@@ -19,7 +19,6 @@ import org.apache.commons.digester3.Substitutor;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.AttributesImpl;
 
-import net.sf.mcf2pdf.mcfconfig.Category;
 import net.sf.mcf2pdf.mcfconfig.Clipart;
 import net.sf.mcf2pdf.mcfconfig.Decoration;
 import net.sf.mcf2pdf.mcfconfig.Fading;
@@ -141,8 +140,6 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		// Decorations (frames)
 		digester.addObjectCreate("decorations", LinkedList.class);
 		digester.addObjectCreate("decorations/decoration", Decoration.class);
-		digester.addObjectCreate("decorations/decoration/categories", LinkedList.class);
-		digester.addObjectCreate("decorations/decoration/categories/category", Category.class);
 		digester.addObjectCreate("decorations/decoration/fading", Fading.class);
 		digester.addSetProperties("decorations/decoration/fading");
 	    digester.addSetNext("decorations/decoration/fading", "setFading");
@@ -154,8 +151,6 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("decorations/decoration/fading/fotoarea", Fotoarea.class);
 		digester.addSetProperties("decorations/decoration/fading/fotoarea");
 	    digester.addSetNext("decorations/decoration/fading/fotoarea", "setFotoarea");
-		
-		digester.addSetNext("decorations/decoration/categories/category", "add");
 		digester.addSetNext("decorations/decoration", "add");
 	}
 
