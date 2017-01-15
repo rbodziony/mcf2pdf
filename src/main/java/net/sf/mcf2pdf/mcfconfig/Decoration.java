@@ -1,7 +1,7 @@
 package net.sf.mcf2pdf.mcfconfig;
 
 public class Decoration {
-	Fading fading;
+	private Fading fading;
 	
 	public Fading getFading() {
 		return fading;
