@@ -137,7 +137,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetNext("fotobook/page/area/imagebackground", "setContent");
 		digester.addSetTop("fotobook/page/area/imagebackground", "setArea");
 		
-		// Decorations (frames)
+		// Decorations (fotoframes)
 		digester.addObjectCreate("decorations", LinkedList.class);
 		digester.addObjectCreate("decorations/decoration", Decoration.class);
 		digester.addObjectCreate("decorations/decoration/fading", Fading.class);
