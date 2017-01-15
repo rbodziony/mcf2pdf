@@ -6,6 +6,7 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -18,6 +19,11 @@ import org.apache.commons.digester3.Substitutor;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.AttributesImpl;
 
+import net.sf.mcf2pdf.mcfconfig.Category;
+import net.sf.mcf2pdf.mcfconfig.Clipart;
+import net.sf.mcf2pdf.mcfconfig.Decoration;
+import net.sf.mcf2pdf.mcfconfig.Fading;
+import net.sf.mcf2pdf.mcfconfig.Fotoarea;
 import net.sf.mcf2pdf.mcfelements.DigesterConfigurator;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
@@ -131,6 +137,26 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/imagebackground", getSpecialImageAttributes());
 		digester.addSetNext("fotobook/page/area/imagebackground", "setContent");
 		digester.addSetTop("fotobook/page/area/imagebackground", "setArea");
+		
+		// Decorations (frames)
+		digester.addObjectCreate("decorations", LinkedList.class);
+		digester.addObjectCreate("decorations/decoration", Decoration.class);
+		digester.addObjectCreate("decorations/decoration/categories", LinkedList.class);
+		digester.addObjectCreate("decorations/decoration/categories/category", Category.class);
+		digester.addObjectCreate("decorations/decoration/fading", Fading.class);
+		digester.addSetProperties("decorations/decoration/fading");
+	    digester.addSetNext("decorations/decoration/fading", "setFading");
+	    
+		digester.addObjectCreate("decorations/decoration/fading/clipart", Clipart.class);
+		digester.addSetProperties("decorations/decoration/fading/clipart");
+	    digester.addSetNext("decorations/decoration/fading/clipart", "setClipart");
+	    
+		digester.addObjectCreate("decorations/decoration/fading/fotoarea", Fotoarea.class);
+		digester.addSetProperties("decorations/decoration/fading/fotoarea");
+	    digester.addSetNext("decorations/decoration/fading/fotoarea", "setFotoarea");
+		
+		digester.addSetNext("decorations/decoration/categories/category", "add");
+		digester.addSetNext("decorations/decoration", "add");
 	}
 
 	private final static Substitutor FLOAT_SUBSTITUTOR = new Substitutor() {
