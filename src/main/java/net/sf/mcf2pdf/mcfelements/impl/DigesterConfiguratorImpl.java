@@ -20,6 +20,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.helpers.AttributesImpl;
 
 import net.sf.mcf2pdf.mcfconfig.Template;
+import net.sf.mcf2pdf.mcfconfig.Clipart;
+import net.sf.mcf2pdf.mcfconfig.Decoration;
+import net.sf.mcf2pdf.mcfconfig.Fading;
+import net.sf.mcf2pdf.mcfconfig.Fotoarea;
 import net.sf.mcf2pdf.mcfelements.DigesterConfigurator;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
@@ -139,6 +143,22 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("templates/template", Template.class);
 		digester.addSetProperties("templates/template");
 		digester.addSetNext("templates/template", "add");
+		
+		// Decorations (fotoframes)
+		digester.addObjectCreate("decorations", LinkedList.class);
+		digester.addObjectCreate("decorations/decoration", Decoration.class);
+		digester.addObjectCreate("decorations/decoration/fading", Fading.class);
+		digester.addSetProperties("decorations/decoration/fading");
+	    digester.addSetNext("decorations/decoration/fading", "setFading");
+	    
+		digester.addObjectCreate("decorations/decoration/fading/clipart", Clipart.class);
+		digester.addSetProperties("decorations/decoration/fading/clipart");
+	    digester.addSetNext("decorations/decoration/fading/clipart", "setClipart");
+	    
+		digester.addObjectCreate("decorations/decoration/fading/fotoarea", Fotoarea.class);
+		digester.addSetProperties("decorations/decoration/fading/fotoarea");
+	    digester.addSetNext("decorations/decoration/fading/fotoarea", "setFotoarea");
+		digester.addSetNext("decorations/decoration", "add");
 	}
 
 	private final static Substitutor FLOAT_SUBSTITUTOR = new Substitutor() {

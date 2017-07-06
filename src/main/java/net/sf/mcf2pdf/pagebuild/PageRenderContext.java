@@ -8,8 +8,10 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.sf.mcf2pdf.mcfconfig.Fading;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
+import net.sf.mcf2pdf.mcfglobals.McfFotoFrame;
 import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
 
 import org.apache.commons.logging.Log;
@@ -79,6 +81,8 @@ public final class PageRenderContext {
 	
 	private static final Pattern PATTERN_FADING = Pattern.compile("fading_(.+)\\.svg", Pattern.CASE_INSENSITIVE);
 	private static final Pattern PATTERN_CLIPART = Pattern.compile("clipart_(.+)\\.svg", Pattern.CASE_INSENSITIVE);
+	private static final Pattern PATTERN_FOTOFRAME = 
+			Pattern.compile("Schmuckrahmen_fading_(.+).mask\\.svg_clipart_(.+).clip\\.svg", Pattern.CASE_INSENSITIVE);
 	
 	/**
 	 * Returns the "fading" (mask) file for the given referenced file name 
@@ -162,4 +166,39 @@ public final class PageRenderContext {
 	public Font getFont(String fontFamily) {
 		return resources.getFont(fontFamily);
 	}
+
+	/**
+	 * Returns fotoframe used for photo, consists of:
+	 * <ul>
+	 *   <li> Mask / fading file </li>
+	 *   <li> Clipart </li>
+	 *   <li> Config file describing transformations for mask, clipart and photo </li>
+	 * </ul>
+	 * 
+	 * @param fileName Name of the fotoframe, eg. 
+	 *        Schmuckrahmen_fading_6220-DECO-CC-mask.svg_clipart_6220-DECO-CC-clip.svg
+	 * @return
+	 */
+	public McfFotoFrame getFotoFrame(String fileName) {
+		Matcher m = PATTERN_FOTOFRAME.matcher(fileName);
+		if (!m.matches()) {
+			return null;
+		}
+		if (!m.group(1).equals(m.group(2))) {
+			log.warn("Unsupported fotoframe config: " + fileName);
+			return null;
+		}
+		
+		String fotoframeName = m.group(1);
+		Fading config = resources.getDecoration(fotoframeName);
+		File fading = resources.getClip(fotoframeName + "-mask");
+		File clipart = resources.getClip(fotoframeName + "-clip");
+		
+		if (fading == null || clipart == null || config == null) {
+			log.warn("Could not get required resources for fotoframe: " + fotoframeName);
+			return null;
+		}
+		return new McfFotoFrame(clipart, fading, config);
+	}
+
 }

@@ -22,6 +22,14 @@ import net.sf.mcf2pdf.mcfconfig.Template;
 import net.sf.mcf2pdf.mcfelements.impl.DigesterConfiguratorImpl;
 import net.sf.mcf2pdf.pagebuild.PageRenderContext;
 
+import org.apache.commons.digester3.Digester;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import net.sf.mcf2pdf.mcfconfig.Decoration;
+import net.sf.mcf2pdf.mcfconfig.Fading;
+import net.sf.mcf2pdf.mcfelements.impl.DigesterConfiguratorImpl;
+
 /**
  * "Dirty little helper" which scans installation directory and temporary
  * directory of fotobook software for background images, cliparts, fonts,
@@ -41,6 +49,8 @@ public class McfResourceScanner {
 	private Map<String, Font> foundFonts = new HashMap<String, Font>();
 	
 	private Map<String, File> foundColors = new HashMap<String, File>();
+	
+	private Map<String, Fading> foundDecorations = new HashMap<String, Fading>();
 
 	private File foundBinding;
 
@@ -63,6 +73,7 @@ public class McfResourceScanner {
 				scanDirectory(f);
 			else {
 				String nm = f.getName().toLowerCase();
+				String path = f.getAbsolutePath();
 				if (nm.matches("[0-9]+\\.jp(e?)g")) {
 					String id = nm.substring(0, nm.indexOf("."));
 					foundImages.put(id, f);
@@ -132,6 +143,15 @@ public class McfResourceScanner {
 				else if(nm.matches("normalbinding.*\\.png")) {
 					foundBinding = f;
 				}
+				else if (nm.matches(".+\\.xml") && path.contains("/decorations/")) {
+					String id = f.getName().substring(0, nm.lastIndexOf("."));
+					List<Decoration> spec = loadDecoration(f);
+					if (spec.size() == 1) {
+						foundDecorations.put(id, spec.get(0).getFading());
+					} else {
+						log.warn("Failed to load decorations from: " + path);
+					}
+				}
 			}
 		}
 	}
@@ -159,6 +179,18 @@ public class McfResourceScanner {
 		}
 		return null;
 	}
+	
+	private static LinkedList<Decoration> loadDecoration(File f) {
+		Digester digester = new Digester();
+		DigesterConfiguratorImpl configurator = new DigesterConfiguratorImpl();
+		try {
+			configurator.configureDigester(digester, f);
+			return digester.parse(f);
+		} catch (Exception e) {
+			log.warn("Failed to load decorations", e);
+		}
+		return null;
+	}
 
 
 	public File getImage(String id) {
@@ -179,5 +211,9 @@ public class McfResourceScanner {
 
 	public Font getFont(String id) {
 		return foundFonts.get(id);
+	}
+	
+	public Fading getDecoration(String id) {
+		return foundDecorations.get(id);
 	}
 }
