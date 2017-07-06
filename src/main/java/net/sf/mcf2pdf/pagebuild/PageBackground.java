@@ -57,14 +57,14 @@ public class PageBackground implements PageDrawable {
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		if (fLeft != null && fLeft.equals(fRight)) {
 			// draw the background image on whole page
-			drawBackground(fLeft, g2d, 0, 0, img.getWidth(), img.getHeight(),hue);
+			drawBackground(fLeft, g2d, 0, 0, img.getWidth(), img.getHeight());
 		}
 		else {
 			// process background parts separate
 			if (fLeft != null)
-				drawBackground(fLeft, g2d, 0, 0, img.getWidth() / 2, img.getHeight(),hue);
+				drawBackground(fLeft, g2d, 0, 0, img.getWidth() / 2, img.getHeight());
 			if (fRight != null)
-				drawBackground(fRight, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight(),hue);
+				drawBackground(fRight, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight());
 		}
 
 		g2d.dispose();
