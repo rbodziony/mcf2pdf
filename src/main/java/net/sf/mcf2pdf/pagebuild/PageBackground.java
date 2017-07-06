@@ -3,6 +3,7 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.pagebuild;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
@@ -45,7 +46,14 @@ public class PageBackground implements PageDrawable {
 			Point drawOffsetPixels) throws IOException {
 		File fLeft = extractBackground(leftBg, context);
 		File fRight = extractBackground(rightBg, context);
-
+		if(fLeft != null) {
+			context.getLog().debug("leftBg="+leftBg.get(0).getTemplateName());
+			context.getLog().debug("file for fLeft bg = "+fLeft.getAbsolutePath());
+		}
+		if(fRight != null) {
+			context.getLog().debug("rightBg="+rightBg.get(0).getTemplateName());
+			context.getLog().debug("file for fRight bg = "+fRight.getAbsolutePath());
+		}
 		McfAlbumType albumType = context.getAlbumType();
 
 		float widthMM = (albumType.getUsableWidth() + albumType.getBleedMargin()) / 10.0f * 2;
@@ -56,26 +64,61 @@ public class PageBackground implements PageDrawable {
 		Graphics2D g2d = img.createGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-
+		int hue=1000;
 		if (fLeft != null && fLeft.equals(fRight)) {
+			//1st we checking if hue is 
+			String templateName = leftBg.get(0).getTemplateName();
+			if(templateName.contains(",hue")) {
+				String hueinString = templateName.substring(templateName.indexOf("hue"),templateName.indexOf("fading")-1);
+				hue = Integer.parseInt(hueinString.substring(hueinString.indexOf("=")+1,hueinString.length())); 
+				context.getLog().debug("hueinString="+hueinString+" hue = " + hue);
+				
+			}
 			// draw the background image on whole page
-			drawBackground(fLeft, g2d, 0, 0, img.getWidth(), img.getHeight());
+			drawBackground(fLeft, g2d, 0, 0, img.getWidth(), img.getHeight(),hue);
 		}
 		else {
 			// process background parts separate
 			if (fLeft != null)
-				drawBackground(fLeft, g2d, 0, 0, img.getWidth() / 2, img.getHeight());
+				drawBackground(fLeft, g2d, 0, 0, img.getWidth() / 2, img.getHeight(),hue);
 			if (fRight != null)
-				drawBackground(fRight, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight());
+				drawBackground(fRight, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight(),hue);
 		}
 
 		g2d.dispose();
 		return img;
 	}
 
-	private void drawBackground(File f, Graphics2D g2d, int x, int y, int width, int height) throws IOException {
-		BufferedImage img = ImageIO.read(f);
+	private void drawBackground(File f, Graphics2D g2d, int x, int y, int width, int height,int hue) throws IOException {
+		
+		BufferedImage img = null;
+		if(hue==180 || hue==1000)
+		 img = ImageIO.read(f);
+		else
+		{
+			BufferedImage raw;
+			 raw = ImageIO.read(f);
+			 int WIDTH = raw.getWidth();
+			 int HEIGHT = raw.getHeight();
+			 img = new BufferedImage(WIDTH,HEIGHT,raw.getType());
+			 float huef = hue/360.0f;
+			 img = new BufferedImage(WIDTH,HEIGHT,raw.getType());
 
+				 for(int Y=0; Y<HEIGHT;Y++)
+			 {
+			  for(int X=0;X<WIDTH;X++)
+			  {
+			   int RGB = raw.getRGB(X,Y);
+			   int R = (RGB >> 16) & 0xff;
+			   int G = (RGB >> 8) & 0xff;
+			   int B = (RGB) & 0xff;
+			   float HSV[]=new float[3];
+			   Color.RGBtoHSB(R,G,B,HSV);
+			   img.setRGB(X,Y,Color.getHSBColor(hue,HSV[1],HSV[2]).getRGB());
+			   
+			  }
+			 }
+		}
 		float tgtRatio = width / (float)height;
 
 		float imgRatio = img.getWidth() / (float)img.getHeight();
@@ -106,11 +149,13 @@ public class PageBackground implements PageDrawable {
 			PageRenderContext context) throws IOException {
 		for (McfBackground bg : bgs) {
 			String tn = bg.getTemplateName();
-			if (tn == null || !tn.matches("[a-zA-Z0-9_]+,normal(,.*)?"))
+			for(McfBackground a :bg.getPage().getBackgrounds())
+			 context.getLog().debug("bg="+a.getLayout()+" layout "+a.getTemplateName());
+			if (tn == null )//|| !tn.matches("[a-zA-Z0-9_]+,normal(,.*)?"))
 				continue;
 
 			tn = tn.substring(0, tn.indexOf(","));
-
+			 context.getLog().debug("tring to load background="+ tn);
 			File f = context.getBackgroundImage(tn);
 			if (f == null) {
 				f = context.getBackgroundColor(tn);

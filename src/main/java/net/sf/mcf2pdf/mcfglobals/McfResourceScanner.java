@@ -83,6 +83,48 @@ public class McfResourceScanner {
 						foundColors.put(color.getName(), colorFile);
 					}
 				}
+				else if (nm.equals("backgrounds_default.xml")) {
+					log.debug("Processing backgrounds_default backgrounds " + f.getAbsolutePath());
+					List<Template> colors = loadColorsMapping(f);
+					//log.debug("colors size = "+colors.size());
+					if (colors == null) {
+						log.warn("Cannot load colors from file " + f.getAbsolutePath());
+						continue;
+					}
+					for (Template color : colors) {
+						File colorFile = new File(f.getParent() + '/' + color.getFilename());
+						log.debug("adding color="+color.getName()+" at file"+color.getFilename());
+						foundColors.put(color.getName(), colorFile);
+					}
+				}
+				else if (nm.equals("multicolor-2012.xml")) {
+					log.debug("Processing multicolor-2012 backgrounds " + f.getAbsolutePath());
+					List<Template> colors = loadColorsMapping(f);
+					//log.debug("colors size = "+colors.size());
+					if (colors == null) {
+						log.warn("Cannot load colors from file " + f.getAbsolutePath());
+						continue;
+					}
+					for (Template color : colors) {
+						File colorFile = new File(f.getParent() + '/' + color.getFilename());
+						log.debug("adding color="+color.getName()+" at file"+color.getFilename());
+						foundColors.put(color.getName(), colorFile);
+					}
+				}
+				else if (nm.equals("multicolor-bg.xml")) {
+					log.debug("Processing multicolor-bg.xml backgrounds " + f.getAbsolutePath());
+					List<Template> colors = loadColorsMapping(f);
+					//log.debug("colors size = "+colors.size());
+					if (colors == null) {
+						log.warn("Cannot load colors from file " + f.getAbsolutePath());
+						continue;
+					}
+					for (Template color : colors) {
+						File colorFile = new File(f.getParent() + '/' + color.getFilename());
+						log.debug("adding color="+color.getName()+" at file"+color.getFilename());
+						foundColors.put(color.getName(), colorFile);
+					}
+				}
 				else if(nm.matches(".+\\.ttf")) {
 					Font font = loadFont(f);
 					foundFonts.put(font.getFamily(), font);
