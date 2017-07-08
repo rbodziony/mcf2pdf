@@ -74,6 +74,7 @@ public class McfResourceScanner {
 			else {
 				String nm = f.getName().toLowerCase();
 				String path = f.getAbsolutePath();
+				//log.debug("nm="+nm+" path="+path);
 				if (nm.matches("[0-9]+\\.jp(e?)g")) {
 					String id = nm.substring(0, nm.indexOf("."));
 					foundImages.put(id, f);
@@ -143,11 +144,13 @@ public class McfResourceScanner {
 				else if(nm.matches("normalbinding.*\\.png")) {
 					foundBinding = f;
 				}
-				else if (nm.matches(".+\\.xml") && path.contains("/decorations/")) {
+				else if (nm.matches(".+\\.xml") && path.contains("decorations")) {
 					String id = f.getName().substring(0, nm.lastIndexOf("."));
+					log.debug("checking decorations id ="+id+" file name="+f.getName());
 					List<Decoration> spec = loadDecoration(f);
 					if (spec.size() == 1) {
 						foundDecorations.put(id, spec.get(0).getFading());
+						log.debug("adding decorations id ="+id+" fading="+spec.get(0).getFading());
 					} else {
 						log.warn("Failed to load decorations from: " + path);
 					}
