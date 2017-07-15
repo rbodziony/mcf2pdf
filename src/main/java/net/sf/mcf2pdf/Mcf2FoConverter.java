@@ -78,14 +78,18 @@ public class Mcf2FoConverter {
 	 * is normally <code>&lt;USER_HOME>/.mcf</code>.
 	 * @param tempImageDir The temporary directory to use for storing image files
 	 * (created by this converter object). This directory is created if it does not exist.
-	 *
+	 * @param scancommon if true scanning common apps folder or user false skipping it 
 	 * @throws IOException If any I/O problem occurs when reading files in the
 	 * installation directory, or the temporary directory could not be created.
 	 *
 	 * @throws SAXException If any of the XML files in the installation directory
 	 * which are parsed have a format error.
 	 */
-	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir) throws IOException, SAXException {
+//	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir) throws IOException, SAXException {
+//		Mcf2FoConverter(mcfInstallDir,mcfTempDir, tempImageDir,Boolean.TRUE);
+//	}
+
+	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir,Boolean scancommon) throws IOException, SAXException {
 		this.tempImageDir = tempImageDir;
 
 		// get all products - scan ALL XML files in Resources for fotobookdefinitions
@@ -100,9 +104,10 @@ public class Mcf2FoConverter {
 			scanForProducts(productsDir, McfProductCatalogue.CatalogueVersion.V6);
 		}
 
+		File hpsDir = null;
 		// search all resources
 		// on Windows, also scan "<Common Application Data>/hps", if existing
-		File hpsDir = null;
+		if(scancommon==true) {
 		try {
 			char[] pszPath = new char[WinDef.MAX_PATH];
 			if (Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_COMMON_APPDATA, null, ShlObj.SHGFP_TYPE_CURRENT, pszPath).intValue() == 0) {
@@ -120,7 +125,9 @@ public class Mcf2FoConverter {
 				hpsDir = homeHpsDir;
 			}
 		}
-
+		} else
+			log.debug("Skipping scanning common apps for MCF resources ");
+		//hpsDir = null;
 		List<File> scanDirs = new ArrayList<File>();
 		scanDirs.add(new File(mcfInstallDir, "Resources"));
 		scanDirs.add(mcfTempDir);
@@ -130,8 +137,8 @@ public class Mcf2FoConverter {
 		log.debug("Searching for MCF resources in " + scanDirs);
 		resources = new McfResourceScanner(scanDirs);
 		resources.scan();
-	}
-
+	};
+		
 	/**
 	 * Performs conversion of the given MCF input file to XSL-FO data.
 	 *

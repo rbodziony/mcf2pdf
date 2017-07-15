@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Diese Definition ist erforderlich um im Client ein neues Thema zu definieren. Es reicht also wenn der Client das
+einmal hat. -->
+<themes>
+  <theme id="albfreetheme" producttype="PRODUCT_FOTOBOOK" expiry="209912312359" thumbnail="">
+    <description>Kostenlose Thementeile</description>
+    <titlepage bgcolor="#fff5de" />
+   
+    <products>
+      <product>ALB14</product> <!-- A4 Soft-->
+      <product>ALB15</product> <!-- A4 Hard Digitaldruck-->
+      <!-- <product>ALB72</product> --> <!-- A4 Hard Fotopapier-->
+      <product>ALB62</product> <!-- A4 Hard Digitaldruck hochglanzveredelt-->
+      <!-- <product>ALB73</product> --> <!-- A4 Hard Fotopapier Glossy-->
+      
+      <product>ALB16</product> <!-- Quad Soft-->
+      <product>ALB17</product> <!-- Quad Hard Digitaldruck-->
+      <!-- <product>ALB40</product> --> <!-- Quad Hard Fotopapier-->
+      
+      <product>ALB32</product> <!-- XL 30x30 Hard Digitaldruck-->
+      <!-- <product>ALB39</product> --> <!-- XL 30x30 Hard Fotopapier-->
+      <product>ALB64</product> <!-- XL 30x30 Hard Digitaldruck hochglanzveredelt-->
+      <!-- <product>ALB75</product> --> <!-- XL 30x30 Hard Fotopapier Glossy--> 
+      
+      <product>ALB35</product> <!-- A4 quer Hard Digitaldruck-->
+      <!-- <product>ALB41</product> --> <!-- A4 quer Hard Fotopapier -->
+      <product>ALB63</product> <!-- A4 quer Hard Digitaldruck hochglanzveredelt-->
+      <!-- <product>ALB74</product> --> <!-- A4 quer Hard Fotopapier Glossy-->
+      <!-- <product>ALB76</product> --><!-- A4 quer Soft-->
+    </products>
+    <logos>
+    </logos>
+    <spinetext use="true"/>
+    <content movable="true" noCoverAtStartup="false" normalBackgrounds="true" customBackgrounds="true"/>
+    <defaultcategories background="Multicolor" clipart="Urlaub" fading="Verläufe" content="" />
+  </theme>
+</themes>

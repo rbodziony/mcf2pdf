@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--  Diese Definition ist erforderlich um im Client ein neues Thema zu definieren. Es reicht also wenn der Client das
+einmal hat. -->
+<themes>
+  <theme id="design" producttype="PRODUCT_FOTOBOOK" expiry="202512312359" thumbnail="">
+    <description>Themenfotobuch</description>
+    <titlepage bgcolor="#fff5de" />
+    <logos>
+    </logos>
+    <spinetext use="true"/>
+    <content movable="false" noCoverAtStartup="true"  normalBackgrounds="true" customBackgrounds="true"/>
+    <defaultcategories background="Multicolor" clipart="Urlaub" fading="Verläufe" content="" />
+  </theme>
+</themes>

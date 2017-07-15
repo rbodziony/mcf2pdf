@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<templates theme="normal,albtheme,design">
+   <template type="fotobook,calendar,gift,doublepage,card,playingcard" name="6543" category="Hintergrund" pagetype="normalpage,fullcover" autoThumb="background" filename="../backgrounds/6543.jpg" subcategory="Texturen" designElementId="6543" designElementType="background"/>
+</templates>

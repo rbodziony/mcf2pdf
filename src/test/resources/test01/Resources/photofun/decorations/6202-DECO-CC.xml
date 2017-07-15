@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?><decorations>
+  <decoration designElementId="74127" id="6202-DECO-CC" type="fading">
+    <categories>
+      
+    <category>Film</category></categories>
+    <fading designElementType="passepartout" file="6202-DECO-CC-mask.svg" keepAspectRatio="1" ratio="1.3421">
+      <clipart designElementType="clipart" file="6202-DECO-CC-clip.svg" ratio="1.3421"/>
+      <fotoarea height="0.9554" width="0.9349" x="0.0366" y="0.026"/>
+    </fading>
+  </decoration>
+</decorations>

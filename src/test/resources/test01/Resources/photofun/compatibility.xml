@@ -1,0 +1,337 @@
+<products>
+<group>
+ <!-- einseitige Tassen und Kruege -->
+  <item>CR1B</item>
+  <item>CRG1B</item>
+  <item>CUP1</item>
+  <item>CUP2</item>
+  <item>CRM1B</item>
+</group>
+<group>
+  <!-- Panorama-Tassen -->
+  <item>CUP8</item>
+  <item>CUP9</item>
+  <item>CUP10</item>
+  <item>CUP11</item>
+  <item>SB2</item>
+</group>
+<group>
+  <!-- Taschen -->
+  <item>BA1</item>
+  <item>BA7</item>
+</group>
+<group>
+ <!-- einseitige Spielkarten -->
+  <item>PLC1</item>
+  <item>PLC3</item>
+</group>
+<group>
+ <!-- zweiseitige Spielkarten -->
+  <item>PLC51</item>
+  <item>PLC53</item>
+</group>
+<group>
+ <!-- Schneekugeln -->
+  <item>SG1</item>
+  <item>SG4</item>
+</group>
+<group>
+<!-- Kissen -->
+  <item>PI1</item>
+  <item>PI2</item>
+</group>
+<group>
+<!-- Grusskarten -->
+  <item>EC1S10</item>
+  <item>EC1C10</item>
+  <item>EC101S10</item>
+  <item>EC201S10</item>
+</group>
+<group>
+<!-- andere Grusskarten -->
+  <item>EC2S10</item>
+  <item>EC2C10</item>
+  <item>EC102S10</item>
+  <item>EC202S10</item>
+</group>
+<group>
+  <item>EC3S10</item>
+  <item>EC3C10</item>
+  <item>EC103S10</item>
+  <item>EC203S10</item>
+</group>
+<group>
+<!-- Grusskarten -->
+  <item>EC51S10</item>
+  <item>EC51C10</item>
+  <item>EC151S10</item>
+  <item>EC251S10</item>
+</group>
+<group>
+<!-- andere Grusskarten -->
+  <item>EC52S10</item>
+  <item>EC52C10</item>
+  <item>EC152S10</item>
+  <item>EC252S10</item>
+</group>
+<group>
+  <item>EC53S10</item>
+  <item>EC53C10</item>
+  <item>EC153S10</item>
+  <item>EC253S10</item>
+</group>
+<group>
+  <item>PC1S10</item>
+  <item>PC51S10</item>
+  <item>PC51C10</item>
+</group>
+<group>
+  <item>PC2S10</item>
+  <item>PC52S10</item>
+  <item>PC52C10</item>
+</group>
+<group>
+ <!-- Tischkarten -->
+  <item>EC4S10</item>
+  <item>EC4C10</item>
+</group>
+
+<group>
+<!--
+// Menukarte doppelseitig
+// Die Produktion wollte unbedingt die Menükarte EC60S10 in EC160S10 umbenennen.
+// Deshalb müssen wir jetzt eine kompatibilität herstellen um, vor der Umstellung
+// heruntergeladene Designs laden zu koennen.
+-->
+  <item>EC60S10</item>
+  <item>EC160S10</item>
+</group>
+<group>
+<!--
+// Dasselbe gilt für die Menukarte einseitig
+// EC10S10 wurde in EC110S10 umbenannt.
+-->
+  <item>EC10S10</item>
+  <item>EC110S10</item>
+</group>
+<group>
+<!-- Alu-Dibond & Acrylposter 20er -->
+  <item>20x30DP</item>
+  <item>20x30AD</item>
+  <item>20x30AG</item>
+</group>
+<group>
+<!-- Alu-Dibond & Acrylposter 30er -->
+  <item>30x45DP</item>
+  <item>30x45AD</item>
+  <item>30x45AG</item>
+</group>
+<group>
+<!-- Alu-Dibond & Acrylposter 40er -->
+  <item>40x60DP</item>
+  <item>40x60AD</item>
+  <item>40x60AG</item>
+</group>
+<group>
+<!-- Alu-Dibond & Acrylposter 50er -->
+  <item>50x75DP</item>
+  <item>50x75AD</item>
+  <item>50x75AG</item>
+</group>
+<group>
+<!-- Normale vs Hochglanzkalender vs Premiumpapier matt -->
+  <item>CAL9</item>
+  <item>CAL41</item>
+  <item>CAL51</item>
+</group>
+<group>
+<!-- Normale vs Hochglanzkalender vs Premiumpapier matt -->
+  <item>CAL11</item>
+  <item>CAL43</item>
+  <item>CAL52</item>
+</group>
+<group>
+<!-- Normale vs Hochglanzkalender vs Premiumpapier matt -->
+  <item>CAL35</item>
+  <item>CAL42</item>
+  <item>CAL53</item>
+</group>
+<group>
+<!-- Normale vs Hochglanzkalender vs Premiumpapier matt -->
+  <item>CAL36</item>
+  <item>CAL44</item>
+  <item>CAL54</item>
+</group>
+<group>
+<!--
+	//Workaround für HPS-4070 Schulhefte: Keine Designs nach Download vorhanden
+-->
+  <item>CB2S3</item>
+  <item>CB1S3</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB14</item>
+  <item>ALBS14</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB15</item>
+  <item>ALBS15</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB16</item>
+  <item>ALBS16</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB17</item>
+  <item>ALBS17</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB32</item>
+  <item>ALBS32</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB35</item>
+  <item>ALBS35</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB37</item>
+  <item>ALBS37</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB62</item>
+  <item>ALBS62</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB63</item>
+  <item>ALBS63</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB64</item>
+  <item>ALBS64</item>
+</group>
+<group>
+  <!-- 20+2 Seiten Bücher sind kompatibel zu den 26+8 Seiten Bücher -->
+  <item>ALB66</item>
+  <item>ALBS66</item>
+</group>
+<group>
+  <item>20x100PPG</item>
+  <item>20x100PPM</item>
+  <item>20x100PPS</item>
+  <item>20x100PPP</item>
+  <item>20x100FAM</item>
+</group>
+<group>
+  <item>20x20PPG</item>
+  <item>20x20PPM</item>
+  <item>20x20PPS</item>
+  <item>20x20PPP</item>
+  <item>20x20FAM</item>
+</group>
+<group>
+  <item>20x30PPG</item>
+  <item>20x30PPM</item>
+  <item>20x30PPS</item>
+  <item>20x30PPP</item>
+  <item>20x30FAM</item>
+</group>
+<group>
+  <item>20x60PPG</item>
+  <item>20x60PPM</item>
+  <item>20x60PPS</item>
+  <item>20x60PPP</item>
+  <item>20x60FAM</item>
+</group>
+<group>
+  <item>20x80PPG</item>
+  <item>20x80PPM</item>
+  <item>20x80PPS</item>
+  <item>20x80PPP</item>
+  <item>20x80FAM</item>
+</group>
+<group>
+  <item>30x30PPG</item>
+  <item>30x30PPM</item>
+  <item>30x30PPS</item>
+  <item>30x30PPP</item>
+  <item>30x30FAM</item>
+</group>
+<group>
+  <item>30x45PPG</item>
+  <item>30x45PPM</item>
+  <item>30x45PPS</item>
+  <item>30x45PPP</item>
+  <item>30x45FAM</item>
+</group>
+<group>
+  <item>30x90PPG</item>
+  <item>30x90PPM</item>
+  <item>30x90PPS</item>
+  <item>30x90PPP</item>
+  <item>30x90FAM</item>
+</group>
+<group>
+  <item>40x40PPG</item>
+  <item>40x40PPM</item>
+  <item>40x40PPS</item>
+  <item>40x40PPP</item>
+  <item>40x40FAM</item>
+</group>
+<group>
+  <item>40x60PPG</item>
+  <item>40x60PPM</item>
+  <item>40x60PPS</item>
+  <item>40x60PPP</item>
+  <item>40x60FAM</item>
+</group>
+<group>
+  <item>50x50PPG</item>
+  <item>50x50PPM</item>
+  <item>50x50PPS</item>
+  <item>50x50PPP</item>
+  <item>50x50FAM</item>
+</group>
+<group>
+  <item>50x75PPG</item>
+  <item>50x75PPM</item>
+  <item>50x75PPS</item>
+  <item>50x75PPP</item>
+  <item>50x75FAM</item>
+</group>
+<group>
+	<item>MC101</item>
+	<item>MC102</item>
+	<item>MC103</item>
+	<item>MC104</item>
+	<item>MC105</item>
+	<item>MC106</item>
+	<item>MC108</item>
+	<item>MC109</item>
+	<item>MC110</item>
+	<item>MC111</item>
+	<item>MC112</item>
+	<item>MC501</item>
+	<item>MC502</item>
+	<item>MC504</item>
+	<item>MC508</item>
+	<item>MC509</item>
+	<item>MC510</item>
+	<item>MC511</item>
+	<item>MC512</item>
+</group>
+<group>
+	<item>TC101</item>
+	<item>TC102</item>
+	<item>TC103</item>
+</group>
+</products>

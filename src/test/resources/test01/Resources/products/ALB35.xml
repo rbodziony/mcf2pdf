@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<description>
+ <!-- Luxusfotobuch A4 quer mit gestaltbarem HardCover = ALB35 -->
+ <!-- rechecked by DF according to Image and Text Positioning V1.62 -->
+ <product class="book" isVario="false" isTwoSided="false" coverextravertical="50" coverextrahorizontal="50" safetymargin="50" hasLogoOnSpine="true" binding="hardcover" pageBinding="glue" bleedmargincover="100" defaultSellingPages="26" bleedmargin="30" name="ALB35">
+  <usablesize orientation="landscape" width="2700" space="600cm2" height="2050"/>
+  <productionnumbering>0,1,2,3,4</productionnumbering>
+  <pages>FullCover, Spine, FullCover, Empty, NormalPages, Empty</pages>
+  <defaults>
+   <default layout="fullcoverpage_landscape" pageType="FullCover" background="Weiß" alignment="left"/>
+   <default layout="emptypage-xl" pageType="Spine" background="Weiß"/>
+   <default layout="fullcoverpage_with_text_landscape" pageType="FullCover" background="Weiß" alignment="right"/>
+   <default layout="schema_landscape_001" pageType="Normal" background="Weiß" alignment="left"/>
+   <default layout="schema_landscape_005" pageType="Normal" background="Weiß" alignment="right"/>
+   <default layout="emptypage" pageType="Empty" background="empty-ffffff"/>
+  </defaults>
+  <surroundings>
+   <surrounding hasbindingshade="true" hasspinefold="true" spinefoldwidth="80" type="book" pageType="FullCover, Spine, Empty, NormalPage">
+    <logos>
+     <logo width="330" bottom="2160" left="1305" reverseOrder="false" pageNr="0" height="121"/>
+    </logos>
+   </surrounding>
+  </surroundings>
+  <pageNumberConfig>
+   <margin horizontalMargin="111" verticalMargin="50"/>
+   <font fontSize="12"/>
+  </pageNumberConfig>
+  <editorAbilities>
+   <assistant enabled="true"/>
+   <startPage>0</startPage>
+   <pageNamingStyle>book</pageNamingStyle>
+   <jigs showChangeBaseDesignButton="false">
+    <background fullOnEachPage="false" enabled="true"/>
+    <content enabled="true"/>
+    <layout enabled="true"/>
+    <passepartout enabled="true"/>
+    <clipart enabled="true"/>
+   </jigs>
+  </editorAbilities>
+  <pricelist>
+   <category>ALB35</category>
+  </pricelist>
+ </product>
+</description>

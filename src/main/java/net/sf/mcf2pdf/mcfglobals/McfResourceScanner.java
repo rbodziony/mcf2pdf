@@ -146,12 +146,18 @@ public class McfResourceScanner {
 				}
 				else if (nm.matches(".+\\.xml") && path.contains("decorations")) {
 					String id = f.getName().substring(0, nm.lastIndexOf("."));
-					log.debug("checking decorations id ="+id+" file name="+f.getName());
+					log.debug("checking decorations id ="+id+" file name="+f.getAbsolutePath());
 					List<Decoration> spec = loadDecoration(f);
 					if (spec.size() == 1) {
 						foundDecorations.put(id, spec.get(0).getFading());
 						log.debug("adding decorations id ="+id+" fading="+spec.get(0).getFading());
 					} else {
+						
+						for(Decoration d:spec){
+							Fading fad = d.getFading();
+							//oundDecorations.put(id, spec.get(0).getFading());
+							//log.warn("Failed to load decorations from: " path );
+						}
 						log.warn("Failed to load decorations from: " + path);
 					}
 				}

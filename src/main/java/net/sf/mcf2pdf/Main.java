@@ -178,7 +178,7 @@ public class Main {
 		Log log = LogFactory.getLog(Main.class);
 
 		try {
-			new Mcf2FoConverter(installDir, tempDir, tempImages).convert(
+			new Mcf2FoConverter(installDir, tempDir, tempImages,true).convert(
 					mcfFile, xslFoOut, dpi, maxPageNo);
 			xslFoOut.flush();
 

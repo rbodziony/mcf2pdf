@@ -1,0 +1,103 @@
+<fotobook imagedir="test01"	 savetime="2017-06-27 23:04" pagenaming="1" programversion="6001005" startdatecalendarium="" isDataMcf="0" createdWithHPSVersion="6000005" identifier="fd5dc3ca-bd3f-4163-b941-0515cd904b46" productname="ALB35" productvariant_visiblename="" compatibilityVersion="6001000" version="3.0" totalpages="8" useSpineLogo="1" productvariant="pages:2" designStyle="" productparameter="" normalpages="8">
+ <pagenumbering fontbold="0" fontfamily="Calibri" format="0" fontitalics="0" position="0" margin="111" fontsize="24" textstring="%" bgcolor="#" textcolor="#000000" verticalMargin="50">
+  <outline width="1" enabled="0"/>
+ </pagenumbering>
+ <extra>
+  <lastTextFormat fontSize="12" isUnderlined="0" fontOutlineColor="#000000" isBold="0" fontOutlineWidth="1" isItalic="1" marginWidth="5" hasOutline="0" fontFamily="Calibri" fontFGColor="4278190080" textAlignement="ALIGNLEFT"/>
+ </extra>
+ <page pagenr="0" type="fullcover" rotation="0">
+  <bundlesize height="2100" width="5600"/>
+  <designElementIDs background="6543" layout="82068"/>
+  <background type="1" rotation="0" alignment="4" templatename="6543,hue=180,fading=1,normal,"/>
+  <background layout="1" templatename="fullcoverpage_landscape,normal"/>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="-99.8926744080885" alpha="1" height="1242.999999983703" zposition="102" top="857.0000000162975" rotation="0" shadowIntensity="128" areatype="clipartarea" width="2832.95624621339" shadowAngle="135">
+   <designElementIDs clipart="63500"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_rect_iceblue.svg"/>
+  </area>
+   <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="-99.8926744080885" alpha="1" height="402" zposition="112" top="455.0000000162975" rotation="0" shadowIntensity="128" areatype="clipartarea" width="2832.95624621339" shadowAngle="135">
+   <designElementIDs clipart="63502"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_rect_lightblue.svg"/>
+  </area>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="-99.8926744080885" alpha="1" height="555.0000000162975" zposition="119" top="-100" rotation="0" shadowIntensity="128" areatype="clipartarea" width="2832.956246213391" shadowAngle="135">
+   <designElementIDs clipart="63523"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_rect_powderblue.svg"/>
+  </area>
+   <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="1789.28249431944" alpha="1" height="395.2143507480041" zposition="123" top="1631.49999999596" rotation="0" shadowIntensity="128" areatype="clipartarea" width="913.1774644535664" shadowAngle="135">
+   <designElementIDs clipart="30611"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_art_8540176_X_16b.svg"/>
+  </area>
+  </page>
+ <page pagenr="0" type="spine" rotation="0">
+  <bundlesize height="2100" width="5600"/>
+  <designElementIDs background="6543"/>
+  <background type="1" rotation="0" alignment="4" templatename="6543,hue=180,fading=1,normal,"/>
+ </page>
+ <page pagenr="0" type="fullcover" rotation="0">
+  <bundlesize height="2100" width="5600"/>
+  <designElementIDs background="6543" layout="50292"/>
+  <background type="1" rotation="0" alignment="4" templatename="6543,hue=180,fading=1,normal,"/>
+  <background layout="1" templatename="cover_schema_landscape_005_x-axis, y-axis,normal"/>
+ </page>
+ <page pagenr="0" type="emptypage" rotation="0">
+  <bundlesize height="2050" width="5400"/>
+  <designElementIDs background="201"/>
+  <background type="1" rotation="0" alignment="1" templatename="Weiss,normal,"/>
+ </page>
+ <page pagenr="1" type="normalpage" rotation="0">
+  <bundlesize height="2050" width="5400"/>
+  <designElementIDs background="6011" layout="100360"/>
+  <background type="1" rotation="0" alignment="1" templatename="Creme,normal,"/>
+  <background layout="1" templatename="schema_landscape_001,normal"/>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="114687" shadowDistance="50" left="1736.991" alpha="1" height="1371.9625" zposition="100" top="110.0029999999999" rotation="0" shadowIntensity="128" areatype="imagearea" width="854.0100000000001" shadowAngle="135">
+   <designElementIDs passepartout="74126"/>
+   <border enabled="0" color="#bbbbbb" offset="-5" width="5"/>
+   <image scale="0.688608" filename="test01.tif" fading="Schmuckrahmen_fading_6213-DECO-CC-mask.svg_clipart_6213-DECO-CC-clip.svg" left="-132" safeContainerLocation="persistent" top="-110" useABK="1">
+    <relationships>
+     <relationship child="aaaa.tif" parent="D:/aaaa/aaaa.tif" nature="RELATIONSHIP_MODIFIED_COPY"/>
+    </relationships>
+   </image>
+  </area>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="114687" shadowDistance="50" left="4483.539" alpha="1" height="1025.5535" zposition="104" top="49.52800000000002" rotation="0" shadowIntensity="128" areatype="imagearea" width="853.47" shadowAngle="135">
+   <designElementIDs passepartout="74128"/>
+   <border enabled="0" color="#bbbbbb" offset="-5" width="5"/>
+   <image scale="0.861925" filename="test01.jpeg" fading="Schmuckrahmen_fading_6213-DECO-CC-mask.svg_clipart_6213-DECO-CC-clip.svg" left="-2417" safeContainerLocation="persistent" top="-1237" useABK="1">
+    <relationships>
+     <relationship child="aaaa.jpg" parent="D:/aaaa/aaaa.jpg" nature="RELATIONSHIP_MODIFIED_COPY"/>
+    </relationships>
+   </image>
+  </area>
+  </page>
+  <page pagenr="2" type="normalpage" rotation="0">
+  <bundlesize height="2050" width="5400"/>
+  <designElementIDs background="251" layout="50251"/>
+  <background type="1" rotation="0" alignment="1" templatename="Creme,normal,"/>
+  <background layout="1" templatename="schema_landscape_001,normal"/>
+ <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="1704.220009254341" alpha="1" height="585.4369105763999" zposition="109" top="118.7679584666973" rotation="90" shadowIntensity="128" areatype="clipartarea" width="882.9728275097946" shadowAngle="135">
+   <designElementIDs clipart="68961"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_5329.15-CLIP-CC.svg"/>
+  </area>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="1695.711459024382" alpha="1" height="585.441" zposition="111" top="1010.251077529616" rotation="90" shadowIntensity="128" areatype="clipartarea" width="899.9910000000001" shadowAngle="135">
+   <designElementIDs clipart="68961"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_5329.15-CLIP-CC.svg"/>
+  </area>
+  <area shadowEnabled="0" shadowBlurNew="5" shadowWidthInMM="4" areaAbilities="66303" shadowDistance="50" left="1695.704914305521" alpha="1" height="585.4369105763999" zposition="112" top="1840.254372221213" rotation="90" shadowIntensity="128" areatype="clipartarea" width="900" shadowAngle="135">
+   <designElementIDs clipart="68961"/>
+   <border enabled="0" color="#000000" offset="0" width="5"/>
+   <clipart uniqueName="clipart_5329.15-CLIP-CC.svg"/>
+  </area>
+ </page>
+ <page pagenr="3" type="normalpage" rotation="0">
+  <bundlesize height="2050" width="5400"/>
+  <designElementIDs background="6011" layout="50301"/>
+  <background type="1" rotation="0" alignment="3" templatename="6011,normal,"/>
+  <background layout="1" templatename="schema_landscape_005,normal"/>
+ </page>
+ <userfeedback>CWInfoWindowVideoDialog=2</userfeedback>
+ <statistics fotosAdded="389" pauseTime="289813" elapsedTimeGross="2016-03-14T11:07:38" countPauses="87" sessionsUsed="40" fotosRemoved="214" assistantUsed="0" elapsedTimeNet="431105"/>
+</fotobook>

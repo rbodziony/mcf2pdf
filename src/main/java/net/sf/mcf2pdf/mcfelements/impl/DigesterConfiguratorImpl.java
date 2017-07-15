@@ -62,10 +62,21 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		@Override
 		protected Object convertToType(Class type, Object value) throws Throwable {
 			if (value instanceof String) {
+				String colorStr = ((String)value).trim();
+				
 				// could be full INT when containing Alpha channel
-				if (!value.toString().startsWith("#")) {
-					return longToColor(Long.parseLong(value.toString()));
+				if (!colorStr.startsWith("#")) {
+					return longToColor(Long.parseLong(colorStr));
 				}
+				// ARGB  #AARRGGBB
+				if(colorStr.length() == 9) {
+					return new Color(
+				            Integer.valueOf( colorStr.substring( 1, 3 ), 16 ),
+				            Integer.valueOf( colorStr.substring( 3, 5 ), 16 ),
+				            Integer.valueOf( colorStr.substring( 5, 7 ), 16 ),
+				            Integer.valueOf( colorStr.substring( 7, 9 ), 16 ));
+				}
+				// RGB
 				return Color.decode(value.toString());
 			}
 

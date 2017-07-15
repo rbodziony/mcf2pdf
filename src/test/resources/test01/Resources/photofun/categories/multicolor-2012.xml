@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<templates theme="normal,albtheme">
+  <template type="fotobook,calendar,gift,card,doublepage,playingcard" subcategory="Multicolor,Texturen" pagetype="normalpage,fullcover,calendercoverfront" name="6547" multicolor_id="9026" multicolor="1" filename="../backgrounds/multicolor/6547.jpg" designElementType="background" designElementId="6547" category="Hintergrund" autoThumb="background"/>
+  <!-- AB hier NEU HPS-6.2 -->
+  <template type="fotobook,calendar,gift,card,doublepage,playingcard" subcategory="Multicolor,Muster" pagetype="normalpage,fullcover,calendercoverfront" name="6850" multicolor_id="9051" multicolor="1" filename="../backgrounds/multicolor/6850.png" designElementType="background" designElementId="6850" category="Hintergrund" autoThumb="background"/>
+  <template type="fotobook,calendar,gift,card,doublepage,playingcard" subcategory="Multicolor,Texturen" pagetype="normalpage,fullcover,calendercoverfront" name="6881" multicolor_id="9057" multicolor="1" filename="../backgrounds/multicolor/6881.png" designElementType="background" designElementId="6881" category="Hintergrund" autoThumb="background"/>
+  <template type="fotobook,calendar,gift,card,doublepage,playingcard" subcategory="Multicolor,Scrap Design" pagetype="normalpage,fullcover,calendercoverfront" name="6898" multicolor_id="9058" multicolor="1" filename="../backgrounds/multicolor/6898.png" designElementType="background" designElementId="6898" category="Hintergrund" autoThumb="background"/>
+  <template type="fotobook,calendar,gift,card,doublepage,playingcard" subcategory="Multicolor,Texturen" pagetype="normalpage,fullcover,calendercoverfront" name="6909" multicolor_id="9060" multicolor="1" filename="../backgrounds/multicolor/6909.png" designElementType="background" designElementId="6909" category="Hintergrund" autoThumb="background"/>
+</templates>
