@@ -61,8 +61,8 @@ public class PageClipart implements PageDrawable {
 		
 		int widthPixel = context.toPixel(clipart.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(clipart.getArea().getHeight() / 10.0f);
-		context.getLog().debug("widthPixel " + widthPixel);
-		context.getLog().debug("heightPixel " + heightPixel);
+//		context.getLog().debug("widthPixel " + widthPixel);
+//		context.getLog().debug("heightPixel " + heightPixel);
 		//int scale = 
 		drawOffsetPixels.x = drawOffsetPixels.y = 0;
 		//return ImageUtil.loadClpFile(f, widthPixel, heightPixel);
@@ -75,7 +75,7 @@ public class PageClipart implements PageDrawable {
 		if (clipart.getArea().getBorder() != null) {
 			McfBorder border = clipart.getArea().getBorder();
 			borderWidth = border.isEnabled() ? context.toPixel(border.getWidth() / 10.0f) : 0;
-			context.getLog().debug("borderWidth " + borderWidth);
+//			context.getLog().debug("borderWidth " + borderWidth);
 			borderColor = border.getColor();
 		}
 		int shadowDistance = (!clipart.getArea().isShadowEnabled()) ? 0 : context.toPixel(clipart.getArea().getShadowDistance() / 10.0f);
@@ -83,11 +83,11 @@ public class PageClipart implements PageDrawable {
 		int yAddShadow = (int)Math.round(shadowDistance * -Math.cos(Math.toRadians(clipart.getArea().getShadowAngle())));
 		int xAdd = Math.max(Math.abs(xAddShadow), borderWidth * 2);
 		int yAdd = Math.max(Math.abs(yAddShadow), borderWidth * 2);
-		context.getLog().debug("shadowDistance " + shadowDistance);
-		context.getLog().debug("xAddShadow " + xAddShadow);
-		context.getLog().debug("yAddShadow " + yAddShadow);
-		context.getLog().debug("xAdd " + xAdd);
-		context.getLog().debug("yAdd " + yAdd);
+//		context.getLog().debug("shadowDistance " + shadowDistance);
+//		context.getLog().debug("xAddShadow " + xAddShadow);
+//		context.getLog().debug("yAddShadow " + yAddShadow);
+//		context.getLog().debug("xAdd " + xAdd);
+//		context.getLog().debug("yAdd " + yAdd);
 		// create image without rotation
 				BufferedImage img = new BufferedImage(widthPixel + xAdd, heightPixel + yAdd,
 						BufferedImage.TYPE_INT_ARGB);
@@ -101,10 +101,10 @@ public class PageClipart implements PageDrawable {
 					int stop = yAddShadow < 0 ? 0 : yAddShadow;
 					imgLeft = sleft == 0 ? -xAddShadow : 0;
 					imgTop = stop == 0 ? -yAddShadow : 0;
-					context.getLog().debug("sleft " + sleft);
-					context.getLog().debug("stop " + stop);
-					context.getLog().debug("imgLeft " + imgLeft);
-					context.getLog().debug("imgTop " + imgTop);
+//					context.getLog().debug("sleft " + sleft);
+//					context.getLog().debug("stop " + stop);
+//					context.getLog().debug("imgLeft " + imgLeft);
+//					context.getLog().debug("imgTop " + imgTop);
 					g2d.setColor(new Color(0, 0, 0, clipart.getArea().getShadowIntensity()));
 					g2d.fillRect(sleft, stop, widthPixel, heightPixel);
 		}
@@ -131,8 +131,8 @@ public class PageClipart implements PageDrawable {
 	
 		int effImgWidth = widthPixel;
 		int effImgHeight = heightPixel;
-		context.getLog().debug("leftOffset " + leftOffset);
-		context.getLog().debug("topOffset " + topOffset);
+//		context.getLog().debug("leftOffset " + leftOffset);
+//		context.getLog().debug("topOffset " + topOffset);
 
 		// draw main image
 		g2d.drawImage(baseImg, 

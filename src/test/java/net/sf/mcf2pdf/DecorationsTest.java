@@ -13,7 +13,7 @@ import org.xml.sax.SAXException;
 
 import net.sf.mcf2pdf.mcfelements.util.PdfUtil;
 
-public class DecorationsTests {
+public class DecorationsTest {
 	public static Mcf2FoConverter test01converter = null;
 	public static int dpi = 150;
 	public int maxPageNo = -1;
@@ -47,6 +47,19 @@ public class DecorationsTests {
 		
 		File mcfFile = new File("./src/test/resources/test02.mcf");
 		OutputStream finalOut = new FileOutputStream("test_6213_NOK.pdf");
+		OutputStream xslFoOut = new ByteArrayOutputStream();
+		test01converter.convert(
+				mcfFile, xslFoOut, dpi, maxPageNo);
+		xslFoOut.flush();
+		byte[] data = ((ByteArrayOutputStream)xslFoOut).toByteArray();
+		PdfUtil.convertFO2PDF(new ByteArrayInputStream(data), finalOut, dpi);
+		finalOut.flush();
+	}
+	@Test
+	public void testRender_cyrilic_DECO_6213_NOK() throws Exception {
+		
+		File mcfFile = new File("./src/test/resources/test03.mcf");
+		OutputStream finalOut = new FileOutputStream("test_cyrilic_6213_NOK.pdf");
 		OutputStream xslFoOut = new ByteArrayOutputStream();
 		test01converter.convert(
 				mcfFile, xslFoOut, dpi, maxPageNo);

@@ -62,10 +62,10 @@ public class PageImage implements PageDrawable {
 	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
 		int widthPixel = context.toPixel(image.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(image.getArea().getHeight() / 10.0f);
-		context.getLog().debug("image.getArea().getWidth()  " + image.getArea().getWidth() );
-		context.getLog().debug("image.getArea().getHeight() " + image.getArea().getHeight());
-		context.getLog().debug("widthPixel " + widthPixel);
-		context.getLog().debug("heightPixel " + heightPixel);
+//		context.getLog().debug("image.getArea().getWidth()  " + image.getArea().getWidth() );
+//		context.getLog().debug("image.getArea().getHeight() " + image.getArea().getHeight());
+//		context.getLog().debug("widthPixel " + widthPixel);
+//		context.getLog().debug("heightPixel " + heightPixel);
 		if (image.getFileName() == null || "".equals(image.getFileName())) {
 			// return empty image
 			return new BufferedImage(widthPixel, heightPixel, BufferedImage.TYPE_INT_ARGB);
@@ -114,18 +114,18 @@ public class PageImage implements PageDrawable {
 
 		double sw = (tmmX * resX) / scale;
 		double sh = (tmmY * resY) / scale;
-		context.getLog().debug("res[0] " + res[0]);
-		context.getLog().debug("res[1]" + res[1]);
-		
-		context.getLog().debug("tmmX " + tmmX);
-		context.getLog().debug("tmmY " + tmmY);
-		context.getLog().debug("resX " + resX);
-		context.getLog().debug("resY " + resY);
-		context.getLog().debug("image.getScale() "+image.getScale());
-		context.getLog().debug("scale " + scale);
-		context.getLog().debug("sw " + sw);
-		
-		context.getLog().debug("sh " + sh);
+//		context.getLog().debug("res[0] " + res[0]);
+//		context.getLog().debug("res[1]" + res[1]);
+//		
+//		context.getLog().debug("tmmX " + tmmX);
+//		context.getLog().debug("tmmY " + tmmY);
+//		context.getLog().debug("resX " + resX);
+//		context.getLog().debug("resY " + resY);
+//		context.getLog().debug("image.getScale() "+image.getScale());
+//		context.getLog().debug("scale " + scale);
+//		context.getLog().debug("sw " + sw);
+//		
+//		context.getLog().debug("sh " + sh);
 	
 		// draw border and / or shadow?
 		int borderWidth = (maskFile != null || !image.getArea().isBorderEnabled()) ? 0
@@ -205,19 +205,19 @@ public class PageImage implements PageDrawable {
 			int y = 0;
 			int effWidth = widthPixel;
 			int effHeight = heightPixel;
-			context.getLog().debug(" mask widthPixel " + widthPixel);
-			context.getLog().debug("mask heightPixel " + heightPixel);
+//			context.getLog().debug(" mask widthPixel " + widthPixel);
+//			context.getLog().debug("mask heightPixel " + heightPixel);
 			if (fotoArea != null) {
 				x = (int)(fotoArea.getX() * widthPixel);
 				y = (int)(fotoArea.getY() * heightPixel);
-				context.getLog().debug("x " + x);
-				context.getLog().debug("y " + y);
+//				context.getLog().debug("x " + x);
+//				context.getLog().debug("y " + y);
 				effWidth = (int)(widthPixel * fotoArea.getWidth());
 				effHeight = (int)(heightPixel * fotoArea.getHeight());
-				context.getLog().debug("effWidth " + widthPixel);
-				context.getLog().debug("effWidth " + heightPixel);
-				context.getLog().debug("fotoArea.getWidth() " + fotoArea.getWidth());
-				context.getLog().debug("fotoArea.getHeight() " + fotoArea.getHeight());
+//				context.getLog().debug("effWidth " + widthPixel);
+//				context.getLog().debug("effWidth " + heightPixel);
+//				context.getLog().debug("fotoArea.getWidth() " + fotoArea.getWidth());
+//				context.getLog().debug("fotoArea.getHeight() " + fotoArea.getHeight());
 			}
 			
 			context.getLog().debug("Applying fading file " + maskFile);
