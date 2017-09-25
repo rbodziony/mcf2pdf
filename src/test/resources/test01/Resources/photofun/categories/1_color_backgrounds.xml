@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <templates theme="normal,albtheme">
   <template type="fotobook,calendar,gift,card,poster,canvas,doublepage,playingcard" subcategory="Farben" pagetype="normalpage,fullcover,calendercoverfront" name="Weiss" filename="../backgrounds/einfarbige/201.png" designElementType="background" designElementId="201" category="Hintergrund" autoThumb="background"/>
+  <template type="fotobook,calendar,gift,card,poster,canvas,playingcard" subcategory="Farben" pagetype="normalpage,fullcover,calendercoverfront" name="Schwarz" filename="../backgrounds/einfarbige/212.jpg" designElementType="background" designElementId="212" category="Hintergrund" autoThumb="background"/>
   <template type="fotobook,calendar,gift,card,poster,canvas,doublepage,playingcard" subcategory="Farben" pagetype="normalpage,fullcover,calendercoverfront" name="Creme" filename="../backgrounds/einfarbige/251.jpg" designElementType="background" designElementId="251" category="Hintergrund" autoThumb="background"/>
   <template type="fotobook,calendar,gift,card,poster,canvas,doublepage,playingcard" subcategory="Farben" pagetype="normalpage,fullcover,calendercoverfront" name="6011" filename="../backgrounds/einfarbige/6011.jpg" designElementType="background" designElementId="6011" category="Hintergrund" autoThumb="background"/>
 </templates>

@@ -69,4 +69,18 @@ public class DecorationsTest {
 		finalOut.flush();
 	}
 	
+	@Test
+	public void testRender_schwarc_6110_OK() throws Exception {
+		
+		File mcfFile = new File("./src/test/resources/test04.mcf");
+		OutputStream finalOut = new FileOutputStream("test_schwarz_6110_NOK.pdf");
+		OutputStream xslFoOut = new ByteArrayOutputStream();
+		test01converter.convert(
+				mcfFile, xslFoOut, dpi, maxPageNo);
+		xslFoOut.flush();
+		byte[] data = ((ByteArrayOutputStream)xslFoOut).toByteArray();
+		PdfUtil.convertFO2PDF(new ByteArrayInputStream(data), finalOut, dpi);
+		finalOut.flush();
+	}
+	
 }
