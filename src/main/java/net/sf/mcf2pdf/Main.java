@@ -9,8 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import net.sf.mcf2pdf.mcfelements.util.PdfUtil;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -25,6 +23,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+
+import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
+import net.sf.mcf2pdf.mcfelements.util.PdfUtil;
 
 
 /**
@@ -48,6 +49,7 @@ public class Main {
 		options.addOption("w", true, "Location for temporary images generated during conversion.");
 		options.addOption("r", true, "Sets the resolution to use for page rendering, in DPI. Default is 150.");
 		options.addOption("n", true, "Sets the page number to render up to. Default renders all pages.");
+		options.addOption("b", false, "Prevents rendering of binding between double pages.");
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
@@ -142,6 +144,11 @@ public class Main {
 			}
 		}
 
+		boolean binding = true;
+		if (cl.hasOption("b")) {
+			binding = false;
+		}
+
 		OutputStream finalOut;
 		if (cl.getArgs()[1].equals("-"))
 			finalOut = System.out;
@@ -177,9 +184,12 @@ public class Main {
 
 		Log log = LogFactory.getLog(Main.class);
 
+		// TODO this is a bad pattern, fix it.
+		ImageUtil.init(installDir);
+
 		try {
 			new Mcf2FoConverter(installDir, tempDir, tempImages).convert(
-					mcfFile, xslFoOut, dpi, maxPageNo);
+					mcfFile, xslFoOut, dpi, binding, maxPageNo);
 			xslFoOut.flush();
 
 			if (!cl.hasOption("x")) {
@@ -210,7 +220,7 @@ public class Main {
 		HelpFormatter hf = new HelpFormatter();
 		hf.printHelp("mcf2pdf <options> INFILE OUTFILE", "Options are:", options,
 				"If -t is not specified, <USER_HOME>/.mcf is used.\n" +
-				"If -w is not specified, <USER_HOME>/.mcf2pdf is created and used.\n" +
+						"If -w is not specified, <USER_HOME>/.mcf2pdf is created and used.\n" +
 				"If you specify a dash (-) as OUTFILE, resulting content will be written to STDOUT. Notice that, in that case, temporary image files will be kept in specified image working directory. Notice also that you should add option -q in this case to avoid logging output.");
 	}
 }
