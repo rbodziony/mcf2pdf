@@ -1,4 +1,4 @@
-/*******************************************************************************
+﻿/*******************************************************************************
  * ${licenseText}
  *******************************************************************************/
 package net.sf.mcf2pdf.pagebuild;
@@ -141,7 +141,7 @@ public final class PageRenderContext {
 		// FIXME this is a workaround. ID should be derived from
 		// <designElementIDs background="nnn" /> element.
 		if ("Weiss".equals(name)) {
-			name = "WeiĂź";
+			name = "Weiß";
 		}
 		return resources.getColorImage(name);
 	}
