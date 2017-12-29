@@ -14,7 +14,6 @@ import java.util.List;
 
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
-import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 
 
 public class PageBackground implements PageDrawable {

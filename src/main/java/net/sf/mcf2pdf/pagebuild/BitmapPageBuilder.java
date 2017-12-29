@@ -23,7 +23,6 @@ import javax.imageio.ImageIO;
 
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 
-import org.jdom.Element;
 import org.jdom.Namespace;
 
 
@@ -83,11 +82,11 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 			}
 		}
 
-		docBuilder.addPageElement(createXslFoElement(img, docBuilder.getNamespace()), widthPX, heightPX);
+		docBuilder.addPageElement(createImgFoElement(img, docBuilder.getNamespace()));
 		g2d.dispose();
 	}
 
-	private Element createXslFoElement(BufferedImage img, Namespace xslFoNs) throws IOException {
+	private String createImgFoElement(BufferedImage img, Namespace xslFoNs) throws IOException {
 		// save bitmap to file
 		File f;
 		int i = 1;
@@ -102,14 +101,10 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		g2d.dispose();
 
 		ImageIO.write(imgPlain, "jpeg", f);
-
-		Element eg = new Element("external-graphic", xslFoNs);
-		eg.setAttribute("src", f.getAbsolutePath());
-		eg.setAttribute("content-width", widthPX + "px");
-		eg.setAttribute("content-height", heightPX + "px");
+		String src = f.getAbsolutePath();
 		f.deleteOnExit();
 
-		return eg;
+		return src;
 	}
 
 

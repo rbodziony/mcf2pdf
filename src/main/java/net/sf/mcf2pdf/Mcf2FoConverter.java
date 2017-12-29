@@ -250,7 +250,6 @@ public class Mcf2FoConverter {
 					imageDir, binding);
 			currentPage.addToDocumentBuilder(docBuilder);
 			if (i < normalPages.size() - 2) {
-				docBuilder.newPage();
 				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
 			}
 		}

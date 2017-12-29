@@ -41,7 +41,6 @@ public class XslFoDocumentBuilder {
 		m.setAttribute("master-name", name);
 		m.setAttribute("page-width", widthPX + "px");
 		m.setAttribute("page-height", heightPX + "px");
-		m.setAttribute("margin", "0px");
 		
 		Element body = new Element("region-body", ns);
 		m.addContent(body);
@@ -62,7 +61,6 @@ public class XslFoDocumentBuilder {
 		
 		Element ps = new Element("page-sequence", ns);
 		ps.setAttribute("master-reference", masterName);
-		ps.setAttribute("id", masterName);
 		Element f = new Element("flow", ns);
 		f.setAttribute("flow-name", "xsl-region-body");
 		ps.addContent(f);
@@ -94,28 +92,18 @@ public class XslFoDocumentBuilder {
 		return ns;
 	}
 
-	public void addPageElement(Element element, int widthPX, int heightPX) {
+	public void addPageElement(String imgSource) {
 		if (flow == null)
 			throw new IllegalStateException("Please call startFlow() first");
 		
 		// create block container
 		Element bc = new Element("block-container",ns);
-		bc.setAttribute("absolute-position", "absolute");
-		bc.setAttribute("left", "0px");
-		bc.setAttribute("top", "0px");
-		bc.setAttribute("width", widthPX + "px");
-		bc.setAttribute("height", heightPX + "px");
-		
-		// create block
-		Element b = new Element("block", ns);
-		b.setAttribute("margin", "0px");
-		b.setAttribute("padding", "0px");
-		b.setAttribute("border-width", "0px");
-		bc.addContent(b);
-		
-		b.addContent(element);
+		bc.setAttribute("background-image", imgSource);
+		bc.setAttribute("width", "100%");
+		bc.setAttribute("height", "100%");
+		bc.addContent(new Element("block", ns));
 		
 		flow.addContent(bc);
-	}	
+	}
 
 }
