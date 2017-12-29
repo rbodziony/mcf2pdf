@@ -34,9 +34,9 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 	private PageRenderContext context;
 
-	private float widthMM;
+	private int widthPX;
 
-	private float heightMM;
+	private int heightPX;
 
 	private static final Comparator<PageDrawable> zComp = new Comparator<PageDrawable>() {
 		@Override
@@ -45,10 +45,10 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		}
 	};
 
-	public BitmapPageBuilder(float widthMM, float heightMM,
+	public BitmapPageBuilder(int widthPX, int heightPX,
 			PageRenderContext context, File tempImageDir) throws IOException {
-		this.widthMM = widthMM;
-		this.heightMM = heightMM;
+		this.widthPX = widthPX;
+		this.heightPX = heightPX;
 		this.context = context;
 		this.tempImageDir = tempImageDir;
 	}
@@ -62,8 +62,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 		context.getLog().debug("Creating full page image from page elements");
 
-		BufferedImage img = new BufferedImage(context.toPixel(widthMM),
-				context.toPixel(heightMM), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage img = new BufferedImage(widthPX, heightPX, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
 		g2d.setColor(Color.white);
 		g2d.fillRect(0, 0, img.getWidth(), img.getHeight());
@@ -74,7 +73,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 			Point offset = new Point();
 			try {
-				BufferedImage pdImg = pd.renderAsBitmap(context, offset);
+				BufferedImage pdImg = pd.renderAsBitmap(context, offset, widthPX, heightPX);
 				if (pdImg != null)
 					g2d.drawImage(pdImg, left + offset.x, top + offset.y, null);
 			}
@@ -84,7 +83,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 			}
 		}
 
-		docBuilder.addPageElement(createXslFoElement(img, docBuilder.getNamespace()), widthMM, heightMM);
+		docBuilder.addPageElement(createXslFoElement(img, docBuilder.getNamespace()), widthPX, heightPX);
 		g2d.dispose();
 	}
 
@@ -106,8 +105,8 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 		Element eg = new Element("external-graphic", xslFoNs);
 		eg.setAttribute("src", f.getAbsolutePath());
-		eg.setAttribute("content-width", widthMM + "mm");
-		eg.setAttribute("content-height", heightMM + "mm");
+		eg.setAttribute("content-width", widthPX + "px");
+		eg.setAttribute("content-height", heightPX + "px");
 		f.deleteOnExit();
 
 		return eg;

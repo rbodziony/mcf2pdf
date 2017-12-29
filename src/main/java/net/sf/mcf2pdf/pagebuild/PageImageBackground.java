@@ -25,8 +25,8 @@ public class PageImageBackground extends PageImage {
 	
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
-		BufferedImage img = super.renderAsBitmap(context, drawOffsetPixels);
+			Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
+		BufferedImage img = super.renderAsBitmap(context, drawOffsetPixels, widthPX, heightPX);
 		if (McfImageBackground.RIGHT_OR_BOTTOM.equals(image.getBackgroundPosition())) {
 			McfAlbumType albumType = context.getAlbumType();
 			drawOffsetPixels.x += context.toPixel(albumType.getUsableWidth() / 10.0f + 
