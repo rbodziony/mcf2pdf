@@ -20,6 +20,8 @@ public interface McfPage {
 	public final static Pattern SPINE = Pattern.compile("SPINE|spine");
 
 	public McfFotobook getFotobook();
+	
+	public McfBundlesize getBundlesize();
 
 	public List<? extends McfArea> getAreas();
 
