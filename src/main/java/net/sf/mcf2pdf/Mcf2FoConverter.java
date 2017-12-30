@@ -219,7 +219,8 @@ public class Mcf2FoConverter {
 		if (leftCover != null) {
 			log.info("Rendering cover...");
 			currentPage = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
-			processDoublePage(leftCover, rightCover, imageDir, false, false, book);
+			processDoublePage(leftCover, rightCover, imageDir, false, false,
+					book, coverPageWidthPX, coverPageHeightPX);
 			docBuilder.startFlow("cover");
 			currentPage.addToDocumentBuilder(docBuilder);
 			docBuilder.endFlow();
@@ -249,7 +250,7 @@ public class Mcf2FoConverter {
 			log.info("Rendering pages " + i + "+" + (i+1) + "...");
 			processDoublePage(normalPages.get(i),
 					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					imageDir, binding, pageNum, book);
+					imageDir, binding, pageNum, book, pageWidthPX, pageHeightPX);
 			currentPage.addToDocumentBuilder(docBuilder);
 			if (i < normalPages.size() - 2) {
 				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
@@ -264,7 +265,8 @@ public class Mcf2FoConverter {
 	}
 
 	private void processDoublePage(McfPage leftPage, McfPage rightPage, File imageDir,
-			boolean addBinding, boolean addPageNum, McfFotobook book) throws IOException {
+			boolean addBinding, boolean addPageNum, McfFotobook book,
+			int pageWidth, int pageHeight) throws IOException {
 		// handle backgrounds
 		PageBackground bg = new PageBackground(
 				leftPage == null ? Collections.<McfBackground>emptyList() : leftPage.getBackgrounds(),
@@ -294,7 +296,8 @@ public class Mcf2FoConverter {
 		}
 		
 		if (addPageNum) {
-			currentPage.addDrawable(new PageNum(book, leftPage, rightPage));
+			currentPage.addDrawable(new PageNum(book, leftPage, "left", pageWidth, pageHeight));
+			currentPage.addDrawable(new PageNum(book, rightPage, "right", pageWidth, pageHeight));
 		}
 
 		if (addBinding) {

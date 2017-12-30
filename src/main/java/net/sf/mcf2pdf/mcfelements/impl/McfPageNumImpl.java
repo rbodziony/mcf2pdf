@@ -14,7 +14,7 @@ public class McfPageNumImpl implements McfPageNum {
 	private int horizontalMargin;
 	private Color textColor;
 	private Color bgColor;
-	private int fontSize;
+	private float fontSize;
 	private int fontBold;
 	private int fontItalics;
 	private String fontFamily;
@@ -83,12 +83,12 @@ public class McfPageNumImpl implements McfPageNum {
 		return bgColor;
 	}
 	
-	public void setFontSize(int fontSize) {
+	public void setFontSize(float fontSize) {
 		this.fontSize = fontSize;
 	}
 
 	@Override
-	public int getFontSize() {
+	public float getFontSize() {
 		return fontSize;
 	}
 	

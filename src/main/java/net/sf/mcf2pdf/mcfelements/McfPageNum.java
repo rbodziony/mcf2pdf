@@ -18,7 +18,7 @@ public interface McfPageNum {
 	
 	public Color getBgColor();
 	
-	public int getFontSize();
+	public float getFontSize();
 
 	public int getFontBold();
 	
