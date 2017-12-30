@@ -257,7 +257,6 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 
 	protected List<String[]> getSpecialAreaAttributes() {
 		List<String[]> result = new Vector<String[]>();
-		result.add(new String[] { "zposition", "zPosition" });
 		result.add(new String[] { "areatype", "areaType" });
 		result.add(new String[] { "borderenabled", "borderEnabled" });
 		result.add(new String[] { "sizeborder", "borderSize" });
