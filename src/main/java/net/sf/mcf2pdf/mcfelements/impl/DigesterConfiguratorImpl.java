@@ -34,6 +34,7 @@ import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
 import net.sf.mcf2pdf.mcfelements.McfImageBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
+import net.sf.mcf2pdf.mcfelements.McfPageNum;
 import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.util.DigesterUtil;
 
@@ -95,6 +96,13 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		// fotobook element
 		digester.addObjectCreate("fotobook", getFotobookClass());
 		DigesterUtil.addSetProperties(digester, "fotobook", getSpecialFotobookAttributes());
+		
+		// pagenumbering element
+		digester.addObjectCreate("fotobook/pagenumbering", getPageNumClass());
+		digester.addSetTop("fotobook/pagenumbering", "setFotobook");
+//		digester.addSetProperties("fotobook/pagenumbering");
+		DigesterUtil.addSetProperties(digester, "fotobook/pagenumbering", getSpecialPageNumAttributes());
+		digester.addSetNext("fotobook/pagenumbering", "addPageNum", McfPageNum.class.getName());
 
 		// page element
 		digester.addObjectCreate("fotobook/page", getPageClass());
@@ -156,7 +164,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("templates/template", Template.class);
 		digester.addSetProperties("templates/template");
 		digester.addSetNext("templates/template", "add");
-
+		
 		// Decorations (fotoframes)
 		digester.addObjectCreate("decorations", LinkedList.class);
 		digester.addObjectCreate("decorations/decoration", Decoration.class);
@@ -223,6 +231,23 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "totalpages", "totalPages" });
 		result.add(new String[] { "producttype", "productType" });
 		result.add(new String[] { "programversion", "programVersion" });
+		return result;
+	}
+	
+	protected Class<? extends McfPageNum> getPageNumClass() {
+		return McfPageNumImpl.class;
+	}
+	
+	protected List<String[]> getSpecialPageNumAttributes() {
+		List<String[]> result = new Vector<String[]>();
+		result.add(new String[] { "textstring", "textString" });
+		result.add(new String[] { "margin", "horizontalMargin" });
+		result.add(new String[] { "textcolor", "textColor" });
+		result.add(new String[] { "bgcolor", "bgColor" });
+		result.add(new String[] { "fontsize", "fontSize" });
+		result.add(new String[] { "fontbold", "fontBold" });
+		result.add(new String[] { "fontitalics", "fontItalics" });
+		result.add(new String[] { "fontfamily", "fontFamily"});
 		return result;
 	}
 

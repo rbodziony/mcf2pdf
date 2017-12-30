@@ -10,6 +10,7 @@ import java.util.Vector;
 
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfPage;
+import net.sf.mcf2pdf.mcfelements.McfPageNum;
 
 
 public class McfFotobookImpl implements McfFotobook {
@@ -32,6 +33,8 @@ public class McfFotobookImpl implements McfFotobook {
 	
 	private int totalPages;
 	
+	private McfPageNum pageNumbering;
+	
 	private List<McfPage> pages = new Vector<McfPage>();
 	
 	public void addPage(McfPage page) {
@@ -40,6 +43,14 @@ public class McfFotobookImpl implements McfFotobook {
 	
 	public List<? extends McfPage> getPages() {
 		return Collections.unmodifiableList(pages);
+	}
+	
+	public void addPageNum(McfPageNum pageNumbering) {
+		this.pageNumbering = pageNumbering;
+	}
+	
+	public McfPageNum getPageNum() {
+		return pageNumbering;
 	}
 	
 	public int getProductType() {
