@@ -35,6 +35,7 @@ import net.sf.mcf2pdf.pagebuild.PageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageClipart;
 import net.sf.mcf2pdf.pagebuild.PageImage;
 import net.sf.mcf2pdf.pagebuild.PageImageBackground;
+import net.sf.mcf2pdf.pagebuild.PageNum;
 import net.sf.mcf2pdf.pagebuild.PageRenderContext;
 import net.sf.mcf2pdf.pagebuild.PageText;
 
@@ -148,7 +149,8 @@ public class Mcf2FoConverter {
 	 * @throws SAXException If any XML related problem occurs, e.g. the input file
 	 * has an invalid format.
 	 */
-	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, int maxPageNo) throws IOException, SAXException {
+	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding,
+			boolean pageNum, int maxPageNo) throws IOException, SAXException {
 		// build MCF DOM
 		log.debug("Reading MCF file");
 		McfFotobook book = new FotobookBuilder().readFotobook(mcfFile);
@@ -217,7 +219,7 @@ public class Mcf2FoConverter {
 		if (leftCover != null) {
 			log.info("Rendering cover...");
 			currentPage = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
-			processDoublePage(leftCover, rightCover, imageDir, false);
+			processDoublePage(leftCover, rightCover, imageDir, false, false, book);
 			docBuilder.startFlow("cover");
 			currentPage.addToDocumentBuilder(docBuilder);
 			docBuilder.endFlow();
@@ -247,7 +249,7 @@ public class Mcf2FoConverter {
 			log.info("Rendering pages " + i + "+" + (i+1) + "...");
 			processDoublePage(normalPages.get(i),
 					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					imageDir, binding);
+					imageDir, binding, pageNum, book);
 			currentPage.addToDocumentBuilder(docBuilder);
 			if (i < normalPages.size() - 2) {
 				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
@@ -262,7 +264,7 @@ public class Mcf2FoConverter {
 	}
 
 	private void processDoublePage(McfPage leftPage, McfPage rightPage, File imageDir,
-			boolean addBinding) throws IOException {
+			boolean addBinding, boolean addPageNum, McfFotobook book) throws IOException {
 		// handle backgrounds
 		PageBackground bg = new PageBackground(
 				leftPage == null ? Collections.<McfBackground>emptyList() : leftPage.getBackgrounds(),
@@ -289,6 +291,10 @@ public class Mcf2FoConverter {
 			else if (McfArea.TEXTAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageText((McfText)a.getContent()));
 			}
+		}
+		
+		if (addPageNum) {
+			currentPage.addDrawable(new PageNum(book, leftPage, rightPage));
 		}
 
 		if (addBinding) {
