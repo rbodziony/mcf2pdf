@@ -106,7 +106,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("fotobook/page/bundlesize", getBundlesizeClass());
 		digester.addSetTop("fotobook/page/bundlesize", "setPage");
 		digester.addSetProperties("fotobook/page/bundlesize");
-		digester.addSetNext("fotobook/page/bundlesize", "addBundlesize", McfBundlesize.class.getName());
+		digester.addSetNext("fotobook/page/bundlesize", "setBundlesize", McfBundlesize.class.getName());
 
 		// background element
 		digester.addObjectCreate("fotobook/page/background", getBackgroundClass());

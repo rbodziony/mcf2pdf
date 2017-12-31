@@ -69,7 +69,7 @@ public class McfPageImpl implements McfPage {
 		return bundlesize;
 	}
 	
-	public void addBundlesize(McfBundlesize bundlesize) {
+	public void setBundlesize(McfBundlesize bundlesize) {
 		this.bundlesize = bundlesize;
 	}
 
