@@ -27,6 +27,8 @@ import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
 public final class PageRenderContext {
 
 	private final static Log log = LogFactory.getLog(PageRenderContext.class);
+	
+	private double sx;
 
 	private int targetDpi;
 
@@ -34,9 +36,10 @@ public final class PageRenderContext {
 
 	private McfAlbumType albumType;
 
-	public PageRenderContext(int targetDpi, McfResourceScanner resources,
+	public PageRenderContext(int targetDpi, double sx, McfResourceScanner resources,
 			McfAlbumType albumType) {
 		this.targetDpi = targetDpi;
+		this.sx = sx;
 		this.resources = resources;
 		this.albumType = albumType;
 	}
@@ -48,6 +51,15 @@ public final class PageRenderContext {
 	 */
 	public Log getLog() {
 		return log;
+	}
+	
+	/**
+	 * Returns the scaling factor for fonts that don't natively support bold text.
+	 * 
+	 * @return the scaling factor for fonts that don't natively support bold text.
+	 */
+	public double getSX() {
+		return sx;
 	}
 
 	/**

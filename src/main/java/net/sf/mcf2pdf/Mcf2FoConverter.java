@@ -148,7 +148,7 @@ public class Mcf2FoConverter {
 	 * @throws SAXException If any XML related problem occurs, e.g. the input file
 	 * has an invalid format.
 	 */
-	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, int maxPageNo) throws IOException, SAXException {
+	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, int maxPageNo, double sx) throws IOException, SAXException {
 		// build MCF DOM
 		log.debug("Reading MCF file");
 		McfFotobook book = new FotobookBuilder().readFotobook(mcfFile);
@@ -170,7 +170,7 @@ public class Mcf2FoConverter {
 			throw new IOException("No album type definition found for used print product '" + book.getProductName() + "'");
 
 		// prepare page render context
-		context = new PageRenderContext(dpi, resources, albumType);
+		context = new PageRenderContext(dpi, sx, resources, albumType);
 
 		// create XSL-FO document
 		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
