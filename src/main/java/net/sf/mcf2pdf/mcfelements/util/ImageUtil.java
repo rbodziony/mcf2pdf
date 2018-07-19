@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
 
@@ -33,6 +34,10 @@ import org.apache.batik.ext.awt.RenderingHintsKeyExt;
 import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
 import org.w3c.dom.svg.SVGDocument;
 import org.w3c.dom.svg.SVGPreserveAspectRatio;
 
@@ -50,6 +55,8 @@ import net.sf.mcf2pdf.mcfelements.util.webp.WebpLib;
  */
 public final class ImageUtil {
 
+	private final static Log log = LogFactory.getLog(ImageUtil.class);
+	
 	/*
 	 * FIXME this uses CEWE Fotobook for MY personal pictures when they do not
 	 * have resolution information.
@@ -143,28 +150,15 @@ public final class ImageUtil {
 	 * @throws IOException If any I/O related problem occurs reading the file.
 	 */
 	public static BufferedImage loadClpFile(File clpFile, int widthPixel, int heightPixel) throws IOException {
-		FileInputStream fis = new FileInputStream(clpFile);
-		ClpInputStream cis = null;
-		InputStream in = clpFile.getName().toLowerCase().endsWith(".clp") ? (cis = new ClpInputStream(fis)) : fis;
-
+		
 		UserAgentAdapter userAgentAdapter = new UserAgentAdapter();
-		BridgeContext bridgeContext = new BridgeContext(userAgentAdapter);
+        BridgeContext bridgeContext = new BridgeContext(userAgentAdapter);
 
-		SVGDocument svgDocument;
-		GraphicsNode rootSvgNode;
-		try {
-			String parser = XMLResourceDescriptor.getXMLParserClassName();
-			SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
-			svgDocument = (SVGDocument)factory.createDocument(clpFile.toURI().toString(), new InputStreamReader(in, "ISO-8859-1"));
-			rootSvgNode = getRootNode(svgDocument, bridgeContext);
-		}
-		finally {
-			IOUtils.closeQuietly(cis);
-			IOUtils.closeQuietly(fis);
-		}
-
-		float[] vb = ViewBox.parseViewBoxAttribute(svgDocument.getRootElement(),
-				svgDocument.getRootElement().getAttribute("viewBox"), bridgeContext);
+        SVGDocument svgDocument;
+        GraphicsNode rootSvgNode;
+        svgDocument = getSVGDocument(clpFile);
+        rootSvgNode = getRootNode(svgDocument, bridgeContext);
+        float[] vb = getViewBox(bridgeContext, svgDocument);
 
 		AffineTransform usr2dev = ViewBox.getPreserveAspectRatioTransform(vb, SVGPreserveAspectRatio.SVG_PRESERVEASPECTRATIO_NONE,
 				true, widthPixel, heightPixel);
@@ -193,6 +187,76 @@ public final class ImageUtil {
 		return img;
 	}
 
+	 /**
+     * Returns SVG document from File
+      * @param File path to file clp/svg.
+     *
+      *
+     * @return SVG Document
+      * @throws IOException If any I/O related problem occurs reading the file.
+     */
+     public static SVGDocument getSVGDocument(File clpFile)
+                  throws IOException, UnsupportedEncodingException {
+           FileInputStream fis = new FileInputStream(clpFile);
+           ClpInputStream cis = null;
+           InputStream in = clpFile.getName().toLowerCase().endsWith(".clp") ? (cis = new ClpInputStream(fis)) : fis;
+           SVGDocument svgDocument;
+           try {
+         String parser = XMLResourceDescriptor.getXMLParserClassName();
+         SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
+                  svgDocument = (SVGDocument)factory.createDocument(clpFile.toURI().toString(), new InputStreamReader(in, "ISO-8859-1"));
+           }
+           finally {
+                  IOUtils.closeQuietly(cis);
+                  IOUtils.closeQuietly(fis);
+           }
+           return svgDocument;
+     }
+	
+	/**
+     * Create default array view box for scaling svg or clp files based on width/height of image attributes
+      * @param svgDocument SVGDocument.
+     *
+     * @return float array with default viewbox for clp/or/svg file based on width/height of SVGDocument
+     *
+     */
+     private static float[] createDefaultViewBox(SVGDocument svgDocument) {
+
+           Element svgRoot = svgDocument.getDocumentElement();
+           Attr width =null;
+           Attr height = null;
+           width = svgRoot.getAttributeNodeNS(null, "width");   
+           if(width!=null) {
+                  log.debug("width in file="+width.getValue());
+           }
+           height = svgRoot.getAttributeNodeNS(null, "height");
+           if(height!=null) {
+                  log.debug("height in file="+height.getValue());
+           }
+           log.debug("Creating default viewbox with 0f,0.0f,"+width.getValue()+","+height.getValue());
+           return new float[] {0.0f,0.0f,Float.parseFloat(width.getValue()),Float.parseFloat(height.getValue())};
+     }
+
+     /**
+     * Returns viewbox array from document or create default
+      * @param svgDocument SVGDocument.
+     * @param bridgeContext BridgeContext
+     *
+     * @return float array with default viewbox for clp/or/svg file based on width/height of SVGDocument
+     *
+     */
+     public static float[] getViewBox(BridgeContext bridgeContext,
+                  SVGDocument svgDocument) {
+           float[] vb = ViewBox.parseViewBoxAttribute(svgDocument.getRootElement(),
+                         svgDocument.getRootElement().getAttribute("viewBox"), bridgeContext);
+           if( vb == null )
+           {
+                  log.debug("viewbox empty");
+                  vb = createDefaultViewBox(svgDocument);
+           }
+           return vb;
+     }
+	
 	private static GraphicsNode getRootNode(SVGDocument document, BridgeContext bridgeContext) {
 		// Build the tree and get the document dimensions
 		GVTBuilder builder = new GVTBuilder();
