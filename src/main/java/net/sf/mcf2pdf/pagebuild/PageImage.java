@@ -59,7 +59,7 @@ public class PageImage implements PageDrawable {
 	}
 
 	@Override
-	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
 		int widthPixel = context.toPixel(image.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(image.getArea().getHeight() / 10.0f);
 		if (image.getFileName() == null || "".equals(image.getFileName())) {

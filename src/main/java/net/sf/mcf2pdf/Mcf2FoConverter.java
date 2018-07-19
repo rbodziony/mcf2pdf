@@ -175,17 +175,28 @@ public class Mcf2FoConverter {
 		// create XSL-FO document
 		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
 
-		float pageWidth = albumType.getUsableWidth() / 10.0f * 2;
-		float pageHeight = albumType.getUsableHeight() / 10.0f;
-
-		// set page master
-		docBuilder.addPageMaster("default", pageWidth, pageHeight);
-
-		// create master for cover
-		float coverPageWidth = pageWidth + (albumType.getCoverExtraHorizontal() * 2 + albumType.getSpineWidth(book.getNormalPages())) / 10.0f;
-		float coverPageHeight = pageHeight + albumType.getCoverExtraVertical() / 10.0f;
-
-		docBuilder.addPageMaster("cover", coverPageWidth, coverPageHeight);
+		// setting page widths for master pages
+		int coverPageWidthPX = -1;
+		int coverPageHeightPX = -1;
+		int pageWidthPX = -1;
+		int pageHeightPX = -1;
+		
+		for (McfPage p : book.getPages()) {
+			if (McfPage.FULLCOVER.matcher(p.getType()).matches() && coverPageWidthPX == -1 && coverPageHeightPX == -1) {
+				coverPageWidthPX = context.toPixel(p.getBundlesize().getWidth() / 10.0f);
+				coverPageHeightPX = context.toPixel(p.getBundlesize().getHeight() / 10.0f);
+			} else if (McfPage.CONTENT.matcher(p.getType()).matches()&& pageWidthPX == -1 && pageHeightPX == -1 ) {
+				pageWidthPX = context.toPixel(p.getBundlesize().getWidth() / 10.0f);
+				pageHeightPX = context.toPixel(p.getBundlesize().getHeight() / 10.0f);
+			}
+			if (coverPageWidthPX != -1 && coverPageHeightPX != -1 && pageWidthPX != -1 && pageHeightPX != -1) {
+				break;
+			}
+		}
+		
+		// setting master pages
+		docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
+		docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
 
 		// prepare temporary folder
 		log.debug("Preparing temporary working directory");
@@ -205,7 +216,7 @@ public class Mcf2FoConverter {
 
 		if (leftCover != null) {
 			log.info("Rendering cover...");
-			currentPage = new BitmapPageBuilder(coverPageWidth, coverPageHeight, context, tempImageDir);
+			currentPage = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
 			processDoublePage(leftCover, rightCover, imageDir, false);
 			docBuilder.startFlow("cover");
 			currentPage.addToDocumentBuilder(docBuilder);
@@ -230,7 +241,7 @@ public class Mcf2FoConverter {
 		// now, process pages as a pair
 		docBuilder.startFlow("default");
 		log.debug("Starting rendering of " + normalPages.size() + " pages");
-		currentPage = new BitmapPageBuilder(pageWidth, pageHeight, context, tempImageDir);
+		currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
 
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering pages " + i + "+" + (i+1) + "...");
@@ -239,8 +250,7 @@ public class Mcf2FoConverter {
 					imageDir, binding);
 			currentPage.addToDocumentBuilder(docBuilder);
 			if (i < normalPages.size() - 2) {
-				docBuilder.newPage();
-				currentPage = new BitmapPageBuilder(pageWidth, pageHeight, context, tempImageDir);
+				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
 			}
 		}
 
@@ -253,7 +263,7 @@ public class Mcf2FoConverter {
 
 	private void processDoublePage(McfPage leftPage, McfPage rightPage, File imageDir,
 			boolean addBinding) throws IOException {
-		// handle packgrounds
+		// handle backgrounds
 		PageBackground bg = new PageBackground(
 				leftPage == null ? Collections.<McfBackground>emptyList() : leftPage.getBackgrounds(),
 				rightPage == null ? Collections.<McfBackground>emptyList() : rightPage.getBackgrounds());
@@ -282,9 +292,7 @@ public class Mcf2FoConverter {
 		}
 
 		if (addBinding) {
-			currentPage.addDrawable(new PageBinding(resources.getBinding(),
-					(albumType.getUsableWidth() + albumType.getBleedMargin()) / 10.0f * 2,
-					(albumType.getUsableHeight() + albumType.getBleedMargin() * 2) / 10.0f));
+			currentPage.addDrawable(new PageBinding(resources.getBinding()));
 		}
 	}
 

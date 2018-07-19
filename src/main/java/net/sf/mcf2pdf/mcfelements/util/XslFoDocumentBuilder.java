@@ -36,12 +36,11 @@ public class XslFoDocumentBuilder {
 		document.addContent(e);
 	}
 	
-	public void addPageMaster(String name, float widthMM, float heightMM) {
+	public void addPageMaster(String name, int widthPX, int heightPX) {
 		Element m = new Element("simple-page-master", ns);
 		m.setAttribute("master-name", name);
-		m.setAttribute("page-width", widthMM + "mm");
-		m.setAttribute("page-height", heightMM + "mm");
-		m.setAttribute("margin", "0mm");
+		m.setAttribute("page-width", widthPX + "px");
+		m.setAttribute("page-height", heightPX + "px");
 		
 		Element body = new Element("region-body", ns);
 		m.addContent(body);
@@ -62,7 +61,6 @@ public class XslFoDocumentBuilder {
 		
 		Element ps = new Element("page-sequence", ns);
 		ps.setAttribute("master-reference", masterName);
-		ps.setAttribute("id", masterName);
 		Element f = new Element("flow", ns);
 		f.setAttribute("flow-name", "xsl-region-body");
 		ps.addContent(f);
@@ -80,9 +78,9 @@ public class XslFoDocumentBuilder {
 		
 		Element e = new Element("block", ns);
 		e.setAttribute("break-after", "page");
-		e.setAttribute("padding", "0mm");
-		e.setAttribute("margin", "0mm");
-		e.setAttribute("border-width", "0mm");
+		e.setAttribute("padding", "0px");
+		e.setAttribute("margin", "0px");
+		e.setAttribute("border-width", "0px");
 		flow.addContent(e);
 	}
 	
@@ -94,28 +92,18 @@ public class XslFoDocumentBuilder {
 		return ns;
 	}
 
-	public void addPageElement(Element element, float widthMM, float heightMM) {
+	public void addPageElement(String imgSource) {
 		if (flow == null)
 			throw new IllegalStateException("Please call startFlow() first");
 		
 		// create block container
 		Element bc = new Element("block-container",ns);
-		bc.setAttribute("absolute-position", "absolute");
-		bc.setAttribute("left", "0mm");
-		bc.setAttribute("top", "0mm");
-		bc.setAttribute("width", widthMM + "mm");
-		bc.setAttribute("height", heightMM + "mm");
-		
-		// create block
-		Element b = new Element("block", ns);
-		b.setAttribute("margin", "0mm");
-		b.setAttribute("padding", "0mm");
-		b.setAttribute("border-width", "0mm");
-		bc.addContent(b);
-		
-		b.addContent(element);
+		bc.setAttribute("background-image", imgSource);
+		bc.setAttribute("width", "100%");
+		bc.setAttribute("height", "100%");
+		bc.addContent(new Element("block", ns));
 		
 		flow.addContent(bc);
-	}	
+	}
 
 }

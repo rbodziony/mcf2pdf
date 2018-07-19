@@ -14,6 +14,8 @@ public class McfPageImpl implements McfPage {
 	
 	private McfFotobook fotobook;
 	
+	private McfBundlesize bundlesize;
+	
 	private int pageNr;
 	
 	private String type;
@@ -60,6 +62,15 @@ public class McfPageImpl implements McfPage {
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	@Override
+	public McfBundlesize getBundlesize() {
+		return bundlesize;
+	}
+	
+	public void setBundlesize(McfBundlesize bundlesize) {
+		this.bundlesize = bundlesize;
 	}
 
 }

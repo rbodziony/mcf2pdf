@@ -28,6 +28,7 @@ import net.sf.mcf2pdf.mcfelements.DigesterConfigurator;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfBorder;
+import net.sf.mcf2pdf.mcfelements.McfBundlesize;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
@@ -100,6 +101,12 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetTop("fotobook/page", "setFotobook");
 		DigesterUtil.addSetProperties(digester, "fotobook/page", getSpecialPageAttributes());
 		digester.addSetNext("fotobook/page", "addPage", McfPage.class.getName());
+		
+		// bundlesize element
+		digester.addObjectCreate("fotobook/page/bundlesize", getBundlesizeClass());
+		digester.addSetTop("fotobook/page/bundlesize", "setPage");
+		digester.addSetProperties("fotobook/page/bundlesize");
+		digester.addSetNext("fotobook/page/bundlesize", "setBundlesize", McfBundlesize.class.getName());
 
 		// background element
 		digester.addObjectCreate("fotobook/page/background", getBackgroundClass());
@@ -227,6 +234,10 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		List<String[]> result = new Vector<String[]>();
 		result.add(new String[] { "pagenr", "pageNr" });
 		return result;
+	}
+	
+	protected Class<? extends McfBundlesize> getBundlesizeClass() {
+		return McfBundlesizeImpl.class;
 	}
 
 	protected Class<? extends McfBackground> getBackgroundClass() {
