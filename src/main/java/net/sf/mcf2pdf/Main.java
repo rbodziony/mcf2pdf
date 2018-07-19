@@ -49,6 +49,7 @@ public class Main {
 		options.addOption("r", true, "Sets the resolution to use for page rendering, in DPI. Default is 150.");
 		options.addOption("n", true, "Sets the page number to render up to. Default renders all pages.");
 		options.addOption("b", false, "Prevents rendering of binding between double pages.");
+		options.addOption("p", false, "Enable page numbering");
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
@@ -147,6 +148,11 @@ public class Main {
 		if (cl.hasOption("b")) {
 			binding = false;
 		}
+		
+		boolean pageNum = false;
+		if (cl.hasOption("p")) {
+			pageNum = true;
+		}
 
 		OutputStream finalOut;
 		if (cl.getArgs()[1].equals("-"))
@@ -185,7 +191,7 @@ public class Main {
 
 		try {
 			new Mcf2FoConverter(installDir, tempDir, tempImages).convert(
-					mcfFile, xslFoOut, dpi, binding, maxPageNo);
+					mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo);
 			xslFoOut.flush();
 
 			if (!cl.hasOption("x")) {

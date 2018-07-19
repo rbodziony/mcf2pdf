@@ -14,6 +14,8 @@ public interface McfFotobook {
 	public File getFile();
 	
 	public List<? extends McfPage> getPages();
+	
+	public McfPageNum getPageNum();
 
 	public int getProductType();
 
