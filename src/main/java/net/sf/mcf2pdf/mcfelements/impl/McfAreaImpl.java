@@ -108,7 +108,7 @@ public class McfAreaImpl implements McfArea {
 		return zPosition;
 	}
 
-	public void setZPosition(int zPosition) {
+	public void setZposition(int zPosition) {
 		this.zPosition = zPosition;
 	}
 
