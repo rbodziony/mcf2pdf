@@ -96,4 +96,37 @@ public class PageTextTest {
 		Assert.assertTrue(test01.getParas().get(0).getTexts().get(0).getText().equalsIgnoreCase("OnlyParagraph"));
 		Assert.assertTrue(test01.getParas().get(0).getTexts().get(0).getFontFamily().equalsIgnoreCase("Calibri"));
     }
+
+	@Test
+	public void test_007TableNormal() throws Exception{
+		McfTextImpl text = new McfTextImpl();
+		text.setHtmlContent("<body style=\" font-family:'Calibri'; font-size:12pt; font-weight:400; font-style:normal;\">\n" +
+				" <table style=\"-qt-table-type: root; margin-top:29px; margin-bottom:0px; margin-left:0px; margin-right:0px;\">\n" +
+				"  <tbody>\n" +
+				"   <tr>\n" +
+				"    <td style=\"border: none;\"><p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" color:#000000;\">aaaaaa -aaaa,bbbbbb</span></p></td>\n" +
+				"   </tr>\n" +
+				"  </tbody>\n" +
+				" </table>\n" +
+				"</body>");
+		PageText test01 = new PageText(text);
+		Assert.assertTrue(test01.getParas().size() > 0);
+	}
+	@Test
+	public void test_008Issue10WithFonts() throws Exception {
+		McfTextImpl text = new McfTextImpl();
+		text.setHtmlContent("html<!DOCTYPE HTML PUBLIC \"\n" +
+				"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\"><html><he\n" +
+				"ad><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">p, li { white-spa\n" +
+				"ce: pre-wrap; }</style></head><body style=\" font-family:'Arial'; font-size:21pt;\n" +
+				" font-weight:600; font-style:normal;\"><table style=\"-qt-table-type: root; margin\n" +
+				"-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;\"><tr><td style=\"\n" +
+				"border: none;\"><p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; marg\n" +
+				"in-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style\n" +
+				"=\" font-size:36pt; color:#ffffff;\">TEST</span></p></td></tr></table></body></htm\n" +
+				"l>");
+		PageText test08 = new PageText(text);
+		Assert.assertTrue(test08.getParas().size()>0);
+		Assert.assertTrue(test08.getParas().get(0).getTexts().get(0).getText().equalsIgnoreCase("TEST"));
+	}
 }

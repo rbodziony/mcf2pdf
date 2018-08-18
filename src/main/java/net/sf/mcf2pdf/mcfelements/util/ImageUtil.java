@@ -189,7 +189,7 @@ public final class ImageUtil {
 
 	 /**
      * Returns SVG document from File
-      * @param File path to file clp/svg.
+      * @param  clpFile to file clp/svg.
      *
       *
      * @return SVG Document
@@ -334,6 +334,16 @@ public final class ImageUtil {
 			return Webp.loadWebPImage(f, qt5Library);
 		}
 
-		return ImageIO.read(f);
+		BufferedImage ret = null;
+		try {
+			ret = ImageIO.read(f);
+		} catch (IOException o){
+			if( o.getMessage().contains("Unsupported JPEG process: SOF type")) {
+				log.error("Cant read file "+f.toString()+ " convert file to png/tiff/gif");
+				throw o;
+			}
+		}
+		return ret;
 	}
+
 }

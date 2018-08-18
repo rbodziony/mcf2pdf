@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
@@ -77,22 +78,24 @@ public class PageText implements PageDrawable {
 	private void parseText() {
 		// parse text out of content
 		String htmlText = text.getHtmlContent();
-
+		htmlText = htmlText.replaceAll("\\n", "");
+		htmlText = htmlText.replaceAll("\\r", "");
+		log.debug("processing html" +htmlText);
 		paras = new Vector<FormattedTextParagraph>();
 		Document doc = Jsoup.parse(htmlText);
 		Elements body = doc.select("body");
-		
+		log.debug("body ="+body.toString());
 		String bodystyle = body.attr("style");
 		if(bodystyle != null && bodystyle.length() >0) {
-		int fontNameIndex = bodystyle.indexOf("font-family:")+12;
-		int fontSizeIndex = bodystyle.indexOf("font-size")-2;
-		 String fontname= bodystyle.substring(fontNameIndex+1,fontSizeIndex-1);
-		 if(fontname.contains("MS Shell Dlg")){
-			 log.debug("body fontname = "+fontname);
-			 log.debug("body style="+bodystyle);
-			 log.debug("replacing body fontname = "+fontname + "with Calibri");
-			 bodystyle = bodystyle.replace(fontname, "Calibri");
-		 }
+			int fontNameIndex = bodystyle.indexOf("font-family:")+12;
+			int fontSizeIndex = bodystyle.indexOf("font-size")-2;
+			String fontname= bodystyle.substring(fontNameIndex+1,fontSizeIndex-1);
+			if(fontname.contains("MS Shell Dlg")){
+				log.debug("body fontname = "+fontname);
+				log.debug("body style="+bodystyle);
+				log.debug("replacing body fontname = "+fontname + "with Calibri");
+				bodystyle = bodystyle.replace(fontname, "Calibri");
+			}
 		}
 		setBodyStyle(bodystyle);
 		// <table> contains margin-information, which is parsed here
@@ -103,63 +106,69 @@ public class PageText implements PageDrawable {
 			setTableMargins(tablestyle);
 		}
 		FormattedTextParagraph para =null;
-		for(Node el : body.get(0).childNodes()) {
-		Element par = (Element)el;
+		for(Node el : body.get(0).children()) {
+			if(el instanceof TextNode) continue;
+			Element par = (Element)el;
+			log.debug("el ="+el.toString());
+			log.debug("el.tagname ="+par.tagName());
+			if(par.tagName().equalsIgnoreCase("table"))
+				par  = par.select("p").first();
+			if(par.tagName().equalsIgnoreCase("p")) {
+				para = new FormattedTextParagraph();
+				String paraAlign = par.attr("align");
+				if(paraAlign != null){
+					if ("center".equals(paraAlign))
+						para.setAlignment(Alignment.CENTER);
+					else if ("right".equals(paraAlign))
+						para.setAlignment(Alignment.RIGHT);
+					else if ("justify".equals(paraAlign))
+						para.setAlignment(Alignment.JUSTIFY);
+				}
+				String paraStyle = par.attr("style");
+				para.addText(createFormattedText("", paraStyle));
+				if(par.select("span").size()> 0) {
+					// now para content spans
+					for(Element span:par.select("span")){
+						String spanText = span.text();
+						String spanCss = span.attr("style");
+						para.addText(createFormattedText(spanText, spanCss));
+						if(span.select("br").size()>0){
+							para = para.createEmptyCopy();
+							paraStyle = par.attr("style");
+							para.addText(createFormattedText(" ", paraStyle));
+						}
 
-    	if(par.tagName().equalsIgnoreCase("p")) {
-			para = new FormattedTextParagraph();
-			String paraAlign = par.attr("align");
-			if(paraAlign != null){
-				if ("center".equals(paraAlign))
-					para.setAlignment(Alignment.CENTER);
-				else if ("right".equals(paraAlign))
-					para.setAlignment(Alignment.RIGHT);
-				else if ("justify".equals(paraAlign))
-					para.setAlignment(Alignment.JUSTIFY);
-			}
-			String paraStyle = par.attr("style");
-			para.addText(createFormattedText("", paraStyle));
-			if(par.select("span").size()> 0) {
-			// now para content spans
-			for(Element span:par.select("span")){
-				  String spanText = span.text();
-				  String spanCss = span.attr("style");
-				  para.addText(createFormattedText(spanText, spanCss));
-				  if(span.select("br").size()>0){
-					  para = para.createEmptyCopy();
-					  paraStyle = par.attr("style");
-					  para.addText(createFormattedText(" ", paraStyle));
-				  }
-
-			} 
-			}
-			// no span in para
-			else
-			{
-				String paraText = par.text();
-				if(par.select("br").size() > 0) {
+					}
+				}
+				// no span in para
+				else
+				{
+					String paraText = par.text();
+					if(par.select("br").size() > 0) {
 						para = para.createEmptyCopy();
 						paraStyle = par.attr("style");
 						para.addText(createFormattedText(" ", paraStyle));
-						
-				} else
-				para.addText(createFormattedText(paraText, ""));
+
+					} else
+						para.addText(createFormattedText(paraText, ""));
+				}
+				log.debug("para ="+para.toString());
+				paras.add(para);
+				continue;
+			}
+			if(par.tagName().equalsIgnoreCase("span"))
+			{
+				// there is no par element cheking or span only
+				// now para content spans
+
+				para = new FormattedTextParagraph();
+				String spanText = par.text();
+				String spanCss = par.attr("style");
+				para.addText(createFormattedText(spanText, spanCss));
+				paras.add(para);
+				log.debug("span ="+para.toString());
 			}
 
-			 paras.add(para);
-		}
-    	if(par.tagName().equalsIgnoreCase("span")) 
-        {
-			// there is no par element cheking or span only
-			// now para content spans
-				
-					  para = new FormattedTextParagraph();
-					  String spanText = par.text();
-					  String spanCss = par.attr("style");
-					  para.addText(createFormattedText(spanText, spanCss));
-					  paras.add(para);
-        }			  
-		
 		}
 
 	}
