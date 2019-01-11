@@ -109,14 +109,18 @@ public class PageText implements PageDrawable {
 		for(Node el : body.get(0).children()) {
 			if(el instanceof TextNode) continue;
 			Element par = (Element)el;
-			log.debug("el ="+el.toString());
-			log.debug("el.tagname ="+par.tagName());
-			if(par.tagName().equalsIgnoreCase("table"))
-				par  = par.select("p").first();
-			if(par.tagName().equalsIgnoreCase("p")) {
+			// checking if there are p elements
+			Elements els=  ((Element)el).select("p");
+			for(Element p : els) {
+			log.debug("p ="+p.toString());
+			log.debug("p.tagname ="+p.tagName());
+			// if table got td element
+			if(p.tagName().equalsIgnoreCase("table"))
+				p  = p.select("p").first();
+			if(p.tagName().equalsIgnoreCase("p")) {
 				para = new FormattedTextParagraph();
-				String paraAlign = par.attr("align");
-				if(paraAlign != null){
+				String paraAlign = p.attr("align");
+				if (paraAlign != null) {
 					if ("center".equals(paraAlign))
 						para.setAlignment(Alignment.CENTER);
 					else if ("right".equals(paraAlign))
@@ -124,36 +128,53 @@ public class PageText implements PageDrawable {
 					else if ("justify".equals(paraAlign))
 						para.setAlignment(Alignment.JUSTIFY);
 				}
-				String paraStyle = par.attr("style");
+				String paraStyle = p.attr("style");
 				para.addText(createFormattedText("", paraStyle));
-				if(par.select("span").size()> 0) {
-					// now para content spans
-					for(Element span:par.select("span")){
-						String spanText = span.text();
-						String spanCss = span.attr("style");
-						para.addText(createFormattedText(spanText, spanCss));
-						if(span.select("br").size()>0){
-							para = para.createEmptyCopy();
-							paraStyle = par.attr("style");
-							para.addText(createFormattedText(" ", paraStyle));
+				// loop child nodes
+				///
+				for (Node child : p.childNodes()) {
+					if (child instanceof Element) {
+						Element childel = (Element) child;
+						if (childel.select("span").size() > 0) {
+							// now para content spans
+							for (Element span : childel.select("span")) {
+								String spanText = span.text();
+								String spanCss = span.attr("style");
+								para.addText(createFormattedText(spanText, spanCss));
+								if (span.select("br").size() > 0) {
+									para = para.createEmptyCopy();
+									paraStyle = childel.attr("style");
+									para.addText(createFormattedText(" ", paraStyle));
+								}
+							}
 						}
+						// no span in para
+						else {
+							String paraText = par.text();
+							if (childel.select("br").size() > 0) {
+								para = para.createEmptyCopy();
+								paraStyle = childel.attr("style");
+								para.addText(createFormattedText(" ", paraStyle));
 
+							} else
+								para.addText(createFormattedText(paraText, ""));
+						}
+						//log.debug("para ="+para.toString());
+						//paras.add(para);
+					}
+					// text nodes
+					//
+					if (child instanceof TextNode) {
+						TextNode childtext = (TextNode) child;
+						String text = childtext.getWholeText();
+						para.addText(createFormattedText(text, ""));
+						//log.debug("para ="+para.toString());
+						//paras.add(para);
 					}
 				}
-				// no span in para
-				else
-				{
-					String paraText = par.text();
-					if(par.select("br").size() > 0) {
-						para = para.createEmptyCopy();
-						paraStyle = par.attr("style");
-						para.addText(createFormattedText(" ", paraStyle));
-
-					} else
-						para.addText(createFormattedText(paraText, ""));
-				}
-				log.debug("para ="+para.toString());
+				log.debug("para =" + para.toString());
 				paras.add(para);
+				}
 				continue;
 			}
 			if(par.tagName().equalsIgnoreCase("span"))
