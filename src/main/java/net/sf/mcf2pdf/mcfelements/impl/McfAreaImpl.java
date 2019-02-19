@@ -9,6 +9,7 @@ import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfAreaContent;
 import net.sf.mcf2pdf.mcfelements.McfBorder;
 import net.sf.mcf2pdf.mcfelements.McfPage;
+import net.sf.mcf2pdf.mcfelements.McfCorners;
 
 
 public class McfAreaImpl implements McfArea {
@@ -48,6 +49,8 @@ public class McfAreaImpl implements McfArea {
 	private McfAreaContent content;
 	
 	private McfBorder border;
+
+	private McfCorners corners;
 
 	@Override
 	public McfPage getPage() {
@@ -210,4 +213,11 @@ public class McfAreaImpl implements McfArea {
 		this.border = border;
 	}
 
+	public McfCorners getCorners() {
+               return corners;
+       }
+ 
+       public void setCorners( McfCorners corners) {
+               this.corners = corners;
+       }
 }

@@ -35,6 +35,9 @@ import net.sf.mcf2pdf.mcfelements.McfImageBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.util.DigesterUtil;
+import net.sf.mcf2pdf.mcfelements.McfCorner;
+import net.sf.mcf2pdf.mcfelements.McfCorners;
+
 
 
 /**
@@ -117,6 +120,16 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("fotobook/page/area/border", getBorderClass());
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/border", getSpecialBorderAttributes());
 		digester.addSetNext("fotobook/page/area/border", "setBorder");
+
+                // corners element
+                digester.addObjectCreate("fotobook/page/area/corners", getCornersClass());
+                DigesterUtil.addSetProperties(digester, "fotobook/page/area/corners", getSpecialCornersAttributes());
+                digester.addSetNext("fotobook/page/area/corners", "setCorners");
+ 
+                // corners element
+                digester.addObjectCreate("fotobook/page/area/corners/corner", getCornerClass());
+                DigesterUtil.addSetProperties(digester, "fotobook/page/area/corners/corner", getSpecialCornerAttributes());
+                digester.addSetNext("fotobook/page/area/corners/corner", "addCorner");
 
 		// text element, including textFormat element
 		digester.addObjectCreate("fotobook/page/area/text", getTextClass());
@@ -298,5 +311,27 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "enabled", "enabled" });
 		return result;
 	}
+
+	protected Class<? extends McfCorners> getCornersClass() {
+		return McfCornersImpl.class;
+	}
+  
+	protected List<String[]> getSpecialCornersAttributes() {
+       		List<String[]> result = new Vector<String[]>();
+       		result.add(new String[] { "enabled", "enabled" });
+       		return result;
+       	}
+  
+       	protected Class<? extends McfCorner> getCornerClass() {
+       		return McfCornerImpl.class;
+       	}
+  
+       	protected List<String[]> getSpecialCornerAttributes() {
+       		List<String[]> result = new Vector<String[]>();
+       		result.add(new String[] { "length", "length" });
+       		result.add(new String[] { "where", "where" });
+       		result.add(new String[] { "shape", "shape" });
+       		return result;
+        }
 
 }

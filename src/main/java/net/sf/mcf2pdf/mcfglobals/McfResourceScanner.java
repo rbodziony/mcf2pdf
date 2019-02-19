@@ -86,10 +86,6 @@ public class McfResourceScanner {
 						foundColors.put(color.getName(), colorFile);
 					}
 				}
-						File colorFile = new File(f.getParent() + '/' + color.getFilename());
-						foundColors.put(color.getName(), colorFile);
-					}
-				}
 				else if(nm.matches(".+\\.ttf")) {
 					Font font = loadFont(f);
 					foundFonts.put(font.getFamily(), font);
