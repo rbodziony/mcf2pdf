@@ -25,11 +25,11 @@ import java.util.Locale;
 
 import javax.imageio.ImageIO;
 
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.bridge.ViewBox;
-import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
 import org.apache.batik.ext.awt.RenderingHintsKeyExt;
 import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.util.XMLResourceDescriptor;
