@@ -10,9 +10,9 @@ import java.util.List;
  * TODO comment
  */
 public interface McfFotobook {
-	
+
 	public File getFile();
-	
+
 	public List<? extends McfPage> getPages();
 
 	public int getProductType();

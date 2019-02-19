@@ -7,7 +7,7 @@ import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfAreaContent;
 
 public abstract class AbstractMcfAreaContentImpl implements McfAreaContent {
-	
+
 	private McfArea area;
 
 	public McfArea getArea() {
@@ -17,6 +17,5 @@ public abstract class AbstractMcfAreaContentImpl implements McfAreaContent {
 	public void setArea(McfArea area) {
 		this.area = area;
 	}
-
 
 }

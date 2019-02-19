@@ -33,13 +33,12 @@ public class PageBinding implements PageDrawable {
 	}
 
 	@Override
-	public void renderAsSvgElement(Writer writer,	PageRenderContext context) throws IOException {
+	public void renderAsSvgElement(Writer writer, PageRenderContext context) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
 		context.getLog().debug("Rendering page binding");
 		float widthMM = pageWidthMM / 16.0f;
 

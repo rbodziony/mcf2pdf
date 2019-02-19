@@ -6,17 +6,16 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import net.sf.mcf2pdf.mcfelements.McfText;
 
 public class McfTextImpl extends AbstractMcfAreaContentImpl implements McfText {
-	
+
 	private boolean isSpineText;
-	
+
 	private String htmlContent;
-	
+
 	private float verticalIndentMargin;
-	
+
 	private float indentMargin;
-	
+
 	private int backgroundColorAlpha;
-	
 
 	@Override
 	public ContentType getContentType() {
@@ -31,7 +30,7 @@ public class McfTextImpl extends AbstractMcfAreaContentImpl implements McfText {
 	public void setSpineText(boolean isSpineText) {
 		this.isSpineText = isSpineText;
 	}
-	
+
 	@Override
 	public String getHtmlContent() {
 		return htmlContent;

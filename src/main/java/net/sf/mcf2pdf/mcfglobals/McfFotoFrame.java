@@ -8,7 +8,7 @@ public class McfFotoFrame {
 	private File clipart;
 	private File fading;
 	private Fading config;
-	
+
 	public McfFotoFrame(File clipart, File fading, Fading config) {
 		this.clipart = clipart;
 		this.fading = fading;
@@ -26,6 +26,5 @@ public class McfFotoFrame {
 	public Fading getConfig() {
 		return config;
 	}
-	
-	
+
 }

@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
@@ -30,8 +29,7 @@ public final class Qt5Webp {
 	/**
 	 * Loads the WebP library. Under Windows, the library must be named
 	 * <code>libwebp.dll</code>, under Linux and Mac OS X, a
-	 * <code>libqwebp.so</code> is expected. It must be on the program's
-	 * classpath.
+	 * <code>libqwebp.so</code> is expected. It must be on the program's classpath.
 	 *
 	 * @return The loaded Qt5 WebP library, as a dynamic Java JNA proxy.
 	 *

@@ -23,7 +23,6 @@ import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 import net.sf.mcf2pdf.pagebuild.FormattedTextParagraph.Alignment;
 
-
 /**
  * TODO comment
  */
@@ -33,7 +32,8 @@ public class PageText implements PageDrawable {
 	private static final Pattern PATTERN_PARA_ALIGN = Pattern.compile("(?:\\s|^)align=\"([^\"]+)\"");
 	private static final Pattern PATTERN_PARA_STYLE = Pattern.compile("(?:\\s|^)style=\"([^\"]+)\"");
 
-	private static final Pattern PATTERN_HTML_TEXT_SPAN = Pattern.compile("<span\\s+style=\"([^\"]+)\"[^>]*>((.(?!</span>))*.)</span>");
+	private static final Pattern PATTERN_HTML_TEXT_SPAN = Pattern
+			.compile("<span\\s+style=\"([^\"]+)\"[^>]*>((.(?!</span>))*.)</span>");
 	private static final Pattern PATTERN_BODY_STYLE = Pattern.compile("<body\\s([^>]*)style=\"([^\"]+)\">");
 	private static final Pattern PATTERN_TABLE_STYLE = Pattern.compile("<table\\s([^>]*)style=\"([^\"]+)\">");
 	private static final Pattern PATTERN_HTML_TEXT = Pattern.compile("([^<]\\w+[^/> ])");
@@ -72,20 +72,19 @@ public class PageText implements PageDrawable {
 
 		// <body> contains text style-information, which is parsed here
 		Matcher mb = PATTERN_BODY_STYLE.matcher(htmlText);
-		if (mb.find()){
+		if (mb.find()) {
 			Matcher mbs = PATTERN_PARA_STYLE.matcher(mb.group());
 			if (mbs.find())
 				setBodyStyle(mbs.group(1));
 		}
 		// <table> contains margin-information, which is parsed here
 		Matcher mtbl = PATTERN_TABLE_STYLE.matcher(htmlText);
-		if (mtbl.find()){
+		if (mtbl.find()) {
 			Matcher mts = PATTERN_PARA_STYLE.matcher(mtbl.group());
 			if (mts.find())
 				setTableMargins(mts.group(1));
 		}
-		
-		
+
 		Matcher mp = PATTERN_HTML_TEXT_PARA.matcher(htmlText);
 		int curStart = 0;
 		while (mp.find(curStart)) {
@@ -127,11 +126,11 @@ public class PageText implements PageDrawable {
 			}
 			curStart = mp.end();
 
-			//Some paragraphs have no <span> tags
-			if (curSpanStart == 0){
+			// Some paragraphs have no <span> tags
+			if (curSpanStart == 0) {
 				Matcher mt = PATTERN_HTML_TEXT.matcher(paraContent);
 				int curTextStart = 0;
-				while (mt.find(curTextStart)){
+				while (mt.find(curTextStart)) {
 					String paraText = mt.group();
 					while (paraText.contains(BR_TAG)) {
 						String text = paraText.substring(0, paraText.indexOf(BR_TAG));
@@ -140,12 +139,12 @@ public class PageText implements PageDrawable {
 						para = para.createEmptyCopy();
 						paraText = paraText.substring(paraText.indexOf(BR_TAG) + BR_TAG.length());
 					}
-					
+
 					para.addText(createFormattedText(paraText, ""));
 					curTextStart = mt.end();
 				}
 			}
-			
+
 			paras.add(para);
 		}
 	}
@@ -161,8 +160,7 @@ public class PageText implements PageDrawable {
 	}
 
 	@Override
-	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
 		context.getLog().debug("Rendering text");
 		int width = context.toPixel(text.getArea().getWidth() / 10.0f);
 		int height = context.toPixel(text.getArea().getHeight() / 10.0f);
@@ -179,7 +177,7 @@ public class PageText implements PageDrawable {
 			graphics.fillRect(0, 0, width, height);
 		}
 
-		Rectangle rc = new Rectangle(x, 0, width , height);
+		Rectangle rc = new Rectangle(x, 0, width, height);
 
 		for (FormattedTextParagraph para : paras) {
 			curY = drawParagraph(para, graphics, rc, curY, context);
@@ -190,14 +188,13 @@ public class PageText implements PageDrawable {
 		graphics.dispose();
 
 		if (text.getArea().getRotation() != 0) {
-			return ImageUtil.rotateImage(img,
-					(float)Math.toRadians(text.getArea().getRotation()), drawOffsetPixels);
+			return ImageUtil.rotateImage(img, (float) Math.toRadians(text.getArea().getRotation()), drawOffsetPixels);
 		}
 		return img;
 	}
 
-	private int drawParagraph(FormattedTextParagraph para, Graphics2D graphics,
-			Rectangle rc, int curY, PageRenderContext context) {
+	private int drawParagraph(FormattedTextParagraph para, Graphics2D graphics, Rectangle rc, int curY,
+			PageRenderContext context) {
 		// if empty paragraph
 		if (para.isEmpty())
 			return curY + para.getEmptyHeight(graphics, context);
@@ -213,8 +210,7 @@ public class PageText implements PageDrawable {
 
 		lineMeasurer.setPosition(paragraphStart);
 
-		while (lineMeasurer.getPosition() < paragraphEnd
-				&& drawPosY <= rc.y + rc.height) {
+		while (lineMeasurer.getPosition() < paragraphEnd && drawPosY <= rc.y + rc.height) {
 			TextLayout layout = lineMeasurer.nextLayout(breakWidth);
 			// for justified style
 			TextLayout justifiedLayout = layout.getJustifiedLayout(breakWidth);
@@ -223,21 +219,19 @@ public class PageText implements PageDrawable {
 
 			switch (para.getAlignment()) {
 			case CENTER:
-				drawPosX = (rc.width - layout.getAdvance()) / 2.0f + rc.x -(marginLeft + marginRight)/2;
+				drawPosX = (rc.width - layout.getAdvance()) / 2.0f + rc.x - (marginLeft + marginRight) / 2;
 				break;
 			case RIGHT:
-				drawPosX = !layout.isLeftToRight() ? 0 : breakWidth
-						- layout.getAdvance();
-				drawPosX += rc.x ;
+				drawPosX = !layout.isLeftToRight() ? 0 : breakWidth - layout.getAdvance();
+				drawPosX += rc.x;
 				break;
 			case JUSTIFY:
 				if (lineMeasurer.getPosition() < paragraphEnd)
 					layout = justifiedLayout;
 				// fallthrough
 			default:
-				drawPosX = layout.isLeftToRight() ? 0 : breakWidth
-						- layout.getAdvance();
-				drawPosX += rc.x ;
+				drawPosX = layout.isLeftToRight() ? 0 : breakWidth - layout.getAdvance();
+				drawPosX += rc.x;
 			}
 
 			drawPosY += layout.getAscent();
@@ -245,10 +239,10 @@ public class PageText implements PageDrawable {
 			drawPosY += layout.getDescent() + layout.getLeading();
 		}
 
-		return (int)drawPosY;
+		return (int) drawPosY;
 	}
-	
-	//<body> style
+
+	// <body> style
 	private boolean BODYSTYLE_bold = false;
 	private boolean BODYSTYLE_italic = false;
 	private boolean BODYSTYLE_underline = false;
@@ -278,8 +272,7 @@ public class PageText implements PageDrawable {
 			String v = av[1].trim();
 
 			try {
-				if ("font-family".equalsIgnoreCase(a))
-				{
+				if ("font-family".equalsIgnoreCase(a)) {
 					fontFamily = v.replace("'", "");
 					if (fontFamily.contains(","))
 						fontFamily = fontFamily.substring(0, fontFamily.indexOf(","));
@@ -294,8 +287,7 @@ public class PageText implements PageDrawable {
 					textColor = Color.decode(v);
 				if ("font-style".equalsIgnoreCase(a))
 					italic = "italic".equals(v);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// ignore invalid attributes
 			}
 		}
@@ -308,7 +300,7 @@ public class PageText implements PageDrawable {
 		text = text.replace("&gt;", ">");
 		return new FormattedText(text, bold, italic, underline, textColor, fontFamily, fontSize);
 	}
-	
+
 	private void setBodyStyle(String css) {
 		// parse attributes out of css
 		String[] avPairs = css.split(";");
@@ -324,8 +316,7 @@ public class PageText implements PageDrawable {
 			String v = av[1].trim();
 
 			try {
-				if ("font-family".equalsIgnoreCase(a))
-				{
+				if ("font-family".equalsIgnoreCase(a)) {
 					BODYSTYLE_fontFamily = v.replace("'", "");
 					if (BODYSTYLE_fontFamily.contains(","))
 						BODYSTYLE_fontFamily = BODYSTYLE_fontFamily.substring(0, BODYSTYLE_fontFamily.indexOf(","));
@@ -340,23 +331,22 @@ public class PageText implements PageDrawable {
 					BODYSTYLE_textColor = Color.decode(v);
 				if ("font-style".equalsIgnoreCase(a))
 					BODYSTYLE_italic = "italic".equals(v);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// ignore invalid attributes
 			}
 		}
 
 	}
-	
+
 	// <table> margins
 	private int marginTop = 0;
 	private int marginLeft = 0;
 	private int marginRight = 0;
-	
+
 	private void setTableMargins(String css) {
 		// parse attributes out of css
 		String[] avPairs = css.split(";");
-		
+
 		for (String avp : avPairs) {
 			avp = avp.trim();
 			if (!avp.contains(":"))
@@ -366,22 +356,22 @@ public class PageText implements PageDrawable {
 				continue;
 			String a = av[0].trim();
 			String v = av[1].trim();
-			
-			try{
-				if (isValidMargin("margin-top",a,v))
+
+			try {
+				if (isValidMargin("margin-top", a, v))
 					marginTop = getInt(v);
-				if (isValidMargin("margin-left",a,v))
+				if (isValidMargin("margin-left", a, v))
 					marginLeft = getInt(v);
-				if (isValidMargin("margin-right",a,v))
+				if (isValidMargin("margin-right", a, v))
 					marginRight = getInt(v);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				// ignore invalid attributes
 			}
 		}
 
 	}
-	private int getInt(String v){
+
+	private int getInt(String v) {
 		return Integer.valueOf(v.substring(0, v.indexOf("px"))).intValue();
 	}
 

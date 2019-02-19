@@ -23,7 +23,7 @@ public interface McfImage extends McfAreaContent {
 	public String getSafeContainerLocation();
 
 	public String getFileName();
-	
+
 	public String getFadingFile();
 
 }

@@ -51,9 +51,9 @@ import net.sf.mcf2pdf.mcfelements.util.webp.Qt5WebpLib;
 public final class ImageUtil {
 
 	/*
-	 * FIXME this uses CEWE Fotobook for MY personal pictures when they do not
-	 * have resolution information.
-	 * Don't know if this is default, or just taken from other photos in that MCF file?
+	 * FIXME this uses CEWE Fotobook for MY personal pictures when they do not have
+	 * resolution information. Don't know if this is default, or just taken from
+	 * other photos in that MCF file?
 	 */
 	private static final float DEFAULT_RESOLUTION = 180.0f;
 
@@ -67,12 +67,14 @@ public final class ImageUtil {
 	}
 
 	/**
-	 * Retrieves resolution information from the given image file. As CEWE algorithm seems to have changed, always returns default
-	 * resolution for JPEG files.
+	 * Retrieves resolution information from the given image file. As CEWE algorithm
+	 * seems to have changed, always returns default resolution for JPEG files.
 	 *
-	 * @return An array containing the x- and the y-resolution, in dots per inch, of the given file.
+	 * @return An array containing the x- and the y-resolution, in dots per inch, of
+	 *         the given file.
 	 *
-	 * @throws IOException If any I/O related problem occurs reading the file.
+	 * @throws IOException
+	 *             If any I/O related problem occurs reading the file.
 	 */
 	public static float[] getImageResolution(File imageFile) throws IOException {
 
@@ -89,8 +91,8 @@ public final class ImageUtil {
 
 		boolean swapXY = rotation != 180;
 
-		BufferedImage rotated = new BufferedImage(swapXY ? img.getHeight() : img.getWidth(), swapXY ? img.getWidth() : img.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
+		BufferedImage rotated = new BufferedImage(swapXY ? img.getHeight() : img.getWidth(),
+				swapXY ? img.getWidth() : img.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = rotated.createGraphics();
 		g2d.translate((rotated.getWidth() - img.getWidth()) / 2, (rotated.getHeight() - img.getHeight()) / 2);
 		g2d.rotate(Math.toRadians(rotation), img.getWidth() / 2, img.getHeight() / 2);
@@ -130,17 +132,22 @@ public final class ImageUtil {
 	}
 
 	/**
-	 * Loads the given CLP or SVG file and creates a BufferedImage with the given dimensions. As CLP files contain Vector images,
-	 * they can be scaled to every size needed. The contents are scaled to the given width and height, <b>not</b> preserving any
-	 * ratio of the image.
+	 * Loads the given CLP or SVG file and creates a BufferedImage with the given
+	 * dimensions. As CLP files contain Vector images, they can be scaled to every
+	 * size needed. The contents are scaled to the given width and height,
+	 * <b>not</b> preserving any ratio of the image.
 	 *
-	 * @param clpFile CLP or SVG file.
-	 * @param widthPixel The width, in pixels, the resulting image shall have.
-	 * @param heightPixel The height, in pixels, the resulting image shall have.
+	 * @param clpFile
+	 *            CLP or SVG file.
+	 * @param widthPixel
+	 *            The width, in pixels, the resulting image shall have.
+	 * @param heightPixel
+	 *            The height, in pixels, the resulting image shall have.
 	 *
 	 * @return An image displaying the contents of the loaded CLP file.
 	 *
-	 * @throws IOException If any I/O related problem occurs reading the file.
+	 * @throws IOException
+	 *             If any I/O related problem occurs reading the file.
 	 */
 	public static BufferedImage loadClpFile(File clpFile, int widthPixel, int heightPixel) throws IOException {
 		FileInputStream fis = new FileInputStream(clpFile);
@@ -155,10 +162,10 @@ public final class ImageUtil {
 		try {
 			String parser = XMLResourceDescriptor.getXMLParserClassName();
 			SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
-			svgDocument = (SVGDocument)factory.createDocument(clpFile.toURI().toString(), new InputStreamReader(in, "ISO-8859-1"));
+			svgDocument = (SVGDocument) factory.createDocument(clpFile.toURI().toString(),
+					new InputStreamReader(in, "ISO-8859-1"));
 			rootSvgNode = getRootNode(svgDocument, bridgeContext);
-		}
-		finally {
+		} finally {
 			IOUtils.closeQuietly(cis);
 			IOUtils.closeQuietly(fis);
 		}
@@ -166,8 +173,8 @@ public final class ImageUtil {
 		float[] vb = ViewBox.parseViewBoxAttribute(svgDocument.getRootElement(),
 				svgDocument.getRootElement().getAttribute("viewBox"), bridgeContext);
 
-		AffineTransform usr2dev = ViewBox.getPreserveAspectRatioTransform(vb, SVGPreserveAspectRatio.SVG_PRESERVEASPECTRATIO_NONE,
-				true, widthPixel, heightPixel);
+		AffineTransform usr2dev = ViewBox.getPreserveAspectRatioTransform(vb,
+				SVGPreserveAspectRatio.SVG_PRESERVEASPECTRATIO_NONE, true, widthPixel, heightPixel);
 
 		BufferedImage img = new BufferedImage(widthPixel, heightPixel, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
@@ -177,15 +184,12 @@ public final class ImageUtil {
 		g2d.transform(usr2dev);
 
 		// fixes "Graphics2D from BufferedImage lacks BUFFERED_IMAGE hint" - part 1
-		final Object oldBufferedImage = g2d
-				.getRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE);
-		g2d.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE,
-				new WeakReference<BufferedImage>(img));
+		final Object oldBufferedImage = g2d.getRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE);
+		g2d.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE, new WeakReference<BufferedImage>(img));
 		rootSvgNode.paint(g2d);
 		// fixes "Graphics2D from BufferedImage lacks BUFFERED_IMAGE hint" - part 2
 		if (oldBufferedImage != null)
-			g2d.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE,
-					oldBufferedImage);
+			g2d.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE, oldBufferedImage);
 		else
 			g2d.getRenderingHints().remove(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE);
 
@@ -203,11 +207,14 @@ public final class ImageUtil {
 	 * Rotates the given buffered image by the given angle, and returns a newly
 	 * created image, containing the rotated image.
 	 *
-	 * @param img Image to rotate.
-	 * @param angle Angle, in radians, by which to rotate the image.
-	 * @param drawOffset Receives the offset which is required to draw the image,
-	 * relative to the original (0,0) corner, so that the center of the image is
-	 * still on the same position.
+	 * @param img
+	 *            Image to rotate.
+	 * @param angle
+	 *            Angle, in radians, by which to rotate the image.
+	 * @param drawOffset
+	 *            Receives the offset which is required to draw the image, relative
+	 *            to the original (0,0) corner, so that the center of the image is
+	 *            still on the same position.
 	 *
 	 * @return A newly created image containing the rotated image.
 	 */
@@ -215,8 +222,7 @@ public final class ImageUtil {
 		int w = img.getWidth();
 		int h = img.getHeight();
 
-		AffineTransform tf = AffineTransform.getRotateInstance(angle,
-				w / 2.0,  h / 2.0);
+		AffineTransform tf = AffineTransform.getRotateInstance(angle, w / 2.0, h / 2.0);
 
 		// get coordinates for all corners to determine real image size
 		Point2D[] ptSrc = new Point2D[4];

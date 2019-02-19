@@ -6,25 +6,25 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import net.sf.mcf2pdf.mcfelements.McfImage;
 
 public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage {
-	
+
 	private String parentChildRelationshipNature;
-	
+
 	private float scale;
-	
+
 	private int useABK;
-	
+
 	private int left;
-	
+
 	private int top;
-	
+
 	private String fileNameMaster;
-	
+
 	private String safeContainerLocation;
-	
+
 	private String fileName;
-	
+
 	private String fadingFile;
-	
+
 	@Override
 	public ContentType getContentType() {
 		return ContentType.IMAGE;
@@ -34,8 +34,7 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 		return parentChildRelationshipNature;
 	}
 
-	public void setParentChildRelationshipNature(
-			String parentChildRelationshipNature) {
+	public void setParentChildRelationshipNature(String parentChildRelationshipNature) {
 		this.parentChildRelationshipNature = parentChildRelationshipNature;
 	}
 
@@ -102,6 +101,5 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 	public void setFadingFile(String fadingFile) {
 		this.fadingFile = fadingFile;
 	}
-	
 
 }

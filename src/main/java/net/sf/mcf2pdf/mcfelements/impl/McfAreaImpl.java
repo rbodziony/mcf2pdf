@@ -8,46 +8,45 @@ import java.awt.Color;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfAreaContent;
 import net.sf.mcf2pdf.mcfelements.McfBorder;
-import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfCorners;
-
+import net.sf.mcf2pdf.mcfelements.McfPage;
 
 public class McfAreaImpl implements McfArea {
-	
+
 	private McfPage page;
-	
+
 	private float left;
-	
+
 	private float top;
-	
+
 	private float width;
-	
+
 	private float height;
-	
+
 	private float rotation;
-	
+
 	private int zPosition;
-	
+
 	private String areaType;
-	
+
 	private boolean borderEnabled;
-	
+
 	private float borderSize;
-	
+
 	private Color borderColor;
-	
+
 	private boolean shadowEnabled;
-	
+
 	private int shadowAngle;
-	
+
 	private int shadowIntensity;
-	
+
 	private float shadowDistance;
-	
+
 	private Color backgroundColor;
-	
+
 	private McfAreaContent content;
-	
+
 	private McfBorder border;
 
 	private McfCorners corners;
@@ -132,7 +131,7 @@ public class McfAreaImpl implements McfArea {
 	public void setBorderEnabled(boolean borderEnabled) {
 		this.borderEnabled = borderEnabled;
 	}
-	
+
 	@Override
 	public float getBorderSize() {
 		return borderSize;
@@ -146,11 +145,11 @@ public class McfAreaImpl implements McfArea {
 	public Color getBorderColor() {
 		return borderColor;
 	}
-	
+
 	public void setBorderColor(Color borderColor) {
 		this.borderColor = borderColor;
 	}
-	
+
 	@Override
 	public boolean isShadowEnabled() {
 		return shadowEnabled;
@@ -214,10 +213,10 @@ public class McfAreaImpl implements McfArea {
 	}
 
 	public McfCorners getCorners() {
-               return corners;
-       }
- 
-       public void setCorners( McfCorners corners) {
-               this.corners = corners;
-       }
+		return corners;
+	}
+
+	public void setCorners(McfCorners corners) {
+		this.corners = corners;
+	}
 }

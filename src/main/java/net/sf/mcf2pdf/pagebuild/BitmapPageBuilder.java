@@ -21,12 +21,10 @@ import java.util.Vector;
 
 import javax.imageio.ImageIO;
 
-import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
-
 import org.jdom.Element;
 import org.jdom.Namespace;
 
-
+import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 
 public class BitmapPageBuilder extends AbstractPageBuilder {
 
@@ -45,8 +43,8 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		}
 	};
 
-	public BitmapPageBuilder(float widthMM, float heightMM,
-			PageRenderContext context, File tempImageDir) throws IOException {
+	public BitmapPageBuilder(float widthMM, float heightMM, PageRenderContext context, File tempImageDir)
+			throws IOException {
 		this.widthMM = widthMM;
 		this.heightMM = heightMM;
 		this.context = context;
@@ -54,16 +52,15 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 	}
 
 	@Override
-	public void addToDocumentBuilder(XslFoDocumentBuilder docBuilder)
-			throws IOException {
+	public void addToDocumentBuilder(XslFoDocumentBuilder docBuilder) throws IOException {
 		// render drawables onto image, regardless of type
 		List<PageDrawable> pageContents = new Vector<PageDrawable>(getDrawables());
 		Collections.sort(pageContents, zComp);
 
 		context.getLog().debug("Creating full page image from page elements");
 
-		BufferedImage img = new BufferedImage(context.toPixel(widthMM),
-				context.toPixel(heightMM), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage img = new BufferedImage(context.toPixel(widthMM), context.toPixel(heightMM),
+				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
 		g2d.setColor(Color.white);
 		g2d.fillRect(0, 0, img.getWidth(), img.getHeight());
@@ -77,8 +74,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 				BufferedImage pdImg = pd.renderAsBitmap(context, offset);
 				if (pdImg != null)
 					g2d.drawImage(pdImg, left + offset.x, top + offset.y, null);
-			}
-			catch (FileNotFoundException e) {
+			} catch (FileNotFoundException e) {
 				// ignore
 				// throw e;
 			}
@@ -94,8 +90,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		int i = 1;
 		do {
 			f = new File(tempImageDir, (i++) + ".jpg");
-		}
-		while (f.isFile());
+		} while (f.isFile());
 
 		BufferedImage imgPlain = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
 		Graphics2D g2d = imgPlain.createGraphics();
@@ -112,6 +107,5 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 		return eg;
 	}
-
 
 }
