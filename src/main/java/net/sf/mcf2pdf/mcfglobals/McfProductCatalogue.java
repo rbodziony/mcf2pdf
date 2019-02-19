@@ -12,12 +12,12 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.digester3.Digester;
+import org.xml.sax.SAXException;
+
 import net.sf.mcf2pdf.mcfelements.util.DigesterUtil;
 import net.sf.mcf2pdf.mcfglobals.impl.McfAlbumTypeImpl;
 import net.sf.mcf2pdf.mcfglobals.impl.McfProductCatalogueImpl;
-
-import org.apache.commons.digester3.Digester;
-import org.xml.sax.SAXException;
 
 /**
  * TODO comment

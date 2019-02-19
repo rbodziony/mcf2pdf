@@ -12,29 +12,28 @@ import java.util.Map;
 
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 
-
 public class McfAlbumTypeImpl implements McfAlbumType {
-	
+
 	private String name;
-	
+
 	private int safetyMargin;
-	
+
 	private int bleedMargin;
-	
+
 	private int normalPageHorizontalClamp;
-	
+
 	private int usableWidth;
-	
+
 	private int usableHeight;
-	
+
 	private int bleedMarginCover;
-	
+
 	private int coverExtraVertical;
-	
+
 	private int coverExtraHorizontal;
-	
+
 	private Map<Integer, Integer> spineWidths = new HashMap<Integer, Integer>();
-	
+
 	@Override
 	public String getName() {
 		return name;
@@ -50,7 +49,6 @@ public class McfAlbumTypeImpl implements McfAlbumType {
 		return bleedMargin;
 	}
 
-
 	@Override
 	public int getNormalPageHorizontalClamp() {
 		return normalPageHorizontalClamp;
@@ -65,7 +63,7 @@ public class McfAlbumTypeImpl implements McfAlbumType {
 	public int getUsableHeight() {
 		return usableHeight;
 	}
-	
+
 	@Override
 	public int getBleedMarginCover() {
 		return bleedMarginCover;
@@ -80,13 +78,13 @@ public class McfAlbumTypeImpl implements McfAlbumType {
 	public int getCoverExtraHorizontal() {
 		return coverExtraHorizontal;
 	}
-	
+
 	@Override
 	public int getSpineWidth(int normalPageCount) {
 		Integer key = Integer.valueOf(normalPageCount);
 		if (!spineWidths.containsKey(key))
 			return 0;
-		
+
 		return spineWidths.get(key).intValue();
 	}
 
@@ -125,9 +123,9 @@ public class McfAlbumTypeImpl implements McfAlbumType {
 	public void setCoverExtraHorizontal(int coverExtraHorizontal) {
 		this.coverExtraHorizontal = coverExtraHorizontal;
 	}
-	
+
 	public void addSpine(int pageCount, int width) {
 		spineWidths.put(pageCount, width);
 	}
-	
+
 }

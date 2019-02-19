@@ -6,7 +6,7 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 
 public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfClipart {
-	
+
 	private String uniqueName;
 
 	@Override
@@ -21,6 +21,5 @@ public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfCli
 	public void setUniqueName(String uniqueName) {
 		this.uniqueName = uniqueName;
 	}
-
 
 }

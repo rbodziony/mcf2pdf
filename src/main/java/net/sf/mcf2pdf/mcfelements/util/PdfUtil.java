@@ -8,9 +8,11 @@
 package net.sf.mcf2pdf.mcfelements.util;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -20,15 +22,16 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.avalon.framework.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.fop.apps.FOPException;
 import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
 import org.apache.fop.apps.FormattingResults;
 import org.apache.fop.apps.MimeConstants;
 import org.apache.fop.apps.PageSequenceResults;
+import org.xml.sax.SAXException;
 
 /**
  * Utility class for working with PDFs.
@@ -40,18 +43,26 @@ public class PdfUtil {
 	/**
 	 * Converts an FO file to a PDF file using Apache FOP.
 	 *
-	 * @param fo the FO file
-	 * @param pdf the target PDF file
-	 * @param dpi the DPI resolution to use for bitmaps in the PDF
-	 * @throws IOException In case of an I/O problem
-	 * @throws FOPException In case of a FOP problem
-	 * @throws TransformerException In case of XML transformer problem
+	 * @param fo
+	 *            the FO file
+	 * @param pdf
+	 *            the target PDF file
+	 * @param dpi
+	 *            the DPI resolution to use for bitmaps in the PDF
+	 * @throws IOException
+	 *             In case of an I/O problem
+	 * @throws TransformerException
+	 *             In case of XML transformer problem
+	 * @throws SAXException
+	 * @throws URISyntaxException
+	 * @throws ConfigurationException
 	 */
 	@SuppressWarnings("rawtypes")
-	public static void convertFO2PDF(InputStream fo, OutputStream pdf, int dpi) throws IOException,
-			FOPException, TransformerException {
+	public static void convertFO2PDF(InputStream fo, OutputStream pdf, int dpi)
+			throws IOException, TransformerException, SAXException, URISyntaxException, ConfigurationException {
 
-		FopFactory fopFactory = FopFactory.newInstance();
+		// FopFactory fopFactory = FopFactory.newInstance();
+		FopFactory fopFactory = FopFactory.newInstance(new File(".").toURI());
 
 		FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
 		// configure foUserAgent as desired
@@ -67,7 +78,7 @@ public class PdfUtil {
 		// Setup JAXP using identity transformer
 		TransformerFactory factory = TransformerFactory.newInstance();
 		Transformer transformer = factory.newTransformer(); // identity
-																												// transformer
+															// transformer
 
 		// Setup input stream
 		Source src = new StreamSource(fo);
@@ -82,12 +93,11 @@ public class PdfUtil {
 		FormattingResults foResults = fop.getResults();
 		java.util.List pageSequences = foResults.getPageSequences();
 		for (java.util.Iterator it = pageSequences.iterator(); it.hasNext();) {
-			PageSequenceResults pageSequenceResults = (PageSequenceResults)it
-					.next();
+			PageSequenceResults pageSequenceResults = (PageSequenceResults) it.next();
 			log.debug("PageSequence "
-							+ (String.valueOf(pageSequenceResults.getID()).length() > 0 ? pageSequenceResults
-									.getID() : "<no id>") + " generated "
-							+ pageSequenceResults.getPageCount() + " pages.");
+					+ (String.valueOf(pageSequenceResults.getID()).length() > 0 ? pageSequenceResults.getID()
+							: "<no id>")
+					+ " generated " + pageSequenceResults.getPageCount() + " pages.");
 		}
 		log.info("Generated " + foResults.getPageCount() + " PDF pages in total.");
 		out.flush();

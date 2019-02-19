@@ -24,17 +24,15 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 import net.sf.mcf2pdf.mcfelements.util.PdfUtil;
-
 
 /**
  * Main entry point of the mcf2pdf application. Creates an
  * <code>Mcf2FoConverter</code> object with the settings passed on command line,
- * and renders the given input file to XSL-FO. If PDF output is requested
- * (the default), the XSL-FO is converted to PDF using Apache FOP. The result
- * (PDF or XSL-FO) is then written to given output file, which can be STDOUT
- * when a dash (-) is passed.
+ * and renders the given input file to XSL-FO. If PDF output is requested (the
+ * default), the XSL-FO is converted to PDF using Apache FOP. The result (PDF or
+ * XSL-FO) is then written to given output file, which can be STDOUT when a dash
+ * (-) is passed.
  */
 public class Main {
 
@@ -42,7 +40,8 @@ public class Main {
 	public static void main(String[] args) {
 		Options options = new Options();
 
-		Option o = OptionBuilder.hasArg().isRequired().withDescription("Installation location of My CEWE Photobook. REQUIRED.").create('i');
+		Option o = OptionBuilder.hasArg().isRequired()
+				.withDescription("Installation location of My CEWE Photobook. REQUIRED.").create('i');
 		options.addOption(o);
 		options.addOption("h", false, "Prints this help and exits.");
 		options.addOption("t", true, "Location of MCF temporary files.");
@@ -58,8 +57,7 @@ public class Main {
 		try {
 			CommandLineParser parser = new PosixParser();
 			cl = parser.parse(options, args);
-		}
-		catch (ParseException pe) {
+		} catch (ParseException pe) {
 			printUsage(options, pe);
 			System.exit(3);
 			return;
@@ -71,7 +69,8 @@ public class Main {
 		}
 
 		if (cl.getArgs().length != 2) {
-			printUsage(options, new ParseException("INFILE and OUTFILE must be specified. Arguments were: " + cl.getArgList()));
+			printUsage(options,
+					new ParseException("INFILE and OUTFILE must be specified. Arguments were: " + cl.getArgList()));
 			System.exit(3);
 			return;
 		}
@@ -88,12 +87,12 @@ public class Main {
 		if (sTempDir == null) {
 			tempDir = new File(new File(System.getProperty("user.home")), ".mcf");
 			if (!tempDir.isDirectory()) {
-				printUsage(options, new ParseException("MCF temporary location not specified and default location " + tempDir + " does not exist."));
+				printUsage(options, new ParseException(
+						"MCF temporary location not specified and default location " + tempDir + " does not exist."));
 				System.exit(3);
 				return;
 			}
-		}
-		else {
+		} else {
 			tempDir = new File(sTempDir);
 			if (!tempDir.isDirectory()) {
 				printUsage(options, new ParseException("Specified temporary location does not exist."));
@@ -114,7 +113,8 @@ public class Main {
 		if (cl.hasOption("w")) {
 			tempImages = new File(cl.getOptionValue("w"));
 			if (!tempImages.mkdirs() && !tempImages.isDirectory()) {
-				printUsage(options, new ParseException("Specified working dir does not exist and could not be created."));
+				printUsage(options,
+						new ParseException("Specified working dir does not exist and could not be created."));
 				System.exit(3);
 				return;
 			}
@@ -126,9 +126,9 @@ public class Main {
 				dpi = Integer.valueOf(cl.getOptionValue("r")).intValue();
 				if (dpi < 30 || dpi > 600)
 					throw new IllegalArgumentException();
-			}
-			catch (Exception e) {
-				printUsage(options, new ParseException("Parameter for option -r must be an integer between 30 and 600."));
+			} catch (Exception e) {
+				printUsage(options,
+						new ParseException("Parameter for option -r must be an integer between 30 and 600."));
 			}
 		}
 
@@ -138,8 +138,7 @@ public class Main {
 				maxPageNo = Integer.valueOf(cl.getOptionValue("n")).intValue();
 				if (maxPageNo < 0)
 					throw new IllegalArgumentException();
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				printUsage(options, new ParseException("Parameter for option -n must be an integer >= 0."));
 			}
 		}
@@ -155,8 +154,7 @@ public class Main {
 		else {
 			try {
 				finalOut = new FileOutputStream(cl.getArgs()[1]);
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				printUsage(options, new ParseException("Output file could not be created."));
 				System.exit(3);
 				return;
@@ -185,26 +183,26 @@ public class Main {
 		Log log = LogFactory.getLog(Main.class);
 
 		try {
-			new Mcf2FoConverter(installDir, tempDir, tempImages).convert(
-					mcfFile, xslFoOut, dpi, binding, maxPageNo);
+			new Mcf2FoConverter(installDir, tempDir, tempImages).convert(mcfFile, xslFoOut, dpi, binding, maxPageNo);
 			xslFoOut.flush();
 
 			if (!cl.hasOption("x")) {
 				// convert to PDF
 				log.debug("Converting XSL-FO data to PDF");
-				byte[] data = ((ByteArrayOutputStream)xslFoOut).toByteArray();
+				byte[] data = ((ByteArrayOutputStream) xslFoOut).toByteArray();
 				PdfUtil.convertFO2PDF(new ByteArrayInputStream(data), finalOut, dpi);
 				finalOut.flush();
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			log.error("An exception has occured", e);
 			System.exit(1);
 			return;
-		}
-		finally {
+		} finally {
 			if (finalOut instanceof FileOutputStream) {
-				try { finalOut.close(); } catch (Exception e) { }
+				try {
+					finalOut.close();
+				} catch (Exception e) {
+				}
 			}
 		}
 	}
@@ -216,8 +214,8 @@ public class Main {
 		System.out.println("mcf2pdf My CEWE Photobook to PDF converter");
 		HelpFormatter hf = new HelpFormatter();
 		hf.printHelp("mcf2pdf <options> INFILE OUTFILE", "Options are:", options,
-				"If -t is not specified, <USER_HOME>/.mcf is used.\n" +
-						"If -w is not specified, <USER_HOME>/.mcf2pdf is created and used.\n" +
-				"If you specify a dash (-) as OUTFILE, resulting content will be written to STDOUT. Notice that, in that case, temporary image files will be kept in specified image working directory. Notice also that you should add option -q in this case to avoid logging output.");
+				"If -t is not specified, <USER_HOME>/.mcf is used.\n"
+						+ "If -w is not specified, <USER_HOME>/.mcf2pdf is created and used.\n"
+						+ "If you specify a dash (-) as OUTFILE, resulting content will be written to STDOUT. Notice that, in that case, temporary image files will be kept in specified image working directory. Notice also that you should add option -q in this case to avoid logging output.");
 	}
 }

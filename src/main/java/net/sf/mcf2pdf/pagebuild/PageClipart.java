@@ -12,23 +12,22 @@ import java.io.Writer;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 
-
 /**
  * TODO comment
  */
 public class PageClipart implements PageDrawable {
-	
+
 	private McfClipart clipart;
-	
+
 	public PageClipart(McfClipart clipart) {
 		this.clipart = clipart;
 	}
-	
+
 	@Override
 	public float getLeftMM() {
 		return clipart.getArea().getLeft() / 10.0f;
 	}
-	
+
 	@Override
 	public float getTopMM() {
 		return clipart.getArea().getTop() / 10.0f;
@@ -42,19 +41,18 @@ public class PageClipart implements PageDrawable {
 	@Override
 	public void renderAsSvgElement(Writer writer, PageRenderContext context) throws IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
-	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
 		File f = context.getClipart(clipart.getUniqueName());
 		if (f == null) {
 			context.getLog().warn("Clipart not found: " + clipart.getUniqueName());
 			return null;
 		}
 		context.getLog().debug("Rendering clipart " + f);
-		
+
 		int widthPixel = context.toPixel(clipart.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(clipart.getArea().getHeight() / 10.0f);
 

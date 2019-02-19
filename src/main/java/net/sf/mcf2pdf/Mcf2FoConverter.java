@@ -15,6 +15,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jdom.output.XMLOutputter;
+import org.xml.sax.SAXException;
+
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Shell32;
+import com.sun.jna.platform.win32.ShlObj;
+import com.sun.jna.platform.win32.WinDef;
+
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
@@ -38,21 +50,9 @@ import net.sf.mcf2pdf.pagebuild.PageImageBackground;
 import net.sf.mcf2pdf.pagebuild.PageRenderContext;
 import net.sf.mcf2pdf.pagebuild.PageText;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jdom.output.XMLOutputter;
-import org.xml.sax.SAXException;
-
-import com.sun.jna.Native;
-import com.sun.jna.platform.win32.Shell32;
-import com.sun.jna.platform.win32.ShlObj;
-import com.sun.jna.platform.win32.WinDef;
-
 /**
- * The core class to convert MCF files to XSL-FO data (which then can be used
- * to render page based documents, e.g. PDF files).
+ * The core class to convert MCF files to XSL-FO data (which then can be used to
+ * render page based documents, e.g. PDF files).
  */
 public class Mcf2FoConverter {
 
@@ -73,17 +73,23 @@ public class Mcf2FoConverter {
 	/**
 	 * Creates a new converter object with given settings.
 	 *
-	 * @param mcfInstallDir The installation directory of the MCF Software.
-	 * @param mcfTempDir The temporary directory of the MCF Software to use. This
-	 * is normally <code>&lt;USER_HOME>/.mcf</code>.
-	 * @param tempImageDir The temporary directory to use for storing image files
-	 * (created by this converter object). This directory is created if it does not exist.
+	 * @param mcfInstallDir
+	 *            The installation directory of the MCF Software.
+	 * @param mcfTempDir
+	 *            The temporary directory of the MCF Software to use. This is
+	 *            normally <code>&lt;USER_HOME>/.mcf</code>.
+	 * @param tempImageDir
+	 *            The temporary directory to use for storing image files (created by
+	 *            this converter object). This directory is created if it does not
+	 *            exist.
 	 *
-	 * @throws IOException If any I/O problem occurs when reading files in the
-	 * installation directory, or the temporary directory could not be created.
+	 * @throws IOException
+	 *             If any I/O problem occurs when reading files in the installation
+	 *             directory, or the temporary directory could not be created.
 	 *
-	 * @throws SAXException If any of the XML files in the installation directory
-	 * which are parsed have a format error.
+	 * @throws SAXException
+	 *             If any of the XML files in the installation directory which are
+	 *             parsed have a format error.
 	 */
 	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir) throws IOException, SAXException {
 		this.tempImageDir = tempImageDir;
@@ -105,14 +111,15 @@ public class Mcf2FoConverter {
 		File hpsDir = null;
 		try {
 			char[] pszPath = new char[WinDef.MAX_PATH];
-			if (Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_COMMON_APPDATA, null, ShlObj.SHGFP_TYPE_CURRENT, pszPath).intValue() == 0) {
+			if (Shell32.INSTANCE
+					.SHGetFolderPath(null, ShlObj.CSIDL_COMMON_APPDATA, null, ShlObj.SHGFP_TYPE_CURRENT, pszPath)
+					.intValue() == 0) {
 				File f = new File(new File(Native.toString(pszPath)), "hps");
 				if (f.isDirectory()) {
 					hpsDir = f;
 				}
 			}
-		}
-		catch (Throwable t) {
+		} catch (Throwable t) {
 			// OK, no Windows, obviously
 			// try home directory
 			File homeHpsDir = new File(new File(System.getProperty("user.home")), ".mcf/hps");
@@ -135,20 +142,28 @@ public class Mcf2FoConverter {
 	/**
 	 * Performs conversion of the given MCF input file to XSL-FO data.
 	 *
-	 * @param mcfFile MCF input file.
-	 * @param xslFoOut Stream to write the XSL-FO data to.
-	 * @param dpi Resolution, in dots per inch, to use for image rendering. The
-	 * higher the value, the better the quality, but the more RAM is consumed.
-	 * @param maxPageNo Renders only up to the given page number (e.g. for testing settings).
-	 * A value of -1 indicates to render all pages.
+	 * @param mcfFile
+	 *            MCF input file.
+	 * @param xslFoOut
+	 *            Stream to write the XSL-FO data to.
+	 * @param dpi
+	 *            Resolution, in dots per inch, to use for image rendering. The
+	 *            higher the value, the better the quality, but the more RAM is
+	 *            consumed.
+	 * @param maxPageNo
+	 *            Renders only up to the given page number (e.g. for testing
+	 *            settings). A value of -1 indicates to render all pages.
 	 *
-	 * @throws IOException If any I/O related problem occurs, e.g. reading the
-	 * input file or any referenced image files.
+	 * @throws IOException
+	 *             If any I/O related problem occurs, e.g. reading the input file or
+	 *             any referenced image files.
 	 *
-	 * @throws SAXException If any XML related problem occurs, e.g. the input file
-	 * has an invalid format.
+	 * @throws SAXException
+	 *             If any XML related problem occurs, e.g. the input file has an
+	 *             invalid format.
 	 */
-	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, int maxPageNo) throws IOException, SAXException {
+	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, int maxPageNo)
+			throws IOException, SAXException {
 		// build MCF DOM
 		log.debug("Reading MCF file");
 		McfFotobook book = new FotobookBuilder().readFotobook(mcfFile);
@@ -167,7 +182,8 @@ public class Mcf2FoConverter {
 		}
 
 		if (albumType == null)
-			throw new IOException("No album type definition found for used print product '" + book.getProductName() + "'");
+			throw new IOException(
+					"No album type definition found for used print product '" + book.getProductName() + "'");
 
 		// prepare page render context
 		context = new PageRenderContext(dpi, resources, albumType);
@@ -182,7 +198,8 @@ public class Mcf2FoConverter {
 		docBuilder.addPageMaster("default", pageWidth, pageHeight);
 
 		// create master for cover
-		float coverPageWidth = pageWidth + (albumType.getCoverExtraHorizontal() * 2 + albumType.getSpineWidth(book.getNormalPages())) / 10.0f;
+		float coverPageWidth = pageWidth
+				+ (albumType.getCoverExtraHorizontal() * 2 + albumType.getSpineWidth(book.getNormalPages())) / 10.0f;
 		float coverPageHeight = pageHeight + albumType.getCoverExtraVertical() / 10.0f;
 
 		docBuilder.addPageMaster("cover", coverPageWidth, coverPageHeight);
@@ -233,10 +250,9 @@ public class Mcf2FoConverter {
 		currentPage = new BitmapPageBuilder(pageWidth, pageHeight, context, tempImageDir);
 
 		for (int i = 0; i < normalPages.size(); i += 2) {
-			log.info("Rendering pages " + i + "+" + (i+1) + "...");
-			processDoublePage(normalPages.get(i),
-					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					imageDir, binding);
+			log.info("Rendering pages " + i + "+" + (i + 1) + "...");
+			processDoublePage(normalPages.get(i), i + 1 < normalPages.size() ? normalPages.get(i + 1) : null, imageDir,
+					binding);
 			currentPage.addToDocumentBuilder(docBuilder);
 			if (i < normalPages.size() - 2) {
 				docBuilder.newPage();
@@ -251,8 +267,8 @@ public class Mcf2FoConverter {
 		new XMLOutputter().output(docBuilder.createDocument(), xslFoOut);
 	}
 
-	private void processDoublePage(McfPage leftPage, McfPage rightPage, File imageDir,
-			boolean addBinding) throws IOException {
+	private void processDoublePage(McfPage leftPage, McfPage rightPage, File imageDir, boolean addBinding)
+			throws IOException {
 		// handle packgrounds
 		PageBackground bg = new PageBackground(
 				leftPage == null ? Collections.<McfBackground>emptyList() : leftPage.getBackgrounds(),
@@ -268,16 +284,13 @@ public class Mcf2FoConverter {
 
 		for (McfArea a : areas) {
 			if (McfArea.IMAGEBACKGROUNDAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent()));
-			}
-			else if (McfArea.IMAGEAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageImage((McfImage)a.getContent()));
-			}
-			else if (McfArea.CLIPARTAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageClipart((McfClipart)a.getContent()));
-			}
-			else if (McfArea.TEXTAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageText((McfText)a.getContent()));
+				currentPage.addDrawable(new PageImageBackground((McfImageBackground) a.getContent()));
+			} else if (McfArea.IMAGEAREA.matcher(a.getAreaType()).matches()) {
+				currentPage.addDrawable(new PageImage((McfImage) a.getContent()));
+			} else if (McfArea.CLIPARTAREA.matcher(a.getAreaType()).matches()) {
+				currentPage.addDrawable(new PageClipart((McfClipart) a.getContent()));
+			} else if (McfArea.TEXTAREA.matcher(a.getAreaType()).matches()) {
+				currentPage.addDrawable(new PageText((McfText) a.getContent()));
 			}
 		}
 
@@ -299,7 +312,7 @@ public class Mcf2FoConverter {
 	}
 
 	private void scanForProducts(File productsDir, McfProductCatalogue.CatalogueVersion version) {
-		for (File f : productsDir.listFiles((FilenameFilter)FileFilterUtils.suffixFileFilter(".xml"))) {
+		for (File f : productsDir.listFiles((FilenameFilter) FileFilterUtils.suffixFileFilter(".xml"))) {
 			// try to read, fail is ok!
 			FileInputStream fis = null;
 			try {
@@ -310,10 +323,8 @@ public class Mcf2FoConverter {
 					log.debug("Adding product catalogue found in " + f);
 					productCatalogues.add(cat);
 				}
-			}
-			catch (Exception e) {
-			}
-			finally {
+			} catch (Exception e) {
+			} finally {
 				IOUtils.closeQuietly(fis);
 			}
 		}

@@ -29,13 +29,14 @@ import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfBorder;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
+import net.sf.mcf2pdf.mcfelements.McfCorner;
+import net.sf.mcf2pdf.mcfelements.McfCorners;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
 import net.sf.mcf2pdf.mcfelements.McfImageBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.util.DigesterUtil;
-
 
 /**
  * Default Digester configurator. Configures the digester to use classes from
@@ -82,13 +83,12 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		}
 
 		private Color longToColor(long colorValue) {
-			return new Color((int)(colorValue & 0xFFFFFFFF), true);
+			return new Color((int) (colorValue & 0xFFFFFFFF), true);
 		}
 	};
 
 	@Override
-	public void configureDigester(Digester digester, File mcfFile)
-			throws IOException {
+	public void configureDigester(Digester digester, File mcfFile) throws IOException {
 		digester.setSubstitutor(createSubstitutor());
 
 		// fotobook element
@@ -117,6 +117,16 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("fotobook/page/area/border", getBorderClass());
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/border", getSpecialBorderAttributes());
 		digester.addSetNext("fotobook/page/area/border", "setBorder");
+
+		// corners element
+		digester.addObjectCreate("fotobook/page/area/corners", getCornersClass());
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/corners", getSpecialCornersAttributes());
+		digester.addSetNext("fotobook/page/area/corners", "setCorners");
+
+		// corners element
+		digester.addObjectCreate("fotobook/page/area/corners/corner", getCornerClass());
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/corners/corner", getSpecialCornerAttributes());
+		digester.addSetNext("fotobook/page/area/corners/corner", "addCorner");
 
 		// text element, including textFormat element
 		digester.addObjectCreate("fotobook/page/area/text", getTextClass());
@@ -190,13 +200,12 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		}
 	};
 
-
 	/**
 	 * Creates a substitutor which will be used for attribute and text substitutions
-	 * when parsing. Default implementation replaces a comma by a period in attributes
-	 * with name <code>left, top, width, height</code>. Subclasses can override
-	 * for more substitutions; use a <code>CompoundSubsitutor</code> to add the
-	 * subsitutions created by the default implementation.
+	 * when parsing. Default implementation replaces a comma by a period in
+	 * attributes with name <code>left, top, width, height</code>. Subclasses can
+	 * override for more substitutions; use a <code>CompoundSubsitutor</code> to add
+	 * the subsitutions created by the default implementation.
 	 *
 	 * @return A substitutor to use in the digester.
 	 */
@@ -296,6 +305,28 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "offset", "offset" });
 		result.add(new String[] { "width", "width" });
 		result.add(new String[] { "enabled", "enabled" });
+		return result;
+	}
+
+	protected Class<? extends McfCorners> getCornersClass() {
+		return McfCornersImpl.class;
+	}
+
+	protected List<String[]> getSpecialCornersAttributes() {
+		List<String[]> result = new Vector<String[]>();
+		result.add(new String[] { "enabled", "enabled" });
+		return result;
+	}
+
+	protected Class<? extends McfCorner> getCornerClass() {
+		return McfCornerImpl.class;
+	}
+
+	protected List<String[]> getSpecialCornerAttributes() {
+		List<String[]> result = new Vector<String[]>();
+		result.add(new String[] { "length", "length" });
+		result.add(new String[] { "where", "where" });
+		result.add(new String[] { "shape", "shape" });
 		return result;
 	}
 

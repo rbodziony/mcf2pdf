@@ -10,16 +10,21 @@ package net.sf.mcf2pdf.mcfelements.util;
 import java.awt.Composite;
 import java.awt.CompositeContext;
 import java.awt.RenderingHints;
-import java.awt.image.*;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DirectColorModel;
+import java.awt.image.Raster;
+import java.awt.image.RasterFormatException;
+import java.awt.image.WritableRaster;
 
 /**
- * Performs the "fading" of a rendered image with a mask image. 
- * In MCF, the mask images have to be applied as follows:
+ * Performs the "fading" of a rendered image with a mask image. In MCF, the mask
+ * images have to be applied as follows:
  * <ul>
  * <li>transparent areas have to be also transparent on target image</li>
  * <li>black areas are "opaque" areas of the target image</li>
- * <li>greyscale areas have to get an alpha value on the target image, 
- * according to the greyscale degree.</li>
+ * <li>greyscale areas have to get an alpha value on the target image, according
+ * to the greyscale degree.</li>
  * </ul>
  */
 public final class FadingComposite implements Composite {
@@ -29,16 +34,12 @@ public final class FadingComposite implements Composite {
 	private FadingComposite() {
 	}
 
-
 	private static boolean validateColorModel(ColorModel cm) {
-		if (cm instanceof DirectColorModel
-				&& cm.getTransferType() == DataBuffer.TYPE_INT) {
-			DirectColorModel directCM = (DirectColorModel)cm;
+		if (cm instanceof DirectColorModel && cm.getTransferType() == DataBuffer.TYPE_INT) {
+			DirectColorModel directCM = (DirectColorModel) cm;
 
-			return directCM.getRedMask() == 0x00FF0000
-					&& directCM.getGreenMask() == 0x0000FF00
-					&& directCM.getBlueMask() == 0x000000FF
-					&& directCM.getAlphaMask() == 0xFF000000;
+			return directCM.getRedMask() == 0x00FF0000 && directCM.getGreenMask() == 0x0000FF00
+					&& directCM.getBlueMask() == 0x000000FF && directCM.getAlphaMask() == 0xFF000000;
 		}
 
 		return false;
@@ -47,10 +48,8 @@ public final class FadingComposite implements Composite {
 	/**
 	 * {@inheritDoc}
 	 */
-	public CompositeContext createContext(ColorModel srcColorModel,
-			ColorModel dstColorModel, RenderingHints hints) {
-		if (!validateColorModel(srcColorModel)
-				|| !validateColorModel(dstColorModel)) {
+	public CompositeContext createContext(ColorModel srcColorModel, ColorModel dstColorModel, RenderingHints hints) {
+		if (!validateColorModel(srcColorModel) || !validateColorModel(dstColorModel)) {
 			throw new RasterFormatException("Color models are not compatible");
 		}
 
@@ -58,7 +57,7 @@ public final class FadingComposite implements Composite {
 	}
 
 	private static final class FadingContext implements CompositeContext {
-		
+
 		private FadingContext(FadingComposite composite) {
 		}
 
@@ -95,25 +94,24 @@ public final class FadingComposite implements Composite {
 
 					process(srcPixel, dstPixel, result);
 					// copy back to dstPixels
-					dstPixels[x] = ((result[3] & 0xFF) << 24) | ((result[0] & 0xFF) << 16) |
-							((result[1] & 0xFF) << 8) | (result[2] & 0xFF);
+					dstPixels[x] = ((result[3] & 0xFF) << 24) | ((result[0] & 0xFF) << 16) | ((result[1] & 0xFF) << 8)
+							| (result[2] & 0xFF);
 				}
 				dstOut.setDataElements(0, y, width, 1, dstPixels);
 			}
 		}
-	
+
 		// The core "fading" logic
 		private void process(int[] src, int[] dst, int[] result) {
 			// use colors from dst, calculate alpha from src color
 			result[0] = dst[0];
 			result[1] = dst[1];
 			result[2] = dst[2];
-			
+
 			if (src[3] != 255) {
 				result[3] = src[3];
-			}
-			else {
-				int alpha = 255 - (int)Math.round((src[0] + src[1] + src[2]) / 3.0);
+			} else {
+				int alpha = 255 - (int) Math.round((src[0] + src[1] + src[2]) / 3.0);
 				result[3] = Math.max(alpha, 0);
 			}
 		}

@@ -11,19 +11,21 @@ import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 
-import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
-
 import org.apache.batik.dom.GenericDOMImplementation;
-import org.apache.batik.svggen.*;
+import org.apache.batik.svggen.DefaultImageHandler;
+import org.apache.batik.svggen.ImageHandlerJPEGEncoder;
+import org.apache.batik.svggen.SVGGeneratorContext;
+import org.apache.batik.svggen.SVGGraphics2D;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 
+import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 
 /**
  * Vector based renderer for pages. Yet to be implemented.
  */
 public class SVGPageBuilder extends AbstractPageBuilder {
-	
+
 	private float widthMM;
 
 	private float heightMM;
@@ -32,24 +34,23 @@ public class SVGPageBuilder extends AbstractPageBuilder {
 
 	private File tempImageDir;
 
-	public SVGPageBuilder(float widthMM, float heightMM, PageRenderContext context, 
-			File tempImageDir) throws IOException {
+	public SVGPageBuilder(float widthMM, float heightMM, PageRenderContext context, File tempImageDir)
+			throws IOException {
 		this.widthMM = widthMM;
 		this.heightMM = heightMM;
 		this.context = context;
 		this.tempImageDir = tempImageDir;
 	}
-	
+
 	@Override
-	public void addToDocumentBuilder(XslFoDocumentBuilder docBuilder)
-			throws IOException {
+	public void addToDocumentBuilder(XslFoDocumentBuilder docBuilder) throws IOException {
 		// Get a DOMImplementation.
 		DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
 
 		// Create an instance of org.w3c.dom.Document.
 		String svgNS = "http://www.w3.org/2000/svg";
 		Document document = domImpl.createDocument(svgNS, "svg", null);
-		
+
 		SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(document);
 		DefaultImageHandler ihandler = new ImageHandlerJPEGEncoder(tempImageDir.getAbsolutePath(), null);
 		ctx.setImageHandler(ihandler);
@@ -57,13 +58,10 @@ public class SVGPageBuilder extends AbstractPageBuilder {
 		// Create an instance of the SVG Generator.
 		SVGGraphics2D graphics = new SVGGraphics2D(ctx, false);
 		graphics.setSVGCanvasSize(new Dimension(context.toPixel(widthMM), context.toPixel(heightMM)));
-		
-		
+
 		// TODO render all drawables to canvas
-		
-		
+
 		graphics.dispose();
 	}
-	
 
 }

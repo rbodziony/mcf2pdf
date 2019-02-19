@@ -7,15 +7,15 @@ import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 
 public class McfBackgroundImpl implements McfBackground {
-	
+
 	private McfPage page;
-	
+
 	private String templateName;
-	
+
 	private int type;
-	
+
 	private int layout;
-	
+
 	public McfPage getPage() {
 		return page;
 	}

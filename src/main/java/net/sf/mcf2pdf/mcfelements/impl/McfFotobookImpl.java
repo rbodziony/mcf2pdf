@@ -11,37 +11,36 @@ import java.util.Vector;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 
-
 public class McfFotobookImpl implements McfFotobook {
-	
+
 	public File file;
-	
+
 	private int productType;
-	
+
 	private String productName;
-	
+
 	private String version;
-	
+
 	private String createdWithHPSVersion;
-	
+
 	private String programVersion;
-	
+
 	private String imageDir;
-	
+
 	private int normalPages;
-	
+
 	private int totalPages;
-	
+
 	private List<McfPage> pages = new Vector<McfPage>();
-	
+
 	public void addPage(McfPage page) {
 		pages.add(page);
 	}
-	
+
 	public List<? extends McfPage> getPages() {
 		return Collections.unmodifiableList(pages);
 	}
-	
+
 	public int getProductType() {
 		return productType;
 	}
@@ -113,5 +112,5 @@ public class McfFotobookImpl implements McfFotobook {
 	public void setFile(File file) {
 		this.file = file;
 	}
-	
+
 }

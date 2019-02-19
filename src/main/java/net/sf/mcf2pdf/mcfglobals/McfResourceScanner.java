@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,12 +27,12 @@ import net.sf.mcf2pdf.mcfelements.impl.DigesterConfiguratorImpl;
 
 /**
  * "Dirty little helper" which scans installation directory and temporary
- * directory of fotobook software for background images, cliparts, fonts,
- * and masks (fadings). As there is no (known) usable TOC for these, we just
- * take what we find.
+ * directory of fotobook software for background images, cliparts, fonts, and
+ * masks (fadings). As there is no (known) usable TOC for these, we just take
+ * what we find.
  */
 public class McfResourceScanner {
-	
+
 	private final static Log log = LogFactory.getLog(McfResourceScanner.class);
 
 	private List<File> scanDirs = new ArrayList<File>();
@@ -43,7 +42,7 @@ public class McfResourceScanner {
 	private Map<String, File> foundClips = new HashMap<String, File>();
 
 	private Map<String, Font> foundFonts = new HashMap<String, Font>();
-	
+
 	private Map<String, File> foundColors = new HashMap<String, File>();
 
 	private Map<String, Fading> foundDecorations = new HashMap<String, Fading>();
@@ -73,31 +72,22 @@ public class McfResourceScanner {
 				if (nm.matches(".+\\.(jp(e?)g|webp|bmp)")) {
 					String id = nm.substring(0, nm.indexOf("."));
 					foundImages.put(id, f);
-				}
-				else if (nm.matches(".+\\.(clp|svg)")) {
+				} else if (nm.matches(".+\\.(clp|svg)")) {
 					String id = f.getName().substring(0, nm.lastIndexOf("."));
 					foundClips.put(id, f);
-				}
-				else if (nm.equals("1_color_backgrounds.xml")) {
+				} else if (nm.equals("1_color_backgrounds.xml")) {
 					log.debug("Processing 1-color backgrounds " + f.getAbsolutePath());
 					List<Template> colors = loadColorsMapping(f);
 					for (Template color : colors) {
 						File colorFile = new File(f.getParent() + '/' + color.getFilename());
 						foundColors.put(color.getName(), colorFile);
 					}
-				}
-						File colorFile = new File(f.getParent() + '/' + color.getFilename());
-						foundColors.put(color.getName(), colorFile);
-					}
-				}
-				else if(nm.matches(".+\\.ttf")) {
+				} else if (nm.matches(".+\\.ttf")) {
 					Font font = loadFont(f);
 					foundFonts.put(font.getFamily(), font);
-				}
-				else if(nm.matches("normalbinding.*\\.png")) {
+				} else if (nm.matches("normalbinding.*\\.png")) {
 					foundBinding = f;
-				}
-				else if (nm.matches(".+\\.xml") && path.contains("/decorations/")) {
+				} else if (nm.matches(".+\\.xml") && path.contains("/decorations/")) {
 					String id = f.getName().substring(0, nm.lastIndexOf("."));
 					List<Decoration> spec = loadDecoration(f);
 					if (spec.size() == 1) {
@@ -116,8 +106,7 @@ public class McfResourceScanner {
 			return Font.createFont(Font.TRUETYPE_FONT, is);
 		} catch (FontFormatException e) {
 			throw new IOException(e);
-		}
-		finally {
+		} finally {
 			IOUtils.closeQuietly(is);
 		}
 	}
@@ -133,7 +122,7 @@ public class McfResourceScanner {
 		}
 		return Collections.emptyList();
 	}
-	
+
 	private static List<Decoration> loadDecoration(File f) {
 		Digester digester = new Digester();
 		DigesterConfiguratorImpl configurator = new DigesterConfiguratorImpl();
@@ -146,11 +135,10 @@ public class McfResourceScanner {
 		return null;
 	}
 
-
 	public File getImage(String id) {
 		return foundImages.get(id);
 	}
-	
+
 	public File getColorImage(String name) {
 		return foundColors.get(name);
 	}
