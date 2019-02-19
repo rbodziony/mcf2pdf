@@ -3,6 +3,8 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.pagebuild;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -14,6 +16,8 @@ import java.io.Writer;
 
 import net.sf.mcf2pdf.mcfelements.McfBorder;
 import net.sf.mcf2pdf.mcfelements.McfImage;
+import net.sf.mcf2pdf.mcfelements.McfCorner;
+import net.sf.mcf2pdf.mcfelements.McfCorners;
 import net.sf.mcf2pdf.mcfelements.util.FadingComposite;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 import net.sf.mcf2pdf.mcfelements.util.McfFileUtil;
@@ -183,6 +187,95 @@ public class PageImage implements PageDrawable {
 				leftOffset, topOffset, leftOffset + (int)Math.round(sw), topOffset + (int)Math.round(sh),
 				null);
 		
+		// draw corners
+				if (image.getArea().getCorners() != null) {
+
+					McfCorners corners = image.getArea().getCorners();
+					for (McfCorner corner : corners.getCorners()) {
+						if ("top-left".equals(corner.getWhere())) {
+							int length = context.toPixel(corner.getLength()) / 5;
+
+							g2d.setColor(new Color(0, 0, 0, 255));
+							g2d.setComposite(AlphaComposite.Clear);
+							// g2d.fillRect(0, 0, length, length);
+							g2d.setStroke(new BasicStroke(length));
+							g2d.drawArc(-length / 2, -length / 2, (int) (length * 2), (int) (length * 2), 90, 90);
+
+							g2d.setPaintMode();
+							g2d.setColor(borderColor);
+							// g2d.setColor(Color.GREEN);
+							if (borderWidth > 0) {
+								g2d.setStroke(new BasicStroke(borderWidth));
+								g2d.drawArc(borderWidth / 2, borderWidth / 2, (int) (length), (int) (length), 90, 90);
+							}
+						} else if ("top-right".equals(corner.getWhere())) {
+							int length = context.toPixel(corner.getLength()) / 5;
+
+							g2d.setColor(new Color(0, 0, 0, 255));
+							g2d.setComposite(AlphaComposite.Clear);
+							// g2d.fillRect(0, 0, length, length);
+							g2d.setStroke(new BasicStroke(length));
+							g2d.drawArc((int) (widthPixel + xAdd - length * 1.5), -length / 2, (int) (length * 2),
+									(int) (length * 2), 0, 90);
+
+							g2d.setPaintMode();
+							g2d.setColor(borderColor);
+							// g2d.setColor(Color.GREEN);
+							if (borderWidth > 0) {
+								g2d.setStroke(new BasicStroke(borderWidth));
+								g2d.drawArc((int) (widthPixel + xAdd - length - borderWidth / 2), borderWidth / 2, length,
+										length, 0, 90);
+							}
+						} else if ("bottom-left".equals(corner.getWhere())) {
+							int length = context.toPixel(corner.getLength()) / 5;
+
+							g2d.setColor(new Color(0, 0, 0, 255));
+							g2d.setComposite(AlphaComposite.Clear);
+							// g2d.fillRect(0, 0, length, length);
+							g2d.setStroke(new BasicStroke(length));
+							g2d.drawArc(-length / 2, (int) (heightPixel + yAdd - length * 1.5), (int) (length * 2),
+									(int) (length * 2), 180, 90);
+
+							g2d.setPaintMode();
+							g2d.setColor(borderColor);
+							// g2d.setColor(Color.GREEN);
+							if (borderWidth > 0) {
+								g2d.setStroke(new BasicStroke(borderWidth));
+								g2d.drawArc(borderWidth / 2, (int) (heightPixel + yAdd - length - borderWidth / 2),
+										(int) (length), (int) (length), 180, 90);
+							}
+						} else if ("bottom-right".equals(corner.getWhere())) {
+							int length = context.toPixel(corner.getLength()) / 5;
+
+							g2d.setColor(new Color(0, 0, 0, 255));
+							g2d.setComposite(AlphaComposite.Clear);
+							// g2d.fillRect(0, 0, length, length);
+							g2d.setStroke(new BasicStroke(length));
+							g2d.drawArc((int) (widthPixel + xAdd - length * 1.5), (int) (heightPixel + yAdd - length * 1.5),
+									(int) (length * 2), (int) (length * 2), 270, 90);
+
+							g2d.setPaintMode();
+							g2d.setColor(borderColor);
+							// g2d.setColor(Color.GREEN);
+							if (borderWidth > 0) {
+								g2d.setStroke(new BasicStroke(borderWidth));
+								g2d.drawArc((int) (widthPixel + xAdd - length - borderWidth / 2),
+										(int) (heightPixel + yAdd - length - borderWidth / 2), (int) (length), (int) (length),
+										270, 90);
+							}
+						} else {
+							context.getLog().warn("unknown where: " + corner.getWhere());
+						}
+					}
+					g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+							RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+					g2d.setComposite(FadingComposite.INSTANCE);
+					g2d.setPaintMode();
+				} else {
+					context.getLog().debug("no corners found");
+				}
+
 		// mask image
 		if (maskFile != null) {
 			int x = 0;
