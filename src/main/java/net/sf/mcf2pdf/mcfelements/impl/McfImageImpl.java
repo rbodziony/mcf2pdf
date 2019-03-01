@@ -24,7 +24,9 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 	private String fileName;
 	
 	private String fadingFile;
-	
+
+    private String passepartoutDesignElementId;
+
 	@Override
 	public ContentType getContentType() {
 		return ContentType.IMAGE;
@@ -97,6 +99,15 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 
 	public String getFadingFile() {
 		return fadingFile;
+	}
+
+	@Override
+	public String getPassePartoutDesignElementId() {
+		return passepartoutDesignElementId;
+	}
+
+	public void setPassepartoutDesignElementId(String passepartoutDesignElementId) {
+		this.passepartoutDesignElementId = passepartoutDesignElementId;
 	}
 
 	public void setFadingFile(String fadingFile) {

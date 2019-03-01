@@ -51,6 +51,10 @@ public class PageClipart implements PageDrawable {
 		File f = context.getClipart(clipart.getUniqueName());
 		if (f == null) {
 			context.getLog().warn("Clipart not found: " + clipart.getUniqueName());
+			f = context.getClipartDesignedElementId(clipart.getDesignElementId());
+		}
+		if (f == null) {
+			context.getLog().warn("Clipboard not found: "+clipart.getDesignElementId());
 			return null;
 		}
 		context.getLog().debug("Rendering clipart " + f);

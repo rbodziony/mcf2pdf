@@ -9,5 +9,6 @@ package net.sf.mcf2pdf.mcfelements;
 public interface McfClipart extends McfAreaContent {
 	
 	public String getUniqueName();
+	public String getDesignElementId();
 
 }

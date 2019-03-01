@@ -176,6 +176,11 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetProperties("decorations/decoration/fading/clipart");
 		digester.addSetNext("decorations/decoration/fading/clipart", "setClipart");
 
+		digester.addObjectCreate("decorations/decoration/clipart", Clipart.class);
+		digester.addSetProperties("decorations/decoration/clipart");
+		digester.addSetNext("decorations/decoration/clipart", "setClipart");
+
+
 		digester.addObjectCreate("decorations/decoration/fading/fotoarea", Fotoarea.class);
 		digester.addSetProperties("decorations/decoration/fading/fotoarea");
 		digester.addSetNext("decorations/decoration/fading/fotoarea", "setFotoarea");
@@ -284,6 +289,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "filenamemaster", "fileNameMaster" });
 		result.add(new String[] { "filename", "fileName" });
 		result.add(new String[] { "fading", "fadingFile" });
+		result.add(new String[] { "passepartoutDesignElementId","passepartoutDesignElementId"});
 		return result;
 	}
 

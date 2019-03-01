@@ -123,6 +123,11 @@ public final class PageRenderContext {
 	 * @return The CLP file containing the vector graphic, or <code>null</code> if not found.
 	 */
 	public File getClipart(String fileName) {
+		log.debug("grabbing Clippart "+fileName);
+		if(fileName == null)  {
+			log.debug("filename is null!");
+			return null;
+		}
 		Matcher m = PATTERN_CLIPART.matcher(fileName);
 		if (!m.matches())
 			return null;
@@ -216,5 +221,14 @@ public final class PageRenderContext {
 			return null;
 		}
 		return new McfFotoFrame(clipart, fading, config);
+	}
+
+	public File getClipartDesignedElementId(String designElementId) {
+	    return resources.getClipDesignedID(designElementId);
+	}
+
+
+	public String getFadingFromDesignedElementID(String passePartoutDesignElementId) {
+		return resources.passePartoutDesignElementId(passePartoutDesignElementId);
 	}
 }

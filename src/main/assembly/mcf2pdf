@@ -12,7 +12,7 @@ MCF_TEMP_DIR=~/.mcf
 #
 # Java Options. You can adjust the amount of reserved memory (RAM) here.
 #  
-MCF2PDF_JAVA_OPTS="-Xms64M -Xmx128M"
+MCF2PDF_JAVA_OPTS="-Xms64M -Xmx1024M"
 
 
 # check if this file has to be adjusted!

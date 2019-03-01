@@ -76,12 +76,25 @@ public class PageImage implements PageDrawable {
 		File maskFile = null;
 		File clipartFile = null;
 		Fotoarea fotoArea = null;
-		if (image.getFadingFile() != null) {
-			McfFotoFrame frame = context.getFotoFrame(image.getFadingFile());
+		if (image.getFadingFile() != null || image.getPassePartoutDesignElementId() != null) {
+			String filename = image.getFadingFile();
+			McfFotoFrame frame=null;
+			if(filename != null) {
+				frame = context.getFotoFrame(image.getFadingFile());
+			} //else frame = context.getFotoFrameFromDesignedElementID(image.getPassePartoutDesignElementId());
+			//McfFotoFrame frame = context.getFotoFrame(image.getFadingFile());
 			if (frame != null && frame.getFading() != null) {
+				context.getLog().debug("grabbing fadding from fotoframe " + frame.getFading());
 				maskFile = frame.getFading();
 			} else {
-				maskFile = context.getFading(image.getFadingFile());
+				context.getLog().debug("grabbing fadding from image");
+				String faddingfilename = image.getFadingFile();
+				if(faddingfilename == null) {
+					context.getLog().debug("grabing fadding from PassePartout="+image.getPassePartoutDesignElementId());
+					faddingfilename = "fading_"+context.getFadingFromDesignedElementID(image.getPassePartoutDesignElementId());
+				}
+				maskFile = context.getFading(faddingfilename);
+
 			}
 			if (frame != null && frame.getClipart() != null) {
 				clipartFile = frame.getClipart();
