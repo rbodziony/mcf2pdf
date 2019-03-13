@@ -8,6 +8,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.font.TextAttribute;
+import java.awt.geom.AffineTransform;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.Collections;
@@ -85,7 +86,13 @@ public class FormattedTextParagraph {
 			float fontSizeInch = text.getFontSize() / 72.0f;
 			
 			map.put(TextAttribute.SIZE, fontSizeInch * context.getTargetDpi());
+			Font fontOriginal = font;
 			font = font.deriveFont(map);
+			if (map.get(TextAttribute.WEIGHT) == TextAttribute.WEIGHT_BOLD && font.getFontName().equals(fontOriginal.getFontName())) {
+				AffineTransform afT = new AffineTransform();
+				afT.setToScale(context.getSX(), 1);
+				font = font.deriveFont(afT);
+			}
 			map.put(TextAttribute.FONT, font);
 
 			if (text.getText().length() > 0) {

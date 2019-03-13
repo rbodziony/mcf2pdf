@@ -17,14 +17,8 @@ public class PageBinding implements PageDrawable {
 
 	private BufferedImage bindingImg;
 
-	private float pageWidthMM;
-
-	private float pageHeightMM;
-
-	public PageBinding(File fBindingImg, float pageWidthMM, float pageHeightMM) throws IOException {
+	public PageBinding(File fBindingImg) throws IOException {
 		bindingImg = ImageUtil.readImage(fBindingImg);
-		this.pageWidthMM = pageWidthMM;
-		this.pageHeightMM = pageHeightMM;
 	}
 
 	@Override
@@ -33,27 +27,25 @@ public class PageBinding implements PageDrawable {
 	}
 
 	@Override
-	public void renderAsSvgElement(Writer writer,	PageRenderContext context) throws IOException {
+	public void renderAsSvgElement(Writer writer, PageRenderContext context) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
+			Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
 		context.getLog().debug("Rendering page binding");
-		float widthMM = pageWidthMM / 16.0f;
+		
+		int width = Math.round(widthPX / 16.0f);
 
-		int width = context.toPixel(widthMM);
-		int height = context.toPixel(pageHeightMM);
-
-		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage img = new BufferedImage(width, heightPX, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 
-		g2d.drawImage(bindingImg, 0, 0, width, height, 0, 0, bindingImg.getWidth(), bindingImg.getHeight(), null);
+		g2d.drawImage(bindingImg, 0, 0, width, heightPX, 0, 0, bindingImg.getWidth(), bindingImg.getHeight(), null);
 		g2d.dispose();
 
-		drawOffsetPixels.x = context.toPixel((pageWidthMM - widthMM) / 2.0f);
+		drawOffsetPixels.x = Math.round((widthPX - width) / 2.0f);
 		drawOffsetPixels.y = 0;
 
 		return img;

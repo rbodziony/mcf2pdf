@@ -8,6 +8,7 @@ import net.sf.mcf2pdf.mcfelements.McfClipart;
 public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfClipart {
 	
 	private String uniqueName;
+	private String designElementId;
 
 	@Override
 	public ContentType getContentType() {
@@ -21,6 +22,9 @@ public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfCli
 	public void setUniqueName(String uniqueName) {
 		this.uniqueName = uniqueName;
 	}
+
+	public void setDesignElementId(String designElementId) {this.designElementId = designElementId;}
+	public String getDesignElementId() {return designElementId;}
 
 
 }

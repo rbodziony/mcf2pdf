@@ -60,7 +60,7 @@ public interface PageDrawable {
 	 * @throws IOException If any I/O related problem occurs, e.g. reading an
 	 * image file.
 	 */
-	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException;
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels, int widthPX, int heightPX) throws IOException;
 	
 	/**
 	 * Returns the Z position of this drawable. This is mostly indicated by the

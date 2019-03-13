@@ -14,7 +14,6 @@ import java.util.List;
 
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
-import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 
 
 public class PageBackground implements PageDrawable {
@@ -41,17 +40,11 @@ public class PageBackground implements PageDrawable {
 
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context,
-			Point drawOffsetPixels) throws IOException {
+			Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
 		File fLeft = extractBackground(leftBg, context);
 		File fRight = extractBackground(rightBg, context);
 
-		McfAlbumType albumType = context.getAlbumType();
-
-		float widthMM = (albumType.getUsableWidth() + albumType.getBleedMargin()) / 10.0f * 2;
-		float heightMM = (albumType.getUsableHeight() + albumType.getBleedMargin() * 2) / 10.0f;
-
-		BufferedImage img = new BufferedImage(context.toPixel(widthMM),
-				context.toPixel(heightMM), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage img = new BufferedImage(widthPX, heightPX, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);

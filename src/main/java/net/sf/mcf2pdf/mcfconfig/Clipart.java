@@ -4,6 +4,7 @@ public class Clipart {
 	private String file;
 	private String designElementType; 
 	private double ratio;
+	private String designElementId;
 	
 	public String getFile() {
 		return file;
@@ -23,4 +24,6 @@ public class Clipart {
 	public void setRatio(double ratio) {
 		this.ratio = ratio;
 	}
+	public void setDesignElementId(String designElementId) {this.designElementId=designElementId;}
+	public String getDesignElementId() {return designElementId;}
 }

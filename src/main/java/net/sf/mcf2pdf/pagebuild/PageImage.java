@@ -59,7 +59,7 @@ public class PageImage implements PageDrawable {
 	}
 
 	@Override
-	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
+	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
 		int widthPixel = context.toPixel(image.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(image.getArea().getHeight() / 10.0f);
 		if (image.getFileName() == null || "".equals(image.getFileName())) {
@@ -76,12 +76,25 @@ public class PageImage implements PageDrawable {
 		File maskFile = null;
 		File clipartFile = null;
 		Fotoarea fotoArea = null;
-		if (image.getFadingFile() != null) {
-			McfFotoFrame frame = context.getFotoFrame(image.getFadingFile());
+		if (image.getFadingFile() != null || image.getPassePartoutDesignElementId() != null) {
+			String filename = image.getFadingFile();
+			McfFotoFrame frame=null;
+			if(filename != null) {
+				frame = context.getFotoFrame(image.getFadingFile());
+			} //else frame = context.getFotoFrameFromDesignedElementID(image.getPassePartoutDesignElementId());
+			//McfFotoFrame frame = context.getFotoFrame(image.getFadingFile());
 			if (frame != null && frame.getFading() != null) {
+				context.getLog().debug("grabbing fadding from fotoframe " + frame.getFading());
 				maskFile = frame.getFading();
 			} else {
-				maskFile = context.getFading(image.getFadingFile());
+				context.getLog().debug("grabbing fadding from image");
+				String faddingfilename = image.getFadingFile();
+				if(faddingfilename == null) {
+					context.getLog().debug("grabing fadding from PassePartout="+image.getPassePartoutDesignElementId());
+					faddingfilename = "fading_"+context.getFadingFromDesignedElementID(image.getPassePartoutDesignElementId());
+				}
+				maskFile = context.getFading(faddingfilename);
+
 			}
 			if (frame != null && frame.getClipart() != null) {
 				clipartFile = frame.getClipart();

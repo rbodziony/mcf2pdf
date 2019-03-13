@@ -5,7 +5,7 @@ public class Fading {
 	private String designElementType;
 	private double ratio;
 	private double keepAspectRatio;
-	
+	private String designElementId;
 	private Clipart clipart;
 	private Fotoarea fotoarea;
 	
@@ -21,6 +21,8 @@ public class Fading {
 	public void setDesignElementType(String designElementType) {
 		this.designElementType = designElementType;
 	}
+	public String getDesignElementId() { return designElementId;}
+	public void setDesignElementId(String designElementId){ this.designElementId=designElementId;}
 	public double getRatio() {
 		return ratio;
 	}

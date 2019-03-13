@@ -26,4 +26,5 @@ public interface McfImage extends McfAreaContent {
 	
 	public String getFadingFile();
 
+	public String getPassePartoutDesignElementId();
 }
