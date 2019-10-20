@@ -12,6 +12,7 @@ import net.sf.mcf2pdf.mcfelements.McfCorners;
 public class McfCornersImpl implements McfCorners {
 
 	private final static Log log = LogFactory.getLog(McfCornersImpl.class);
+	
 	private List<McfCorner> corners = new Vector<McfCorner>();
 
 	@Override

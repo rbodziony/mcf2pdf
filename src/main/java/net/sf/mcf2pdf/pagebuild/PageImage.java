@@ -63,6 +63,9 @@ public class PageImage implements PageDrawable {
 
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
+		context.getLog().debug("Rendering image: " //
+				+ image.getArea().getLeft() + '/' + image.getArea().getTop() + ' ' //
+				+ image.getArea().getWidth() + '/' + image.getArea().getHeight());
 		int widthPixel = context.toPixel(image.getArea().getWidth() / 10.0f);
 		int heightPixel = context.toPixel(image.getArea().getHeight() / 10.0f);
 		if (image.getFileName() == null || "".equals(image.getFileName())) {
@@ -101,6 +104,7 @@ public class PageImage implements PageDrawable {
 		// get image resolution; load base image into memory
 		float[] res = ImageUtil.getImageResolution(baseImage);
 		BufferedImage baseImg = ImageUtil.readImage(baseImage);
+		context.getLog().debug("image size: " + baseImg.getWidth() + '/' + baseImg.getHeight());
 
 		double tmmX = image.getArea().getWidth() / 10.0f;
 		double tmmY = image.getArea().getHeight() / 10.0f;
@@ -109,6 +113,7 @@ public class PageImage implements PageDrawable {
 		double resY = res[1] / ImageUtil.MM_PER_INCH;
 
 		double scale = image.getScale() / ImageUtil.SQRT_2;
+		context.getLog().debug("scale: " + scale);
 
 		double sw = (tmmX * resX) / scale;
 		double sh = (tmmY * resY) / scale;
@@ -137,6 +142,7 @@ public class PageImage implements PageDrawable {
 
 		// create image without rotation
 		BufferedImage img = new BufferedImage(widthPixel + xAdd, heightPixel + yAdd, BufferedImage.TYPE_INT_ARGB);
+		context.getLog().debug("g2d: " + img.getWidth() + '/' + img.getHeight());
 		Graphics2D g2d = img.createGraphics();
 
 		int imgLeft = 0, imgTop = 0;
@@ -162,8 +168,8 @@ public class PageImage implements PageDrawable {
 			g2d.fillRect(bleft, btop, widthPixel + 2 * borderWidth, heightPixel + 2 * borderWidth);
 		}
 
-		int leftOffset = -image.getLeft();
-		int topOffset = -image.getTop();
+		int leftOffset = (int) (-image.getLeft() / image.getScale());
+		int topOffset = (int) (-image.getTop() / image.getScale());
 
 		drawOffsetPixels.x = -imgLeft;
 		drawOffsetPixels.y = -imgTop;
@@ -179,13 +185,18 @@ public class PageImage implements PageDrawable {
 			sh = sh * fotoArea.getHeight();
 		}
 
+		context.getLog().debug("eff image size: " //
+				+ imgLeft + '/' + imgTop + ' ' //
+				+ effImgWidth + '/' + effImgHeight + ' ' //
+				+ leftOffset + '/' + topOffset + ' ' //
+				+ sw + '/' + sh + ' ' //
+		);
 		// draw main image
 		g2d.drawImage(baseImg, imgLeft, imgTop, imgLeft + effImgWidth, imgTop + effImgHeight, leftOffset, topOffset,
 				leftOffset + (int) Math.round(sw), topOffset + (int) Math.round(sh), null);
 
 		// draw corners
 		if (image.getArea().getCorners() != null) {
-
 			McfCorners corners = image.getArea().getCorners();
 			for (McfCorner corner : corners.getCorners()) {
 				if ("top-left".equals(corner.getWhere())) {

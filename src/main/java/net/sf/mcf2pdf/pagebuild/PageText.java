@@ -161,7 +161,7 @@ public class PageText implements PageDrawable {
 
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context, Point drawOffsetPixels) throws IOException {
-		context.getLog().debug("Rendering text");
+		context.getLog().debug("Rendering text: " + text.getArea().getWidth() + '/' + text.getArea().getHeight());
 		int width = context.toPixel(text.getArea().getWidth() / 10.0f);
 		int height = context.toPixel(text.getArea().getHeight() / 10.0f);
 

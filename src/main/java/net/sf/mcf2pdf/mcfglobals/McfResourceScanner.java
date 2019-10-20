@@ -93,7 +93,7 @@ public class McfResourceScanner {
 					if (spec.size() == 1) {
 						foundDecorations.put(id, spec.get(0).getFading());
 					} else {
-						log.warn("Failed to load decorations from: " + path);
+						log.warn("Failed to load decorations from: " + path + " elements: " + spec.size());
 					}
 				}
 			}
