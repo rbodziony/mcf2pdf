@@ -30,7 +30,7 @@ public final class FadingComposite implements Composite {
 	}
 
 
-	private static boolean validateColorModel(ColorModel cm) {
+	 static boolean validateColorModel(ColorModel cm) {
 		if (cm instanceof DirectColorModel
 				&& cm.getTransferType() == DataBuffer.TYPE_INT) {
 			DirectColorModel directCM = (DirectColorModel)cm;
