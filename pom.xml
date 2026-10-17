@@ -2,15 +2,16 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.florian-albrecht.tools</groupId>
 	<artifactId>mcf2pdf</artifactId>
-	<version>0.7.5</version>
+	<version>0.7.6-SNAPSHOT</version>
 	<name>mcf2pdf</name>
 	<description>mcf2pdf enables you to convert photobooks generated with the My CEWE Photobook software to PDF files for preview.</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<github.global.server>github</github.global.server>
-		<batik.version>1.16</batik.version>
-		<fop.version>2.9</fop.version>
+		<batik.version>1.19</batik.version>
+		<fop.version>2.11</fop.version>
+		<imageio.version>3.13.0</imageio.version>	
 	</properties>
 
 	<scm>
@@ -102,7 +103,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -110,18 +111,18 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-batik</artifactId>
-			<version>3.9.4</version>
+			<version>${imageio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-core</artifactId>
-			<version>3.9.4</version>
+			<version>${imageio.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-tiff</artifactId>
-			<version>3.9.4</version>
+			<version>${imageio.version}</version>
 		</dependency>
 
 		<dependency>
@@ -134,6 +135,12 @@
             <artifactId>mockito-core</artifactId>
             <version>4.5.1</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.1.0</version>
         </dependency>
 
     </dependencies>
@@ -158,13 +165,13 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.3</version>
+				<version>3.0.1</version>
 			</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.6.1</version>
 				<executions>
 					<execution>
 						<id>prepare-classpath-win</id>
@@ -225,7 +232,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.2</version>
+				<version>3.7.1</version>
 				<executions>
 					<execution>
 						<id>package-assembly</id>
@@ -284,7 +291,7 @@
 											maven-dependency-plugin
 										</artifactId>
 										<versionRange>
-											[2.4,)
+											[3.6.1,)
 										</versionRange>
 										<goals>
 											<goal>build-classpath</goal>

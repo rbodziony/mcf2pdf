@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
@@ -24,6 +23,8 @@ import net.sf.mcf2pdf.mcfelements.McfImage;
 import net.sf.mcf2pdf.mcfelements.McfImageBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfText;
+import net.sf.mcf2pdf.mcfelements.McfxProject;
+import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
@@ -153,6 +154,40 @@ public class Mcf2FoConverter {
 	 * has an invalid format.
 	 */
 	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum, int maxPageNo, double sx) throws IOException, SAXException {
+		convert(mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo, sx, null);
+	}
+
+	/**
+	 * Performs conversion of the given MCF input file to XSL-FO data.
+	 * Supports both .mcf files and native CEWE .mcfx databases.
+	 *
+	 * @param mcfFile MCF input file (.mcf) or database file (.mcfx).
+	 * @param xslFoOut Stream to write the XSL-FO data to.
+	 * @param dpi Resolution, in dots per inch, to use for image rendering. The
+	 * higher the value, the better the quality, but the more RAM is consumed.
+	 * @param maxPageNo Renders only up to the given page number (e.g. for testing settings).
+	 * A value of -1 indicates to render all pages.
+	 * @param dbFilename Optional MCF entry selection when a database contains
+	 * more than one .mcf file.
+	 *
+	 * @throws IOException If any I/O related problem occurs, e.g. reading the
+	 * input file or any referenced image files.
+	 *
+	 * @throws SAXException If any XML related problem occurs, e.g. the input file
+	 * has an invalid format.
+	 */
+	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum, int maxPageNo, double sx, String dbFilename) throws IOException, SAXException {
+		if (mcfFile.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".mcfx")) {
+			try (McfxProject project = McfxProject.extract(mcfFile, dbFilename)) {
+				convertMcf(project.getMcfFile(), xslFoOut, dpi, binding, pageNum, maxPageNo, sx);
+			}
+		} else {
+			convertMcf(mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo, sx);
+		}
+	}
+
+	private void convertMcf(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum,
+			int maxPageNo, double sx) throws IOException, SAXException {
 		// build MCF DOM
 		log.debug("Reading MCF file");
 		McfFotobook book = new FotobookBuilder().readFotobook(mcfFile);

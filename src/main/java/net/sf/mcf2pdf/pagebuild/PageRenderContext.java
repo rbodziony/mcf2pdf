@@ -231,17 +231,16 @@ public final class PageRenderContext {
 
 	public McfFotoFrame getFotoFrameViaDesignElementID(String passepartoutDesignElementId) {
 
-		//String fotoframeName = m.group(1);
 		Fading config = resources.getDecoration(passepartoutDesignElementId);
+		if (config == null) {
+			log.warn("Could not get required resources for fotoframe: via passepartoutDesignElementId= " + passepartoutDesignElementId);
+			return null;
+		}
 		// fix getting fadding and clippart
 		File fading = resources.getClip(config.getFile().split("\\.")[0]);
 		File clipart = null;
 		if(config.getClipart()!=null) {
 			clipart = resources.getClip(config.getClipart().getFile().split("\\.")[0]);
-		}
-		if (config == null) {
-			log.warn("Could not get required resources for fotoframe: via passepartoutDesignElementId= " + passepartoutDesignElementId);
-			return null;
 		}
 		return new McfFotoFrame(clipart, fading, config);
 	}
