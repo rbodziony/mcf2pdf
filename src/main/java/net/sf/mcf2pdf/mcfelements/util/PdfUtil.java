@@ -9,13 +9,9 @@ package net.sf.mcf2pdf.mcfelements.util;
 
 import java.io.*;
 
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +22,8 @@ import org.apache.fop.apps.FopFactory;
 import org.apache.fop.apps.FormattingResults;
 import org.apache.fop.apps.MimeConstants;
 import org.apache.fop.apps.PageSequenceResults;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * Utility class for working with PDFs.
@@ -42,7 +40,7 @@ public class PdfUtil {
 	 * @param dpi the DPI resolution to use for bitmaps in the PDF
 	 * @throws IOException In case of an I/O problem
 	 * @throws FOPException In case of a FOP problem
-	 * @throws TransformerException In case of XML transformer problem
+	 * @throws TransformerException In case of XML processing problem
 	 */
 	@SuppressWarnings("rawtypes")
 	public static void convertFO2PDF(InputStream fo, OutputStream pdf, int dpi) throws IOException,
@@ -63,19 +61,13 @@ public class PdfUtil {
 		// Construct fop with desired output format
 		Fop fop = fopFactory.newFop(MimeConstants.MIME_PDF, foUserAgent, out);
 
-		// Setup JAXP using identity transformer
-		TransformerFactory factory = TransformerFactory.newInstance();
-		Transformer transformer = factory.newTransformer(); // identity
-																												// transformer
-
-		// Setup input stream
-		Source src = new StreamSource(fo);
-
-		// Resulting SAX events (the generated FO) must be piped through to FOP
-		Result res = new SAXResult(fop.getDefaultHandler());
-
-		// Start XSLT transformation and FOP processing
-		transformer.transform(src, res);
+		try {
+			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+			parserFactory.setNamespaceAware(true);
+			parserFactory.newSAXParser().parse(new InputSource(fo), fop.getDefaultHandler());
+		} catch (ParserConfigurationException | SAXException e) {
+			throw new TransformerException("Failed to parse XSL-FO input", e);
+		}
 
 		// Result processing
 		FormattingResults foResults = fop.getResults();

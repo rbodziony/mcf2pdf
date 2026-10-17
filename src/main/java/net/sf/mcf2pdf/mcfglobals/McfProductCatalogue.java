@@ -20,7 +20,7 @@ import org.apache.commons.digester3.Digester;
 import org.xml.sax.SAXException;
 
 /**
- * TODO comment
+ * TODO
  */
 public abstract class McfProductCatalogue {
 

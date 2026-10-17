@@ -54,7 +54,15 @@ public class PageNum implements PageDrawable {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
+	public int getLeftPX() {
+		return leftPX;
+	}
+
+	public int getTopPX() {
+		return topPX;
+	}
+
 	private void setPosition() {
 		int offsetXCenter = (side.equals("right")) ? Math.round(pageWidth / 2.0f) : 0;
 		int offsetXOutside = (side.equals("right")) ? (pageWidth - 2 * pageNum.getHorizontalMargin()) : 0;
