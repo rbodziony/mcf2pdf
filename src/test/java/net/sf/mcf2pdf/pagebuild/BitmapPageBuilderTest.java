@@ -19,6 +19,8 @@ import java.awt.Point;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Vector;
+
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import net.sf.mcf2pdf.pagebuild.BitmapPageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageDrawable;
@@ -62,7 +64,7 @@ public class BitmapPageBuilderTest {
         verify(docBuilder).addPageElement(anyString());
     }
 
-    @Test(expected = NullPointerException.class) // temp dir exits fix this
+    @Test(expected = IIOException.class) // temp dir exits fix this
     public void testAddToDocumentBuilderWithIOException() throws IOException {
         XslFoDocumentBuilder docBuilder = mock(XslFoDocumentBuilder.class);
         File wrongpath = new File("/aaaa/aaa/aa");
