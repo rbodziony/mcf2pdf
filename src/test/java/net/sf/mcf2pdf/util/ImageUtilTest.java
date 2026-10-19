@@ -50,6 +50,15 @@ public class ImageUtilTest {
 	}
 
 	@Test
+	public void testNegativeViewBoxRendersWithoutCropping() throws Exception {
+		BufferedImage image = ImageUtil.loadClpFile(
+				new File("./src/test/resources/negative-viewbox.svg"), 200, 200);
+
+		Assert.assertTrue((image.getRGB(60, 100) >>> 24) > 0);
+		Assert.assertEquals(0, image.getRGB(180, 100) >>> 24);
+	}
+
+	@Test
 	public void testReplaceColorsPreservesAlphaAndUnmappedPixels() {
 		BufferedImage image = new BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB);
 		image.setRGB(0, 0, new Color(255, 255, 255, 221).getRGB());
