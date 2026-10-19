@@ -16,7 +16,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -218,6 +220,26 @@ public final class ImageUtil {
 
 		g2d.dispose();
 		return img;
+	}
+
+	public static void replaceColors(BufferedImage image, Map<Color, Color> colorMappings) {
+		if (colorMappings.isEmpty())
+			return;
+
+		Map<Integer, Integer> rgbMappings = new HashMap<Integer, Integer>();
+		for (Map.Entry<Color, Color> mapping : colorMappings.entrySet()) {
+			rgbMappings.put(mapping.getKey().getRGB() & 0x00ffffff,
+					mapping.getValue().getRGB() & 0x00ffffff);
+		}
+
+		for (int y = 0; y < image.getHeight(); y++) {
+			for (int x = 0; x < image.getWidth(); x++) {
+				int argb = image.getRGB(x, y);
+				Integer replacementRgb = rgbMappings.get(argb & 0x00ffffff);
+				if (replacementRgb != null)
+					image.setRGB(x, y, (argb & 0xff000000) | replacementRgb);
+			}
+		}
 	}
 
 	 /**

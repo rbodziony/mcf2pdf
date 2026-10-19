@@ -68,6 +68,7 @@ public class PageClipart implements PageDrawable {
 
 		drawOffsetPixels.x = drawOffsetPixels.y = 0;
 		BufferedImage loadedClip = ImageUtil.loadClpFile(f, widthPixel, heightPixel);
+		ImageUtil.replaceColors(loadedClip, clipart.getColorMappings());
 		// apply rotation
 		if (clipart.getArea().getRotation() != 0) {
 			loadedClip = ImageUtil.rotateImage(loadedClip, (float)Math.toRadians(clipart.getArea().getRotation()), drawOffsetPixels);

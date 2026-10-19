@@ -80,4 +80,18 @@ public class DigesterConfiguratorImplTest {
         McfFotobook fotobook = (McfFotobook) root;
         assertNotNull(fotobook);
     }
+
+    @Test
+    public void testParsesClipartColorMappings() throws IOException, SAXException {
+        String xml = "<fotobook><page><area><clipart designElementId=\"120115\">" +
+                "<ClipartConfiguration applySpotColor=\"0\"><colors>" +
+                "<color source=\"#ffffff\" target=\"#aabb91\"/>" +
+                "</colors></ClipartConfiguration></clipart></area></page></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+        McfClipart clipart = (McfClipart) fotobook.getPages().get(0).getAreas().get(0).getContent();
+
+        assertEquals(new Color(0xaabb91), clipart.getColorMappings().get(Color.WHITE));
+    }
 }

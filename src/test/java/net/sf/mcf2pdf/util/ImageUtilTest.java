@@ -1,7 +1,10 @@
 package net.sf.mcf2pdf.util;
 
-import java.io.File;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.io.File;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -44,6 +47,20 @@ public class ImageUtilTest {
 	public void testSVGShouldwork() throws Exception {
 		BufferedImage res = ImageUtil.readImage(new File("./src/test/resources/test.svg"));
 		Assert.assertNotNull(res);
+	}
+
+	@Test
+	public void testReplaceColorsPreservesAlphaAndUnmappedPixels() {
+		BufferedImage image = new BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB);
+		image.setRGB(0, 0, new Color(255, 255, 255, 221).getRGB());
+		image.setRGB(1, 0, new Color(12, 34, 56, 255).getRGB());
+		Map<Color, Color> mappings = new HashMap<Color, Color>();
+		mappings.put(Color.WHITE, new Color(0xaabb91));
+
+		ImageUtil.replaceColors(image, mappings);
+
+		Assert.assertEquals(new Color(170, 187, 145, 221), new Color(image.getRGB(0, 0), true));
+		Assert.assertEquals(new Color(12, 34, 56, 255), new Color(image.getRGB(1, 0), true));
 	}
 
 }
