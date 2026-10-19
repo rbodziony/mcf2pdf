@@ -136,9 +136,14 @@ public final class PageRenderContext {
 		Fading config = resources.getDecoration(designElementId);
 		File clipart = null;
 		if(config != null) {
-			clipart = resources.getClip(config.getClipart().getFile().split("\\.")[0]);
+			clipart = resources.getClip(removeExtension(config.getClipart().getFile()));
 		}
 		return clipart;
+	}
+
+	private String removeExtension(String fileName) {
+		int extensionIndex = fileName.lastIndexOf('.');
+		return extensionIndex < 0 ? fileName : fileName.substring(0, extensionIndex);
 	}
 
 	/**
@@ -237,10 +242,10 @@ public final class PageRenderContext {
 			return null;
 		}
 		// fix getting fadding and clippart
-		File fading = resources.getClip(config.getFile().split("\\.")[0]);
+		File fading = resources.getClip(removeExtension(config.getFile()));
 		File clipart = null;
 		if(config.getClipart()!=null) {
-			clipart = resources.getClip(config.getClipart().getFile().split("\\.")[0]);
+			clipart = resources.getClip(removeExtension(config.getClipart().getFile()));
 		}
 		return new McfFotoFrame(clipart, fading, config);
 	}
