@@ -1,6 +1,13 @@
 package net.sf.mcf2pdf.pagebuild;
 
+import net.sf.mcf2pdf.mcfelements.impl.McfAreaImpl;
 import net.sf.mcf2pdf.mcfelements.impl.McfTextImpl;
+import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
+
+import java.awt.Point;
+import java.awt.image.BufferedImage;
+import java.util.Collections;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -198,8 +205,67 @@ public class PageTextTest {
 		PageText test02 = new PageText(text);
 		Assert.assertTrue(test02.getParas().size()==24);
 		Assert.assertTrue("First span should be First",test02.getParas().get(0).getTexts().get(1).getText().equalsIgnoreCase("01 SPAN"));
-		Assert.assertTrue("Last span should be LAst",test02.getParas().get(22).getTexts().get(1).getText().equalsIgnoreCase("15 SPAN"));
+				Assert.assertTrue("Last span should be LAst",test02.getParas().get(22).getTexts().get(1).getText().equalsIgnoreCase("15 SPAN"));
+			}
+
+			@Test
+			public void test_012VerticalCenterIgnoresTableMarginTop() throws Exception {
+		BufferedImage centered = renderText("ALIGNVCENTER,ALIGNHCENTER");
+		int[] rows = textRows(centered);
+		int gapTop = rows[0];
+		int gapBottom = centered.getHeight() - 1 - rows[1];
+
+		Assert.assertTrue("text must be drawn", rows[1] > rows[0]);
+		// glyph bounds differ slightly from the layout box (descent/leading), so allow some slack
+		Assert.assertTrue("gaps top=" + gapTop + " bottom=" + gapBottom, Math.abs(gapTop - gapBottom) <= 10);
+		Assert.assertTrue("must not use table margin-top 165, top gap=" + gapTop, gapTop < 100);
 	}
 
+	@Test
+	public void test_013WithoutVerticalCenterUsesTableMarginTop() throws Exception {
+		BufferedImage top = renderText("ALIGNHCENTER");
+		int[] rows = textRows(top);
+
+		Assert.assertTrue("text must be drawn", rows[1] > rows[0]);
+		Assert.assertTrue("text starts at the table margin, first row=" + rows[0], rows[0] >= 160);
+	}
+
+	private static BufferedImage renderText(String alignment) throws Exception {
+		McfTextImpl text = new McfTextImpl();
+		text.setHtmlContent("<html><body style=\" font-family:'Serif'; font-size:16pt;\">"
+				+ "<table style=\"-qt-table-type: root; margin-top:165px; margin-bottom:5px; margin-left:5px; margin-right:5px;\">"
+				+ "<tr><td><p align=\"center\" style=\" margin-top:0px; margin-bottom:0px;\"><span style=\" font-size:16pt; color:#000000;\">3 listopada 2003</span></p>"
+				+ "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px;\"><span style=\" font-size:16pt; color:#000000;\">Krysia i jej prababcia</span></p>"
+				+ "</td></tr></table></body></html>");
+		text.setAlignment(alignment);
+		text.setIndentMargin(5);
+		McfAreaImpl area = new McfAreaImpl();
+		area.setLeft(0);
+		area.setTop(0);
+		area.setWidth(953);
+		area.setHeight(472);
+		text.setArea(area);
+
+		PageRenderContext context = new PageRenderContext(100, 1.0, new McfResourceScanner(Collections.emptyList()), null);
+		return new PageText(text).renderAsBitmap(context, new Point(0, 0), 0, 0);
+	}
+
+	/** Returns the first and last pixel row containing any non-transparent pixel. */
+	private static int[] textRows(BufferedImage img) {
+		int first = -1;
+		int last = -1;
+		for (int y = 0; y < img.getHeight(); y++) {
+			for (int x = 0; x < img.getWidth(); x++) {
+				if ((img.getRGB(x, y) >>> 24) != 0) {
+					if (first < 0) {
+						first = y;
+					}
+					last = y;
+					break;
+				}
+			}
+		}
+		return new int[] { first, last };
+	}
 
 }

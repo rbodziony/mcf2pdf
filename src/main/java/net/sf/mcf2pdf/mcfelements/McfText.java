@@ -18,4 +18,7 @@ public interface McfText extends McfAreaContent {
 
 	public int getBackgroundColorAlpha();
 
+	/** The raw textFormat Alignment attribute, e.g. "ALIGNVCENTER,ALIGNHCENTER"; may be null. */
+	public String getAlignment();
+
 }

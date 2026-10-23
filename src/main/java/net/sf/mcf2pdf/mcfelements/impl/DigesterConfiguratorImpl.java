@@ -340,6 +340,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "backgroundColor", "backgroundColorAlpha" });
 		result.add(new String[] { "VerticalIndentMargin", "verticalIndentMargin" });
 		result.add(new String[] { "IndentMargin", "indentMargin" });
+		result.add(new String[] { "Alignment", "alignment" });
 		return result;
 	}
 

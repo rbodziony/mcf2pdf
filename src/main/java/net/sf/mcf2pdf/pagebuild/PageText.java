@@ -224,13 +224,28 @@ public class PageText implements PageDrawable {
 		int curY = marginTop;
 		int x = context.toPixel(text.getIndentMargin() / 10.0f);
 
+		Rectangle rc = new Rectangle(x, 0, width , height);
+
+		// CEWE centres the whole text block; the table margin-top is only a cached layout value
+		if (text.getAlignment() != null && text.getAlignment().contains("ALIGNVCENTER")) {
+			BufferedImage scratch = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D sg = scratch.createGraphics();
+			int textBottom = 0;
+			Rectangle measureRc = new Rectangle(x, 0, width, Integer.MAX_VALUE / 2);
+			for (FormattedTextParagraph para : paras) {
+				textBottom = drawParagraph(para, sg, measureRc, textBottom, context);
+			}
+			sg.dispose();
+			if (textBottom < height) {
+				curY = (height - textBottom) / 2;
+			}
+		}
+
 		// background color?
 		if (text.getArea().getBackgroundColor() != null) {
 			graphics.setColor(text.getArea().getBackgroundColor());
 			graphics.fillRect(0, 0, width, height);
 		}
-
-		Rectangle rc = new Rectangle(x, 0, width , height);
 
 		for (FormattedTextParagraph para : paras) {
 			curY = drawParagraph(para, graphics, rc, curY, context);
