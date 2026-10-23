@@ -298,6 +298,8 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "fading", "fading" });
 		result.add(new String[] { "hue", "hue" });
 		result.add(new String[] { "rotation", "rotation" });
+		result.add(new String[] { "alignment", "alignment" });
+		result.add(new String[] { "type", "type" });
 		return result;
 	}
 

@@ -17,9 +17,21 @@ public class McfBackgroundImpl implements McfBackground {
 
 	private int layout;
 
-	private int Hue;
-	private int Fading;
+	// -1 means "not a multicolor background", as in CEWE
+	private int Hue = -1;
+	private int Fading = -1;
 	private int Rotation;
+
+	private int alignment;
+
+	@Override
+	public int getAlignment() {
+		return alignment;
+	}
+
+	public void setAlignment(int alignment) {
+		this.alignment = alignment;
+	}
 	
 	public McfPage getPage() {
 		return page;
