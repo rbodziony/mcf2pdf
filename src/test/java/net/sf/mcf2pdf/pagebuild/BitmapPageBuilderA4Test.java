@@ -78,6 +78,24 @@ public class BitmapPageBuilderA4Test {
 	}
 
 	@Test
+	public void splitModeKeepsOriginalSizeWhenTargetIsHalfSpread() throws IOException {
+		BitmapPageBuilder b = spread();
+		b.setOutputPage(200, 200, true, true, true);
+		b.addToDocumentBuilder(docBuilder);
+
+		assertEquals(2, emitted.size());
+		BufferedImage left = ImageIO.read(new File(emitted.get(0)));
+		BufferedImage right = ImageIO.read(new File(emitted.get(1)));
+		assertEquals(200, left.getWidth());
+		assertEquals(200, left.getHeight());
+		// no white border: the half fills the whole page
+		assertDominant(Color.RED, left.getRGB(2, 2));
+		assertDominant(Color.RED, left.getRGB(197, 197));
+		assertDominant(Color.BLUE, right.getRGB(2, 2));
+		assertDominant(Color.BLUE, right.getRGB(197, 197));
+	}
+
+	@Test
 	public void splitModeSkipsSuppressedHalves() throws IOException {
 		BitmapPageBuilder b = spread();
 		b.setOutputPage(210, 297, true, false, true);

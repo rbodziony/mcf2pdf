@@ -55,6 +55,7 @@ public class Main {
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
+		options.addOption("1", false, "Single pages: split every double page into two PDF pages in the original album page size (cover stays one page). Default keeps double pages.");
 		options.addOption("a", false, "A4 output: split every double page into two A4 pages (orientation follows the album page; cover is fitted on one A4 page). Default keeps the page size from the MCF/MCFX file.");
 		options.addOption("f", true, "Select an MCF entry when a .mcfx database contains more than one.");
 
@@ -236,6 +237,7 @@ public class Main {
 		try {
 			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath);
 			converter.setSplitToA4(cl.hasOption("a"));
+			converter.setSplitPages(cl.hasOption("1"));
 			converter.convert(
 					mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo,sx, dbFilename);
 			xslFoOut.flush();

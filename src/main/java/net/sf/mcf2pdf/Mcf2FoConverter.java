@@ -80,6 +80,8 @@ public class Mcf2FoConverter {
 
 	private boolean splitToA4;
 
+	private boolean splitPages;
+
 	/**
 	 * Creates a new converter object with given settings.
 	 *
@@ -156,6 +158,18 @@ public class Mcf2FoConverter {
 	 */
 	public void setSplitToA4(boolean splitToA4) {
 		this.splitToA4 = splitToA4;
+	}
+
+	/**
+	 * Enables single page output. Every double page is split into its left and
+	 * right page, and each one becomes a PDF page in the original album page
+	 * size. The cover (back, spine and front) stays one page in its original
+	 * size. Ignored if A4 output is enabled, which splits pages as well.
+	 *
+	 * @param splitPages <code>true</code> to enable single page output.
+	 */
+	public void setSplitPages(boolean splitPages) {
+		this.splitPages = splitPages;
 	}
 
 	/**
@@ -268,9 +282,14 @@ public class Mcf2FoConverter {
 		int a4PageH = pageLandscape ? a4ShortPX : a4LongPX;
 		int a4CoverW = coverLandscape ? a4LongPX : a4ShortPX;
 		int a4CoverH = coverLandscape ? a4ShortPX : a4LongPX;
+		boolean split = splitToA4 || splitPages;
+		int singlePageW = pageWidthPX / 2;
 		if (splitToA4) {
 			docBuilder.addPageMaster("cover", a4CoverW, a4CoverH);
 			docBuilder.addPageMaster("default", a4PageW, a4PageH);
+		} else if (splitPages) {
+			docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
+			docBuilder.addPageMaster("default", singlePageW, pageHeightPX);
 		} else {
 			docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
 			docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
@@ -329,12 +348,14 @@ public class Mcf2FoConverter {
 			McfPage left = normalPages.get(i);
 			McfPage right = i + 1 < normalPages.size() ? normalPages.get(i + 1) : null;
 			BitmapPageBuilder spread = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
+			// binding shadow makes no sense on separate sheets
 			if (splitToA4) {
-				// binding shadow makes no sense on separate sheets
 				spread.setOutputPage(a4PageW, a4PageH, true, isPrintable(left), isPrintable(right));
+			} else if (splitPages) {
+				spread.setOutputPage(singlePageW, pageHeightPX, true, isPrintable(left), isPrintable(right));
 			}
 			currentPage = spread;
-			processDoublePage(left, right, imageDir, binding && !splitToA4, pageNum, book, pageWidthPX, pageHeightPX);
+			processDoublePage(left, right, imageDir, binding && !split, pageNum, book, pageWidthPX, pageHeightPX);
 			currentPage.addToDocumentBuilder(docBuilder);
 		}
 

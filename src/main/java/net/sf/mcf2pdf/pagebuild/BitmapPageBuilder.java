@@ -141,6 +141,9 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 	 * and centers it on a white page of the target size.
 	 */
 	BufferedImage fitOnPage(BufferedImage src) {
+		if (src.getWidth() == targetWidthPX && src.getHeight() == targetHeightPX) {
+			return src;
+		}
 		double scale = Math.min(targetWidthPX / (double) src.getWidth(),
 				targetHeightPX / (double) src.getHeight());
 		int w = Math.max(1, (int) Math.round(src.getWidth() * scale));
