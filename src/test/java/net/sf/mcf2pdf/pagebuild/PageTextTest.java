@@ -227,10 +227,25 @@ public class PageTextTest {
 		int[] rows = textRows(top);
 
 		Assert.assertTrue("text must be drawn", rows[1] > rows[0]);
-		Assert.assertTrue("text starts at the table margin, first row=" + rows[0], rows[0] >= 160);
+		// margin-top:165px is 16.5 mm in CEWE text units (1/10 mm) = 65 px at 100 dpi
+		Assert.assertTrue("text starts at the table margin, first row=" + rows[0], rows[0] >= 65 && rows[0] < 100);
+	}
+
+	@Test
+	public void test_014TableMarginTopDoesNotDependOnResolution() throws Exception {
+		int[] rows100 = textRows(renderText("ALIGNHCENTER", 100));
+		int[] rows200 = textRows(renderText("ALIGNHCENTER", 200));
+
+		// same position in mm: twice as many pixels at twice the resolution
+		Assert.assertTrue("first row 100 dpi=" + rows100[0] + ", 200 dpi=" + rows200[0],
+				Math.abs(rows200[0] - 2 * rows100[0]) <= 4);
 	}
 
 	private static BufferedImage renderText(String alignment) throws Exception {
+		return renderText(alignment, 100);
+	}
+
+	private static BufferedImage renderText(String alignment, int dpi) throws Exception {
 		McfTextImpl text = new McfTextImpl();
 		text.setHtmlContent("<html><body style=\" font-family:'Serif'; font-size:16pt;\">"
 				+ "<table style=\"-qt-table-type: root; margin-top:165px; margin-bottom:5px; margin-left:5px; margin-right:5px;\">"
@@ -246,7 +261,7 @@ public class PageTextTest {
 		area.setHeight(472);
 		text.setArea(area);
 
-		PageRenderContext context = new PageRenderContext(100, 1.0, new McfResourceScanner(Collections.emptyList()), null);
+		PageRenderContext context = new PageRenderContext(dpi, 1.0, new McfResourceScanner(Collections.emptyList()), null);
 		return new PageText(text).renderAsBitmap(context, new Point(0, 0), 0, 0);
 	}
 
