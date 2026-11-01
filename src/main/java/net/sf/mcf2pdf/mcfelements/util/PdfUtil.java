@@ -47,7 +47,10 @@ public class PdfUtil {
 			FOPException, TransformerException {
 
 		//FopFactory fopFactory = FopFactory.newInstance();
-		FopFactory		fopFactory = FopFactory.newInstance(new File(".").toURI());
+		// page sizes in the XSL-FO are given in pixels rendered at the given DPI,
+		// so FOP must use the same resolution to convert them back to real lengths
+		FopFactory fopFactory = new org.apache.fop.apps.FopFactoryBuilder(new File(".").toURI())
+				.setSourceResolution(dpi).build();
 
 		FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
 		// configure foUserAgent as desired
