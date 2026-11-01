@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
@@ -456,53 +455,76 @@ public class Mcf2FoConverter {
 		}
 	}
 
+	/** Cover wrap of most CEWE hardcover products (<code>coverextrahorizontal="40"</code>), in mm. */
+	private static final float DEFAULT_COVER_WRAP_MM = 4f;
+
 	/**
 	 * Computes the spine width of the cover. The cover consists of back cover,
 	 * spine and front cover. Sources, in this order:
 	 * <ol>
 	 * <li>the cover wrap (<code>coverextrahorizontal</code>) of the album type:
 	 * back and front cover are one album page plus the wrap each;</li>
-	 * <li>the thickness of a rotated spine text or logo area in the centre of
-	 * the cover, which CEWE sizes to the spine;</li>
+	 * <li>the thickness of the rotated spine text area in the centre of the
+	 * cover, which CEWE sizes to the spine (CEWE 6.1 used a normal text area
+	 * rotated by 90 degrees; the spine logo area is smaller and not used);</li>
+	 * <li>the usual CEWE cover wrap of 4 mm (newer product catalogues do not
+	 * contain the wrap any more);</li>
 	 * <li>otherwise everything between two album pages is treated as spine.</li>
 	 * </ol>
 	 */
 	private int computeSpineWidthPX(McfFotobook book, int coverWidthPX, int singlePageWidthPX) {
 		int extraPX = context.toPixel(albumType.getCoverExtraHorizontal() / 10.0f);
 		int spinePX = coverWidthPX - 2 * (singlePageWidthPX + extraPX);
-		if (extraPX > 0 && spinePX >= 0 && spinePX <= coverWidthPX / 3) {
+		if (extraPX > 0 && isPlausibleSpine(spinePX, coverWidthPX)) {
 			log.debug("Spine width from album type: " + spinePX + " px");
 			return spinePX;
 		}
 
+		int fromAreas = 0;
 		for (McfPage p : book.getPages()) {
 			if (!McfPage.FULLCOVER.matcher(p.getType()).matches()) {
 				continue;
 			}
 			for (McfArea a : p.getAreas()) {
 				int rotation = Math.round(a.getRotation()) % 180;
-				if (a.getAreaType() == null || !a.getAreaType().toLowerCase(Locale.ROOT).startsWith("spine")
-						|| rotation != 90 && rotation != -90) {
+				boolean textArea = a.getAreaType() != null
+						&& (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()
+								|| McfArea.TEXTAREA.matcher(a.getAreaType()).matches());
+				if (!textArea || rotation != 90 && rotation != -90) {
 					continue;
 				}
 				// rotated by 90 degrees around its centre: its height is the horizontal extent
 				int centerPX = context.toPixel((a.getLeft() + a.getWidth() / 2) / 10.0f);
 				int thicknessPX = context.toPixel(a.getHeight() / 10.0f);
 				if (Math.abs(centerPX - coverWidthPX / 2) <= coverWidthPX / 100
-						&& thicknessPX > 0 && thicknessPX <= coverWidthPX / 3) {
-					log.debug("Spine width from " + a.getAreaType() + ": " + thicknessPX + " px");
-					return thicknessPX;
+						&& isPlausibleSpine(thicknessPX, coverWidthPX)) {
+					fromAreas = Math.max(fromAreas, thicknessPX);
 				}
 			}
 		}
+		if (fromAreas > 0) {
+			log.debug("Spine width from spine text area: " + fromAreas + " px");
+			return fromAreas;
+		}
+
+		spinePX = coverWidthPX - 2 * (singlePageWidthPX + context.toPixel(DEFAULT_COVER_WRAP_MM));
+		if (isPlausibleSpine(spinePX, coverWidthPX)) {
+			log.info("Spine width not defined by the product; assuming the usual cover wrap of "
+					+ DEFAULT_COVER_WRAP_MM + " mm, spine " + spinePX + " px");
+			return spinePX;
+		}
 
 		spinePX = coverWidthPX - 2 * singlePageWidthPX;
-		if (spinePX < 0 || spinePX > coverWidthPX / 3) {
+		if (!isPlausibleSpine(spinePX, coverWidthPX)) {
 			spinePX = 0;
 		}
 		log.warn("Spine width of the cover is unknown; assuming " + spinePX
 				+ " px, cover parts may contain a part of the spine");
 		return spinePX;
+	}
+
+	private static boolean isPlausibleSpine(int spinePX, int coverWidthPX) {
+		return spinePX > 0 && spinePX <= coverWidthPX / 3;
 	}
 
 	private static boolean isPrintable(McfPage page) {
