@@ -10,6 +10,7 @@ package net.sf.mcf2pdf.pagebuild;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -37,6 +38,17 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 
 	private int heightPX;
 
+	/** Target output page size; -1 means "same as the rendered spread". */
+	private int targetWidthPX = -1;
+
+	private int targetHeightPX = -1;
+
+	private boolean split;
+
+	private boolean emitLeft = true;
+
+	private boolean emitRight = true;
+
 	private static final Comparator<PageDrawable> zComp = new Comparator<PageDrawable>() {
 		@Override
 		public int compare(PageDrawable p1, PageDrawable p2) {
@@ -50,6 +62,26 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		this.heightPX = heightPX;
 		this.context = context;
 		this.tempImageDir = tempImageDir;
+	}
+
+	/**
+	 * Fits the rendered spread onto an output page of the given size (keeping
+	 * the aspect ratio, centered on a white page) instead of emitting it 1:1.
+	 *
+	 * @param targetWidthPX Output page width, in pixels.
+	 * @param targetHeightPX Output page height, in pixels.
+	 * @param split If <code>true</code>, the spread is cut in the middle and
+	 * each half is placed on its own output page.
+	 * @param emitLeft Whether to emit the left half (only used when splitting).
+	 * @param emitRight Whether to emit the right half (only used when splitting).
+	 */
+	public void setOutputPage(int targetWidthPX, int targetHeightPX, boolean split,
+			boolean emitLeft, boolean emitRight) {
+		this.targetWidthPX = targetWidthPX;
+		this.targetHeightPX = targetHeightPX;
+		this.split = split;
+		this.emitLeft = emitLeft;
+		this.emitRight = emitRight;
 	}
 
 	@Override
@@ -82,8 +114,47 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 			}
 		}
 
-		docBuilder.addPageElement(createImgFoElement(img, docBuilder.getNamespace()));
 		g2d.dispose();
+
+		if (targetWidthPX <= 0 || targetHeightPX <= 0) {
+			docBuilder.addPageElement(createImgFoElement(img, docBuilder.getNamespace()));
+		}
+		else if (!split) {
+			docBuilder.addPageElement(createImgFoElement(fitOnPage(img), docBuilder.getNamespace()));
+		}
+		else {
+			int half = img.getWidth() / 2;
+			if (emitLeft) {
+				docBuilder.addPageElement(createImgFoElement(
+						fitOnPage(img.getSubimage(0, 0, half, img.getHeight())), docBuilder.getNamespace()));
+			}
+			if (emitRight) {
+				docBuilder.addPageElement(createImgFoElement(
+						fitOnPage(img.getSubimage(half, 0, img.getWidth() - half, img.getHeight())),
+						docBuilder.getNamespace()));
+			}
+		}
+	}
+
+	/**
+	 * Scales the given image to fit into the target page (keeping aspect ratio)
+	 * and centers it on a white page of the target size.
+	 */
+	BufferedImage fitOnPage(BufferedImage src) {
+		double scale = Math.min(targetWidthPX / (double) src.getWidth(),
+				targetHeightPX / (double) src.getHeight());
+		int w = Math.max(1, (int) Math.round(src.getWidth() * scale));
+		int h = Math.max(1, (int) Math.round(src.getHeight() * scale));
+
+		BufferedImage page = new BufferedImage(targetWidthPX, targetHeightPX, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = page.createGraphics();
+		g.setColor(Color.white);
+		g.fillRect(0, 0, targetWidthPX, targetHeightPX);
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		g.drawImage(src, (targetWidthPX - w) / 2, (targetHeightPX - h) / 2, w, h, null);
+		g.dispose();
+		return page;
 	}
 
 	private String createImgFoElement(BufferedImage img, Namespace xslFoNs) throws IOException {

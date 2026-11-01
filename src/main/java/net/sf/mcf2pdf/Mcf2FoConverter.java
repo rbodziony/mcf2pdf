@@ -72,6 +72,14 @@ public class Mcf2FoConverter {
 
 	private File tempImageDir;
 
+	/** A4 portrait width, in mm. */
+	public static final float A4_WIDTH_MM = 210f;
+
+	/** A4 portrait height, in mm. */
+	public static final float A4_HEIGHT_MM = 297f;
+
+	private boolean splitToA4;
+
 	/**
 	 * Creates a new converter object with given settings.
 	 *
@@ -135,6 +143,19 @@ public class Mcf2FoConverter {
 		log.debug("Searching for MCF resources in " + scanDirs);
 		resources = new McfResourceScanner(scanDirs);
 		resources.scan();
+	}
+
+	/**
+	 * Enables A4 output mode. Instead of emitting each double page 1:1 with the
+	 * size defined in the MCF file, every double page is split into its left and
+	 * right page, and each one is scaled to fit an A4 page. The cover (back,
+	 * spine and front) is scaled to fit one A4 page. The A4 orientation follows
+	 * the shape of the album page (landscape album pages give landscape A4).
+	 *
+	 * @param splitToA4 <code>true</code> to enable A4 output.
+	 */
+	public void setSplitToA4(boolean splitToA4) {
+		this.splitToA4 = splitToA4;
 	}
 
 	/**
@@ -238,8 +259,22 @@ public class Mcf2FoConverter {
 		}
 		
 		// setting master pages
-		docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
-		docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
+		int a4ShortPX = context.toPixel(A4_WIDTH_MM);
+		int a4LongPX = context.toPixel(A4_HEIGHT_MM);
+		// in A4 mode, orientation follows the shape of a single album page / the cover
+		boolean pageLandscape = pageWidthPX / 2 > pageHeightPX;
+		boolean coverLandscape = coverPageWidthPX > coverPageHeightPX;
+		int a4PageW = pageLandscape ? a4LongPX : a4ShortPX;
+		int a4PageH = pageLandscape ? a4ShortPX : a4LongPX;
+		int a4CoverW = coverLandscape ? a4LongPX : a4ShortPX;
+		int a4CoverH = coverLandscape ? a4ShortPX : a4LongPX;
+		if (splitToA4) {
+			docBuilder.addPageMaster("cover", a4CoverW, a4CoverH);
+			docBuilder.addPageMaster("default", a4PageW, a4PageH);
+		} else {
+			docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
+			docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
+		}
 
 		// prepare temporary folder
 		log.debug("Preparing temporary working directory");
@@ -259,7 +294,11 @@ public class Mcf2FoConverter {
 
 		if (leftCover != null) {
 			log.info("Rendering cover...");
-			currentPage = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
+			BitmapPageBuilder coverBuilder = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
+			if (splitToA4) {
+				coverBuilder.setOutputPage(a4CoverW, a4CoverH, false, true, true);
+			}
+			currentPage = coverBuilder;
 			processDoublePage(leftCover, rightCover, imageDir, false, false,
 					book, coverPageWidthPX, coverPageHeightPX);
 			docBuilder.startFlow("cover");
@@ -285,17 +324,18 @@ public class Mcf2FoConverter {
 		// now, process pages as a pair
 		docBuilder.startFlow("default");
 		log.debug("Starting rendering of " + normalPages.size() + " pages");
-		currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
-
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering pages " + i + "+" + (i+1) + "...");
-			processDoublePage(normalPages.get(i),
-					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					imageDir, binding, pageNum, book, pageWidthPX, pageHeightPX);
-			currentPage.addToDocumentBuilder(docBuilder);
-			if (i < normalPages.size() - 2) {
-				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
+			McfPage left = normalPages.get(i);
+			McfPage right = i + 1 < normalPages.size() ? normalPages.get(i + 1) : null;
+			BitmapPageBuilder spread = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
+			if (splitToA4) {
+				// binding shadow makes no sense on separate sheets
+				spread.setOutputPage(a4PageW, a4PageH, true, isPrintable(left), isPrintable(right));
 			}
+			currentPage = spread;
+			processDoublePage(left, right, imageDir, binding && !splitToA4, pageNum, book, pageWidthPX, pageHeightPX);
+			currentPage.addToDocumentBuilder(docBuilder);
 		}
 
 		docBuilder.endFlow();
@@ -348,6 +388,10 @@ public class Mcf2FoConverter {
 		if (addBinding) {
 			currentPage.addDrawable(new PageBinding(resources.getBinding()));
 		}
+	}
+
+	private static boolean isPrintable(McfPage page) {
+		return page != null && !McfPage.EMPTY.matcher(page.getType()).matches();
 	}
 
 	private McfAlbumType getAlbumType(String albumTypeName) throws IOException {
