@@ -87,6 +87,44 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 	@Override
 	public void addToDocumentBuilder(XslFoDocumentBuilder docBuilder)
 			throws IOException {
+		BufferedImage img = renderImage();
+
+		if (targetWidthPX > 0 && targetHeightPX > 0 && split) {
+			int half = img.getWidth() / 2;
+			if (emitLeft) {
+				addImage(docBuilder, img.getSubimage(0, 0, half, img.getHeight()));
+			}
+			if (emitRight) {
+				addImage(docBuilder, img.getSubimage(half, 0, img.getWidth() - half, img.getHeight()));
+			}
+		}
+		else {
+			addImage(docBuilder, img);
+		}
+	}
+
+	/**
+	 * Adds the given image as one page to the document builder. If an output
+	 * page size has been set, the image is fitted onto a page of that size.
+	 *
+	 * @param docBuilder Document Builder to add the page to.
+	 * @param img Image to add, e.g. a part of {@link #renderImage()}.
+	 *
+	 * @throws IOException If the temporary image file cannot be written.
+	 */
+	public void addImage(XslFoDocumentBuilder docBuilder, BufferedImage img) throws IOException {
+		BufferedImage page = targetWidthPX > 0 && targetHeightPX > 0 ? fitOnPage(img) : img;
+		docBuilder.addPageElement(createImgFoElement(page, docBuilder.getNamespace()));
+	}
+
+	/**
+	 * Renders all drawables of this page onto one image of the full double page.
+	 *
+	 * @return The rendered double page.
+	 *
+	 * @throws IOException If any I/O related problem occurs while rendering.
+	 */
+	public BufferedImage renderImage() throws IOException {
 		// render drawables onto image, regardless of type
 		List<PageDrawable> pageContents = new Vector<PageDrawable>(getDrawables());
 		Collections.sort(pageContents, zComp);
@@ -115,25 +153,7 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		}
 
 		g2d.dispose();
-
-		if (targetWidthPX <= 0 || targetHeightPX <= 0) {
-			docBuilder.addPageElement(createImgFoElement(img, docBuilder.getNamespace()));
-		}
-		else if (!split) {
-			docBuilder.addPageElement(createImgFoElement(fitOnPage(img), docBuilder.getNamespace()));
-		}
-		else {
-			int half = img.getWidth() / 2;
-			if (emitLeft) {
-				docBuilder.addPageElement(createImgFoElement(
-						fitOnPage(img.getSubimage(0, 0, half, img.getHeight())), docBuilder.getNamespace()));
-			}
-			if (emitRight) {
-				docBuilder.addPageElement(createImgFoElement(
-						fitOnPage(img.getSubimage(half, 0, img.getWidth() - half, img.getHeight())),
-						docBuilder.getNamespace()));
-			}
-		}
+		return img;
 	}
 
 	/**

@@ -96,6 +96,23 @@ public class BitmapPageBuilderA4Test {
 	}
 
 	@Test
+	public void renderedPartsCanBeAddedSeparately() throws IOException {
+		BitmapPageBuilder b = spread();
+		BufferedImage img = b.renderImage();
+		// like a cover: back part, 40 px spine, front part
+		b.addImage(docBuilder, img.getSubimage(240, 0, 160, 200));
+		b.addImage(docBuilder, img.getSubimage(0, 0, 160, 200));
+
+		assertEquals(2, emitted.size());
+		BufferedImage front = ImageIO.read(new File(emitted.get(0)));
+		BufferedImage back = ImageIO.read(new File(emitted.get(1)));
+		assertEquals(160, front.getWidth());
+		assertEquals(200, front.getHeight());
+		assertDominant(Color.BLUE, front.getRGB(80, 100));
+		assertDominant(Color.RED, back.getRGB(80, 100));
+	}
+
+	@Test
 	public void splitModeSkipsSuppressedHalves() throws IOException {
 		BitmapPageBuilder b = spread();
 		b.setOutputPage(210, 297, true, false, true);

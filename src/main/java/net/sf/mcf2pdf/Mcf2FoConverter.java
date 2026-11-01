@@ -3,6 +3,7 @@
  *******************************************************************************/
 package net.sf.mcf2pdf;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.Vector;
 
@@ -81,6 +83,8 @@ public class Mcf2FoConverter {
 	private boolean splitToA4;
 
 	private boolean splitPages;
+
+	private boolean splitCover;
 
 	/**
 	 * Creates a new converter object with given settings.
@@ -170,6 +174,18 @@ public class Mcf2FoConverter {
 	 */
 	public void setSplitPages(boolean splitPages) {
 		this.splitPages = splitPages;
+	}
+
+	/**
+	 * Enables cover splitting. The cover is cut into back cover, spine and
+	 * front cover. The front cover becomes the first page of the document, the
+	 * back cover the last one, and the spine is skipped. The cover parts keep
+	 * their original size, or are fitted onto A4 if A4 output is enabled.
+	 *
+	 * @param splitCover <code>true</code> to enable cover splitting.
+	 */
+	public void setSplitCover(boolean splitCover) {
+		this.splitCover = splitCover;
 	}
 
 	/**
@@ -284,14 +300,27 @@ public class Mcf2FoConverter {
 		int a4CoverH = coverLandscape ? a4ShortPX : a4LongPX;
 		boolean split = splitToA4 || splitPages;
 		int singlePageW = pageWidthPX / 2;
+
+		// cover split: back cover | spine | front cover
+		int spinePX = 0;
+		int coverPartW = coverPageWidthPX;
+		if (splitCover && coverPageWidthPX > 0) {
+			spinePX = computeSpineWidthPX(book, coverPageWidthPX, singlePageW);
+			coverPartW = (coverPageWidthPX - spinePX) / 2;
+			boolean partLandscape = coverPartW > coverPageHeightPX;
+			a4CoverW = partLandscape ? a4LongPX : a4ShortPX;
+			a4CoverH = partLandscape ? a4ShortPX : a4LongPX;
+		}
+		int coverOutW = splitCover ? coverPartW : coverPageWidthPX;
+
 		if (splitToA4) {
 			docBuilder.addPageMaster("cover", a4CoverW, a4CoverH);
 			docBuilder.addPageMaster("default", a4PageW, a4PageH);
 		} else if (splitPages) {
-			docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
+			docBuilder.addPageMaster("cover", coverOutW, coverPageHeightPX);
 			docBuilder.addPageMaster("default", singlePageW, pageHeightPX);
 		} else {
-			docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
+			docBuilder.addPageMaster("cover", coverOutW, coverPageHeightPX);
 			docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
 		}
 
@@ -311,9 +340,11 @@ public class Mcf2FoConverter {
 			}
 		}
 
+		BitmapPageBuilder coverBuilder = null;
+		BufferedImage backCover = null;
 		if (leftCover != null) {
 			log.info("Rendering cover...");
-			BitmapPageBuilder coverBuilder = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
+			coverBuilder = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
 			if (splitToA4) {
 				coverBuilder.setOutputPage(a4CoverW, a4CoverH, false, true, true);
 			}
@@ -321,7 +352,15 @@ public class Mcf2FoConverter {
 			processDoublePage(leftCover, rightCover, imageDir, false, false,
 					book, coverPageWidthPX, coverPageHeightPX);
 			docBuilder.startFlow("cover");
-			currentPage.addToDocumentBuilder(docBuilder);
+			if (splitCover) {
+				// front cover first, back cover is added after the last page
+				BufferedImage cover = coverBuilder.renderImage();
+				backCover = cover.getSubimage(0, 0, coverPartW, cover.getHeight());
+				coverBuilder.addImage(docBuilder,
+						cover.getSubimage(cover.getWidth() - coverPartW, 0, coverPartW, cover.getHeight()));
+			} else {
+				coverBuilder.addToDocumentBuilder(docBuilder);
+			}
 			docBuilder.endFlow();
 		}
 
@@ -360,6 +399,12 @@ public class Mcf2FoConverter {
 		}
 
 		docBuilder.endFlow();
+
+		if (backCover != null) {
+			docBuilder.startFlow("cover");
+			coverBuilder.addImage(docBuilder, backCover);
+			docBuilder.endFlow();
+		}
 
 		// create and write document
 		log.debug("Creating XSL-FO data");
@@ -409,6 +454,55 @@ public class Mcf2FoConverter {
 		if (addBinding) {
 			currentPage.addDrawable(new PageBinding(resources.getBinding()));
 		}
+	}
+
+	/**
+	 * Computes the spine width of the cover. The cover consists of back cover,
+	 * spine and front cover. Sources, in this order:
+	 * <ol>
+	 * <li>the cover wrap (<code>coverextrahorizontal</code>) of the album type:
+	 * back and front cover are one album page plus the wrap each;</li>
+	 * <li>the thickness of a rotated spine text or logo area in the centre of
+	 * the cover, which CEWE sizes to the spine;</li>
+	 * <li>otherwise everything between two album pages is treated as spine.</li>
+	 * </ol>
+	 */
+	private int computeSpineWidthPX(McfFotobook book, int coverWidthPX, int singlePageWidthPX) {
+		int extraPX = context.toPixel(albumType.getCoverExtraHorizontal() / 10.0f);
+		int spinePX = coverWidthPX - 2 * (singlePageWidthPX + extraPX);
+		if (extraPX > 0 && spinePX >= 0 && spinePX <= coverWidthPX / 3) {
+			log.debug("Spine width from album type: " + spinePX + " px");
+			return spinePX;
+		}
+
+		for (McfPage p : book.getPages()) {
+			if (!McfPage.FULLCOVER.matcher(p.getType()).matches()) {
+				continue;
+			}
+			for (McfArea a : p.getAreas()) {
+				int rotation = Math.round(a.getRotation()) % 180;
+				if (a.getAreaType() == null || !a.getAreaType().toLowerCase(Locale.ROOT).startsWith("spine")
+						|| rotation != 90 && rotation != -90) {
+					continue;
+				}
+				// rotated by 90 degrees around its centre: its height is the horizontal extent
+				int centerPX = context.toPixel((a.getLeft() + a.getWidth() / 2) / 10.0f);
+				int thicknessPX = context.toPixel(a.getHeight() / 10.0f);
+				if (Math.abs(centerPX - coverWidthPX / 2) <= coverWidthPX / 100
+						&& thicknessPX > 0 && thicknessPX <= coverWidthPX / 3) {
+					log.debug("Spine width from " + a.getAreaType() + ": " + thicknessPX + " px");
+					return thicknessPX;
+				}
+			}
+		}
+
+		spinePX = coverWidthPX - 2 * singlePageWidthPX;
+		if (spinePX < 0 || spinePX > coverWidthPX / 3) {
+			spinePX = 0;
+		}
+		log.warn("Spine width of the cover is unknown; assuming " + spinePX
+				+ " px, cover parts may contain a part of the spine");
+		return spinePX;
 	}
 
 	private static boolean isPrintable(McfPage page) {
