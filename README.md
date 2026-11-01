@@ -98,8 +98,37 @@ The program will start converting the file and inform you when this is finished.
 Notice that the program is NOT optimized for speed in any way... It can take 
 a long time.
 
-For advanced settings, enter "mcf2pdf -h". This will give you information on
-how to adjust the output DPI setting and much more. 
+Both old `.mcf` files and `.mcfx` projects of newer CEWE versions can be
+converted. An `.mcfx` file already contains the project, so the images folder
+is not needed next to it.
+
+### Command line options
+
+Options are placed before the input file, e.g.
+
+    mcf2pdf -1 -o "USA 2011.mcfx" output.pdf
+
+| Option | Description |
+|---|---|
+| `-1` | Single pages: every double page is split into two PDF pages in the original album page size. |
+| `-a` | A4 pages: every double page is split into two pages, each scaled to fit an A4 sheet. The orientation follows the album page, so landscape albums give landscape A4. Implies `-1`. |
+| `-o` | Split the cover: the front cover becomes the first page and the back cover the last page; the spine is left out. Can be combined with `-1` or `-a`. |
+| `-b` | Do not draw the binding shadow between double pages (never drawn with `-1` or `-a`). |
+| `-p` | Print page numbers. |
+| `-r <dpi>` | Rendering resolution in DPI (default 150). Higher values give better quality, but need more memory and time. |
+| `-n <page>` | Render only up to the given page number, e.g. to test settings quickly. |
+| `-f <name>` | Select the MCF entry if an `.mcfx` file contains more than one. |
+| `-c <dir>` | Additional CEWE resources (`hps` directory), e.g. `C:\Users\<user>\AppData\Local\CEWE\hps`. |
+| `-t <dir>` | Temporary directory of the MCF software (set by the startup script). |
+| `-i <dir>` | Installation directory of the MCF software (set by the startup script). |
+| `-w <dir>` | Working directory for temporary images (default `<USER_HOME>/.mcf2pdf`). |
+| `-s <factor>` | Scaling for fonts without a native bold style (default 0.82). |
+| `-x` | Write the intermediate XSL-FO document instead of a PDF. |
+| `-q` / `-d` | Quiet (errors only) / debug logging. |
+
+Without `-1`, `-a` and `-o`, each PDF page is a double page in the original
+size of the photobook, and the whole cover (back, spine and front) is the first
+page. Enter `mcf2pdf -h` to list all options.
 
 ## Automated builds and releases
 
