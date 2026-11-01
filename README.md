@@ -101,6 +101,28 @@ a long time.
 For advanced settings, enter "mcf2pdf -h". This will give you information on
 how to adjust the output DPI setting and much more. 
 
+## Automated builds and releases
+
+GitHub Actions builds and tests every push and pull request on Linux and Windows
+with Java 25. Test reports and build packages are available as workflow artifacts.
+
+To publish a release, commit a non-SNAPSHOT project version in `pom.xml`, then
+push a matching tag. For example, after setting the version to `0.7.6`:
+
+```sh
+git tag mcf2pdf-0.7.6
+git push origin mcf2pdf-0.7.6
+```
+
+Tags `0.7.6` and `v0.7.6` are also supported. The tagged commit must contain the
+workflow. Both Linux and Windows builds must succeed before publishing. A tag
+that does not match the project version fails the release check; SNAPSHOT
+versions never create a release.
+
+The GitHub Release includes generated release notes, the JAR, the Linux tarball,
+the Windows ZIP, and the source tarball. Re-running the workflow updates the
+assets of an existing release instead of creating a duplicate.
+
 ## Troubleshooting
 
 As stated above, mcf2pdf is BETA and does not yet implement very much of the
