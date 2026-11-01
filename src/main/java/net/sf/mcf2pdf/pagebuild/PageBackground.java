@@ -40,28 +40,26 @@ public class PageBackground implements PageDrawable {
 	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context,
 			Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
-		File fLeft = extractBackground(leftBg, context);
-		File fRight = extractBackground(rightBg, context);
+		Resolved left = resolveBackground(leftBg, context);
+		Resolved right = resolveBackground(rightBg, context);
 
 		BufferedImage img = new BufferedImage(widthPX, heightPX, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
-		if (fLeft != null && fLeft.equals(fRight)) {
-			// draw the background image on whole page
-			int hue = extractHueFromBackGround(leftBg);
-			drawBackground(fLeft, g2d, 0, 0, img.getWidth(), img.getHeight(),hue);
+		boolean legacyWhole = left != null && right != null && left.file.equals(right.file)
+				&& left.bg.getAlignment() == 0 && right.bg.getAlignment() == 0;
+		if (legacyWhole) {
+			// no alignment information: draw the background image on whole page
+			drawBackground(left, g2d, 0, 0, img.getWidth(), img.getHeight(), false, false);
 		}
 		else {
-			// process background parts separate
-			if (fLeft != null) {
-				int hueleft = extractHueFromBackGround(leftBg);
-				drawBackground(fLeft, g2d, 0, 0, img.getWidth() / 2, img.getHeight(), hueleft);
+			if (left != null) {
+				drawBackground(left, g2d, 0, 0, img.getWidth() / 2, img.getHeight(), true, false);
 			}
-			if (fRight != null) {
-				int hueright = extractHueFromBackGround(rightBg);
-				drawBackground(fRight, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight(), hueright);
+			if (right != null) {
+				drawBackground(right, g2d, img.getWidth() / 2, 0, img.getWidth() / 2, img.getHeight(), true, true);
 			}
 		}
 
@@ -69,84 +67,185 @@ public class PageBackground implements PageDrawable {
 		return img;
 	}
 
-	private void drawBackground(File f, Graphics2D g2d, int x, int y, int width, int height, int hue) throws IOException {
-		BufferedImage img = ImageUtil.readImage(f);
+	private void drawBackground(Resolved r, Graphics2D g2d, int x, int y, int width, int height,
+			boolean useAlignment, boolean rightPage) throws IOException {
+		BufferedImage img = ImageUtil.readImage(r.file);
 		if (img == null) {
-			throw new IOException("Could not read image file: " + f.getAbsolutePath());
+			throw new IOException("Could not read image file: " + r.file.getAbsolutePath());
 		}
-		/// aply hue 270
-		BufferedImage applied=null;
-		if(f.getName().equalsIgnoreCase("6898.webp")) {
-			 applied=applyHue(img, hue/360.0f);
-		} else
-			applied = img;
-		float tgtRatio = width / (float)height;
+		img = rotateQuarterTurns(img, r.bg.getRotation());
+		if (isMulticolor(r.bg.getHue(), r.bg.getFading())) {
+			img = recolor(img, r.bg.getHue(), r.bg.getFading());
+		}
 
-		float imgRatio = img.getWidth() / (float)img.getHeight();
+		int[] src = useAlignment
+				? computeSourceRect(img.getWidth(), img.getHeight(), width, height, r.bg.getAlignment(), rightPage)
+				: computeCenterCover(img.getWidth(), img.getHeight(), width, height);
+
+		g2d.drawImage(img, x, y, x + width, y + height, src[0], src[1], src[0] + src[2], src[1] + src[3], null);
+	}
+
+	/** Centre cover-crop of the image to the target aspect ratio: {sx, sy, sw, sh}. */
+	static int[] computeCenterCover(int imgW, int imgH, int tgtW, int tgtH) {
+		float tgtRatio = tgtW / (float)tgtH;
+		float imgRatio = imgW / (float)imgH;
 		float scale;
 		boolean xVar;
-
 		if (imgRatio > tgtRatio) {
-			// scale image Y to target Y
-			scale = height / (float)img.getHeight();
+			scale = tgtH / (float)imgH;
 			xVar = true;
 		}
 		else {
-			// scale image X to target X
-			scale = width / (float)img.getWidth();
+			scale = tgtW / (float)imgW;
 			xVar = false;
 		}
-
-		int sx = (int)(xVar ? ((img.getWidth() - (width / scale)) / 2) : 0);
-		int sy = (int)(xVar ? 0 : ((img.getHeight() - (height / scale)) / 2));
-
-		int sw = (int)(width / scale);
-		int sh = (int)(height / scale);
-
-		g2d.drawImage(applied, x, y, x + width, y + height, sx, sy, sx + sw, sy + sh, null);
+		int sx = (int)(xVar ? ((imgW - (tgtW / scale)) / 2) : 0);
+		int sy = (int)(xVar ? 0 : ((imgH - (tgtH / scale)) / 2));
+		return new int[] { sx, sy, (int)(tgtW / scale), (int)(tgtH / scale) };
 	}
 
-	private BufferedImage applyHue(BufferedImage image, float hue) {
-		int width = image.getWidth();
-		int height = image.getHeight();
-		WritableRaster raster = image.getRaster();
-		BufferedImage res = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-		WritableRaster resRast = res.getRaster();
+	/**
+	 * CEWE crops the image to the aspect ratio of the whole spread and shows the left, centre or right half of
+	 * that crop on a page. Alignment 4 (automatic) is left for the left page and right for the right page, 0 or
+	 * unknown values are treated as centre.
+	 *
+	 * @return {sx, sy, sw, sh} in image pixels
+	 */
+	static int[] computeSourceRect(int imgW, int imgH, int pageW, int pageH, int alignment, boolean rightPage) {
+		int[] spread = computeCenterCover(imgW, imgH, pageW * 2, pageH);
+		int effective = alignment == 4 ? (rightPage ? 3 : 1) : alignment;
+		int halfW = spread[2] / 2;
+		int sx;
+		switch (effective) {
+		case 1:
+			sx = spread[0];
+			break;
+		case 3:
+			sx = spread[0] + spread[2] - halfW;
+			break;
+		default:
+			sx = spread[0] + (spread[2] - halfW) / 2;
+			break;
+		}
+		return new int[] { sx, spread[1], halfW, spread[3] };
+	}
 
-		for (int xx = 0; xx < width; xx++) {
-			for (int yy = 0; yy < height; yy++) {
-				//Color color = new Color(Color.HSBtoRGB(hue, 0.7f, 0.7f));
-				int RGB=image.getRGB(xx,yy);
-				//int[] pixels = raster.getPixel(xx, yy, (int[]) null);
-				int R = (RGB >> 16) & 0xff;
-				int G = (RGB >> 8) & 0xff;
-				int B = (RGB) & 0xff;
-				float HSV[]=new float[3];
-				Color.RGBtoHSB(R,G,B,HSV);
-				//pixels[0] = color.getRed();
-				//pixels[1] = color.getGreen();
-				//pixels[2] = color.getBlue();
-				//float newhue = (hue)%1.0f;
-				//float newsat = HSV[1];
-				float newsat = (float) Math.sqrt(HSV[1]*100)/100;
-				res.setRGB(xx,yy,Color.getHSBColor(hue,newsat,HSV[2]).getRGB());
-				//resRast.setPixel(xx, yy, pixels);
+	/** hue and fading exist as a pair only on multicolor backgrounds; -1 means not multicolor. */
+	static boolean isMulticolor(int hue, int fading) {
+		return hue >= 0 && fading >= 0 && !(hue == 0 && fading == 0);
+	}
+
+	/** Rotates clockwise by multiples of 90 degrees; any other value is ignored like CEWE does. */
+	static BufferedImage rotateQuarterTurns(BufferedImage image, int rotation) {
+		int r = ((rotation % 360) + 360) % 360;
+		if (r % 90 != 0 || r == 0) {
+			return image;
+		}
+		int w = image.getWidth();
+		int h = image.getHeight();
+		boolean swap = r != 180;
+		BufferedImage res = new BufferedImage(swap ? h : w, swap ? w : h, BufferedImage.TYPE_INT_ARGB);
+		for (int x = 0; x < w; x++) {
+			for (int y = 0; y < h; y++) {
+				int rgb = image.getRGB(x, y);
+				switch (r) {
+				case 90:
+					res.setRGB(h - 1 - y, x, rgb);
+					break;
+				case 180:
+					res.setRGB(w - 1 - x, h - 1 - y, rgb);
+					break;
+				default:
+					res.setRGB(y, w - 1 - x, rgb);
+					break;
+				}
 			}
 		}
 		return res;
 	}
 
-	private File extractBackground(List<? extends McfBackground> bgs,
-			PageRenderContext context) throws IOException {
+	/**
+	 * CEWE multicolor recolouring: the hue of every pixel is replaced, saturation and value are kept. Fading 0-2
+	 * shifts the saturation right by the fading value, fading 3-5 scales it so that the most saturated pixel ends
+	 * at 180, 90 or 45 (of 255).
+	 */
+	static BufferedImage recolor(BufferedImage image, int hueDegrees, int fading) {
+		int width = image.getWidth();
+		int height = image.getHeight();
+		float hue = (hueDegrees % 360) / 360.0f;
+		int[] sat = new int[width * height];
+		int[] val = new int[width * height];
+		int[] alpha = new int[width * height];
+		float[] hsb = new float[3];
+		int maxS = 0;
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				int argb = image.getRGB(x, y);
+				Color.RGBtoHSB((argb >> 16) & 0xff, (argb >> 8) & 0xff, argb & 0xff, hsb);
+				int i = y * width + x;
+				sat[i] = Math.round(hsb[1] * 255);
+				val[i] = Math.round(hsb[2] * 255);
+				alpha[i] = argb >>> 24;
+				maxS = Math.max(maxS, sat[i]);
+			}
+		}
+
+		BufferedImage res = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				int i = y * width + x;
+				int s = fadeSaturation(sat[i], maxS, fading);
+				int rgb = Color.HSBtoRGB(hue, s / 255.0f, val[i] / 255.0f) & 0x00ffffff;
+				res.setRGB(x, y, (alpha[i] << 24) | rgb);
+			}
+		}
+		return res;
+	}
+
+	static int fadeSaturation(int s, int maxS, int fading) {
+		if (fading <= 2) {
+			return s >> fading;
+		}
+		if (maxS <= 0) {
+			return 0;
+		}
+		double factor = Math.pow(2, 3 - fading);
+		return Math.min(255, (int)Math.floor(s * factor * 180 / maxS));
+	}
+
+	private static class Resolved {
+		final File file;
+		final McfBackground bg;
+
+		Resolved(File file, McfBackground bg) {
+			this.file = file;
+			this.bg = bg;
+		}
+	}
+
+	/** Backgrounds of layer type 1 are preferred, as CEWE only loads those; others are a fallback for old files. */
+	private Resolved resolveBackground(List<? extends McfBackground> bgs, PageRenderContext context) {
+		Resolved r = resolveBackground(bgs, context, true);
+		return r != null ? r : resolveBackground(bgs, context, false);
+	}
+
+	private Resolved resolveBackground(List<? extends McfBackground> bgs, PageRenderContext context,
+			boolean typeOneOnly) {
 		for (McfBackground bg : bgs) {
+			// layout="1" backgrounds are page layout schemas (e.g. fotobook_full_landscape_47), not pictures
+			if (bg.getLayout() != 0) {
+				continue;
+			}
+			if ((bg.getType() == 1) != typeOneOnly) {
+				continue;
+			}
 			String tn = bg.getTemplateName();
 			String designElementId = bg.getDesignElementId();
 			if (designElementId != null) {
 				tn = designElementId;
 			} else {
 				if (tn == null || !tn.matches("[a-zA-Z0-9_]+,normal(,.*)?"))
-				continue;
-			if(designElementId == null)
+					continue;
 				tn = tn.substring(0, tn.indexOf(","));
 			}
 			File f = context.getBackgroundImage(tn);
@@ -156,21 +255,9 @@ public class PageBackground implements PageDrawable {
 			if (f == null)
 				context.getLog().warn("Background not found for page " + bg.getPage().getPageNr() + ": " + tn);
 			else
-				return f;
+				return new Resolved(f, bg);
 		}
-
 		return null;
-	}
-
-	private int extractHueFromBackGround(List<? extends McfBackground> bgs) {
-		int hue=0;
-		for (McfBackground bg : bgs) {
-			if(bg.getHue()>0) {
-				hue=bg.getHue();
-			};
-		}
-
-		return hue;
 	}
 
 	@Override

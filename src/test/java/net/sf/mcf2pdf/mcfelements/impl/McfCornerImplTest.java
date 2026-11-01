@@ -21,7 +21,6 @@ public class McfCornerImplTest {
     }
 
     @Test
-    @Ignore
     public void testShapeMethods() {
         corner.setShape("shape");
         assertEquals("shape", corner.getShape());

@@ -16,7 +16,17 @@ public class McfTextImpl extends AbstractMcfAreaContentImpl implements McfText {
 	private float indentMargin;
 	
 	private int backgroundColorAlpha;
-	
+
+	private String alignment;
+
+	@Override
+	public String getAlignment() {
+		return alignment;
+	}
+
+	public void setAlignment(String alignment) {
+		this.alignment = alignment;
+	}
 
 	@Override
 	public ContentType getContentType() {

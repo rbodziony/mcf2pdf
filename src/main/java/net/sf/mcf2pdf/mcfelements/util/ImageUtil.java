@@ -16,7 +16,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -44,6 +46,7 @@ import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifDirectoryBase;
+import com.drew.metadata.xmp.XmpDirectory;
 
 import net.sf.mcf2pdf.mcfelements.util.webp.Webp;
 import net.sf.mcf2pdf.mcfelements.util.webp.WebpLib;
@@ -85,54 +88,175 @@ public final class ImageUtil {
 	}
 
 	public static BufferedImage readImage(File imageFile) throws IOException {
-		int rotation = getImageRotation(imageFile);
+		int orientation = getImageOrientation(imageFile);
 		BufferedImage img = internalRead(imageFile);
 
-		if (rotation == 0) {
+		if (orientation < 2 || orientation > 8) {
 			return img;
 		}
 
-		boolean swapXY = rotation != 180;
+		int w = img.getWidth();
+		int h = img.getHeight();
+		boolean swapXY = orientation >= 5;
 
-		BufferedImage rotated = new BufferedImage(swapXY ? img.getHeight() : img.getWidth(), swapXY ? img.getWidth() : img.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
+		// AffineTransform(m00, m10, m01, m11, m02, m12): x' = m00*x + m01*y + m02, y' = m10*x + m11*y + m12
+		AffineTransform tx;
+		switch (orientation) {
+		case 2:
+			tx = new AffineTransform(-1, 0, 0, 1, w, 0);
+			break;
+		case 3:
+			tx = new AffineTransform(-1, 0, 0, -1, w, h);
+			break;
+		case 4:
+			tx = new AffineTransform(1, 0, 0, -1, 0, h);
+			break;
+		case 5:
+			tx = new AffineTransform(0, 1, 1, 0, 0, 0);
+			break;
+		case 6:
+			tx = new AffineTransform(0, 1, -1, 0, h, 0);
+			break;
+		case 7:
+			tx = new AffineTransform(0, -1, -1, 0, h, w);
+			break;
+		default:
+			tx = new AffineTransform(0, -1, 1, 0, 0, w);
+			break;
+		}
+
+		BufferedImage rotated = new BufferedImage(swapXY ? h : w, swapXY ? w : h, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = rotated.createGraphics();
-		g2d.translate((rotated.getWidth() - img.getWidth()) / 2, (rotated.getHeight() - img.getHeight()) / 2);
-		g2d.rotate(Math.toRadians(rotation), img.getWidth() / 2, img.getHeight() / 2);
-
-		g2d.drawImage(img, 0, 0, null);
+		g2d.drawImage(img, tx, null);
 		g2d.dispose();
 
 		return rotated;
 	}
 
-	private static int getImageRotation(File imageFile) throws IOException {
+	private static int getImageOrientation(File imageFile) throws IOException {
 		try {
 			if(imageFile.getName().endsWith("svg")) return 0;
 			Metadata md = ImageMetadataReader.readMetadata(imageFile);
 
 			ExifDirectoryBase ed = md.getFirstDirectoryOfType(ExifDirectoryBase.class);
 
-			if (ed != null) {
-				if (ed.containsTag(ExifDirectoryBase.TAG_ORIENTATION)) {
-					int o = ed.getInt(ExifDirectoryBase.TAG_ORIENTATION);
-					switch (o) {
-					case 3:
-						return 180;
-					case 6:
-						return 90;
-					case 8:
-						return 270;
-					}
-				}
+			int o = 0;
+			if (ed != null && ed.containsTag(ExifDirectoryBase.TAG_ORIENTATION)) {
+				o = ed.getInt(ExifDirectoryBase.TAG_ORIENTATION);
 			}
-			return 0;
+			if (o == 0) {
+				o = getXmpOrientation(md);
+			}
+			if (o == 0 && imageFile.getName().toLowerCase().endsWith(".png")) {
+				o = getPngRawProfileOrientation(imageFile);
+			}
+			return o;
 		} catch (ImageProcessingException e) {
 			throw new IOException(e);
 		} catch (MetadataException e) {
 			return 0;
 		}
 
+	}
+
+	private static int getXmpOrientation(Metadata md) {
+		for (XmpDirectory xmp : md.getDirectoriesOfType(XmpDirectory.class)) {
+			try {
+				if (xmp.getXMPMeta() == null) {
+					continue;
+				}
+				Integer o = xmp.getXMPMeta().getPropertyInteger("http://ns.adobe.com/tiff/1.0/", "Orientation");
+				if (o != null) {
+					return o;
+				}
+			} catch (Exception e) {
+				// ignore unreadable XMP
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * Reads the orientation from a "Raw profile type exif" text chunk, as written by GIMP and ImageMagick, which
+	 * metadata-extractor does not interpret.
+	 */
+	private static int getPngRawProfileOrientation(File png) {
+		try (java.io.DataInputStream in = new java.io.DataInputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(png)))) {
+			in.skipBytes(8);
+			while (true) {
+				int len = in.readInt();
+				byte[] type = new byte[4];
+				in.readFully(type);
+				String t = new String(type, java.nio.charset.StandardCharsets.US_ASCII);
+				if (t.equals("IDAT") || t.equals("IEND") || len < 0) {
+					return 0;
+				}
+				byte[] data = new byte[len];
+				in.readFully(data);
+				in.skipBytes(4);
+				if (t.equals("tEXt") || t.equals("zTXt")) {
+					int nul = 0;
+					while (nul < data.length && data[nul] != 0) {
+						nul++;
+					}
+					if (nul >= data.length || !new String(data, 0, nul, java.nio.charset.StandardCharsets.ISO_8859_1)
+							.equals("Raw profile type exif")) {
+						continue;
+					}
+					byte[] text;
+					if (t.equals("zTXt")) {
+						java.util.zip.Inflater inf = new java.util.zip.Inflater();
+						inf.setInput(data, nul + 2, data.length - nul - 2);
+						java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+						byte[] buf = new byte[4096];
+						while (!inf.finished()) {
+							int n = inf.inflate(buf);
+							if (n == 0 && (inf.needsInput() || inf.needsDictionary())) {
+								break;
+							}
+							bos.write(buf, 0, n);
+						}
+						inf.end();
+						text = bos.toByteArray();
+					} else {
+						text = java.util.Arrays.copyOfRange(data, nul + 1, data.length);
+					}
+					return parseRawProfileOrientation(new String(text, java.nio.charset.StandardCharsets.ISO_8859_1));
+				}
+			}
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+
+	private static int parseRawProfileOrientation(String text) {
+		String[] lines = text.trim().split("\n", 3);
+		if (lines.length < 3) {
+			return 0;
+		}
+		String hex = lines[2].replaceAll("\\s", "");
+		byte[] b = new byte[hex.length() / 2];
+		for (int i = 0; i < b.length; i++) {
+			b[i] = (byte) Integer.parseInt(hex.substring(2 * i, 2 * i + 2), 16);
+		}
+		int base = (b.length > 6 && b[0] == 'E' && b[1] == 'x') ? 6 : 0;
+		if (b.length < base + 8) {
+			return 0;
+		}
+		boolean le = b[base] == 'I';
+		java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(b).order(le ? java.nio.ByteOrder.LITTLE_ENDIAN : java.nio.ByteOrder.BIG_ENDIAN);
+		int ifd = base + bb.getInt(base + 4);
+		int count = bb.getShort(ifd) & 0xffff;
+		for (int i = 0; i < count; i++) {
+			int e = ifd + 2 + i * 12;
+			if (e + 12 > b.length) {
+				break;
+			}
+			if ((bb.getShort(e) & 0xffff) == 0x0112) {
+				return bb.getShort(e + 8) & 0xffff;
+			}
+		}
+		return 0;
 	}
 
 	/**
@@ -157,44 +281,13 @@ public final class ImageUtil {
         GraphicsNode rootSvgNode;
         svgDocument = getSVGDocument(clpFile);
         rootSvgNode = getRootNode(svgDocument, bridgeContext);
-        float[] vb = getViewBox(bridgeContext, svgDocument);
-		//
-
-
-// Finally, stream out SVG to the standard output using UTF-8
-// character to byte encoding
-		/*if(clpFile.getName().contains("clp")) {
-			boolean useCSS = true; // we want to use CSS style attribute
-			Writer out;
-			try {
-				SVGGraphics2D graphics = new SVGGraphics2D(svgDocument);
-				out = new OutputStreamWriter(new FileOutputStream(clpFile.getName().replace("clp","svg")), "UTF-8");
-				graphics.stream(svgDocument.getDocumentElement(), out,useCSS,false);
-				out.flush();
-				out.close();
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (SVGGraphics2DIOException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}*/
-		AffineTransform usr2dev = ViewBox.getPreserveAspectRatioTransform(vb, SVGPreserveAspectRatio.SVG_PRESERVEASPECTRATIO_NONE,
-				true, widthPixel, heightPixel);
-		// ugly fix for some clips
-		AffineTransform result = new AffineTransform();
-		if(usr2dev.getTranslateX()<0) {
-			log.debug("usr2dev="+usr2dev.toString());
-			log.debug("fixing for "+clpFile);
-			//usr2dev.translate(0,usr2dev.getTranslateY());
-			result = new AffineTransform();
-			result.scale((double)(widthPixel / vb[2]), (double)(heightPixel / vb[3]));
-			if(vb[0]>0)
-				vb[0]=0;
-			result.translate((double)(-vb[0]), (double)(-vb[1]));
-			usr2dev = result;
+		float viewportWidth = svgDocument.getRootElement().getWidth().getBaseVal().getValue();
+		float viewportHeight = svgDocument.getRootElement().getHeight().getBaseVal().getValue();
+		if (viewportWidth <= 0 || viewportHeight <= 0) {
+			throw new IOException("Could not determine SVG viewport dimensions: " + clpFile.getAbsolutePath());
 		}
+		AffineTransform usr2dev = AffineTransform.getScaleInstance(
+				widthPixel / viewportWidth, heightPixel / viewportHeight);
 
 		BufferedImage img = new BufferedImage(widthPixel, heightPixel, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = img.createGraphics();
@@ -218,6 +311,26 @@ public final class ImageUtil {
 
 		g2d.dispose();
 		return img;
+	}
+
+	public static void replaceColors(BufferedImage image, Map<Color, Color> colorMappings) {
+		if (colorMappings.isEmpty())
+			return;
+
+		Map<Integer, Integer> rgbMappings = new HashMap<Integer, Integer>();
+		for (Map.Entry<Color, Color> mapping : colorMappings.entrySet()) {
+			rgbMappings.put(mapping.getKey().getRGB() & 0x00ffffff,
+					mapping.getValue().getRGB() & 0x00ffffff);
+		}
+
+		for (int y = 0; y < image.getHeight(); y++) {
+			for (int x = 0; x < image.getWidth(); x++) {
+				int argb = image.getRGB(x, y);
+				Integer replacementRgb = rgbMappings.get(argb & 0x00ffffff);
+				if (replacementRgb != null)
+					image.setRGB(x, y, (argb & 0xff000000) | replacementRgb);
+			}
+		}
 	}
 
 	 /**

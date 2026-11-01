@@ -221,16 +221,31 @@ public class PageText implements PageDrawable {
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = img.createGraphics();
 		// Position of the text is determined by <table> margins if available
-		int curY = marginTop;
+		int curY = cssToPixel(context, marginTop);
 		int x = context.toPixel(text.getIndentMargin() / 10.0f);
+
+		Rectangle rc = new Rectangle(x, 0, width , height);
+
+		// CEWE centres the whole text block; the table margin-top is only a cached layout value
+		if (text.getAlignment() != null && text.getAlignment().contains("ALIGNVCENTER")) {
+			BufferedImage scratch = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D sg = scratch.createGraphics();
+			int textBottom = 0;
+			Rectangle measureRc = new Rectangle(x, 0, width, Integer.MAX_VALUE / 2);
+			for (FormattedTextParagraph para : paras) {
+				textBottom = drawParagraph(para, sg, measureRc, textBottom, context);
+			}
+			sg.dispose();
+			if (textBottom < height) {
+				curY = (height - textBottom) / 2;
+			}
+		}
 
 		// background color?
 		if (text.getArea().getBackgroundColor() != null) {
 			graphics.setColor(text.getArea().getBackgroundColor());
 			graphics.fillRect(0, 0, width, height);
 		}
-
-		Rectangle rc = new Rectangle(x, 0, width , height);
 
 		for (FormattedTextParagraph para : paras) {
 			curY = drawParagraph(para, graphics, rc, curY, context);
@@ -259,7 +274,9 @@ public class PageText implements PageDrawable {
 		FontRenderContext frc = graphics.getFontRenderContext();
 		LineBreakMeasurer lineMeasurer = new LineBreakMeasurer(paragraph, frc);
 
-		float breakWidth = rc.width - marginRight - marginLeft;
+		int marginLeftPX = cssToPixel(context, marginLeft);
+		int marginRightPX = cssToPixel(context, marginRight);
+		float breakWidth = rc.width - marginRightPX - marginLeftPX;
 		float drawPosY = curY;
 
 		lineMeasurer.setPosition(paragraphStart);
@@ -274,7 +291,7 @@ public class PageText implements PageDrawable {
 
 			switch (para.getAlignment()) {
 			case CENTER:
-				drawPosX = (rc.width - layout.getAdvance()) / 2.0f + rc.x -(marginLeft + marginRight)/2;
+				drawPosX = (rc.width - layout.getAdvance()) / 2.0f + rc.x -(marginLeftPX + marginRightPX)/2;
 				break;
 			case RIGHT:
 				drawPosX = !layout.isLeftToRight() ? 0 : breakWidth
@@ -291,10 +308,10 @@ public class PageText implements PageDrawable {
 				drawPosX += rc.x ;
 			}
 
-			drawPosY += layout.getAscent() + para.getMarginTop();
+			drawPosY += layout.getAscent() + cssToPixel(context, para.getMarginTop());
 			layout.draw(graphics, drawPosX, drawPosY);
 			// TODO read margines from top bottom paragrapsh
-			drawPosY += layout.getDescent() + layout.getLeading() +para.getMarginBottom();
+			drawPosY += layout.getDescent() + layout.getLeading() + cssToPixel(context, para.getMarginBottom());
 		}
 
 		return (int)drawPosY;
@@ -413,7 +430,16 @@ public class PageText implements PageDrawable {
 
 	}
 	
-	// <table> margins
+	/**
+	 * Converts a CSS length from the CEWE text HTML to pixels. CEWE lays out
+	 * text in units of 1/10 mm, so <code>margin-top:35px</code> means 3.5 mm,
+	 * independent of the rendering resolution.
+	 */
+	static int cssToPixel(PageRenderContext context, float cssPx) {
+		return cssPx == 0 ? 0 : context.toPixel(cssPx / 10.0f);
+	}
+
+	// <table> margins, in CEWE text units (1/10 mm)
 	private int marginTop = 0;
 	private int marginLeft = 0;
 	private int marginRight = 0;

@@ -3,6 +3,7 @@
  *******************************************************************************/
 package net.sf.mcf2pdf;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
@@ -24,6 +24,8 @@ import net.sf.mcf2pdf.mcfelements.McfImage;
 import net.sf.mcf2pdf.mcfelements.McfImageBackground;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfText;
+import net.sf.mcf2pdf.mcfelements.McfxProject;
+import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
@@ -70,6 +72,18 @@ public class Mcf2FoConverter {
 	private PageRenderContext context;
 
 	private File tempImageDir;
+
+	/** A4 portrait width, in mm. */
+	public static final float A4_WIDTH_MM = 210f;
+
+	/** A4 portrait height, in mm. */
+	public static final float A4_HEIGHT_MM = 297f;
+
+	private boolean splitToA4;
+
+	private boolean splitPages;
+
+	private boolean splitCover;
 
 	/**
 	 * Creates a new converter object with given settings.
@@ -137,6 +151,43 @@ public class Mcf2FoConverter {
 	}
 
 	/**
+	 * Enables A4 output mode. Instead of emitting each double page 1:1 with the
+	 * size defined in the MCF file, every double page is split into its left and
+	 * right page, and each one is scaled to fit an A4 page. The cover (back,
+	 * spine and front) is scaled to fit one A4 page. The A4 orientation follows
+	 * the shape of the album page (landscape album pages give landscape A4).
+	 *
+	 * @param splitToA4 <code>true</code> to enable A4 output.
+	 */
+	public void setSplitToA4(boolean splitToA4) {
+		this.splitToA4 = splitToA4;
+	}
+
+	/**
+	 * Enables single page output. Every double page is split into its left and
+	 * right page, and each one becomes a PDF page in the original album page
+	 * size. The cover (back, spine and front) stays one page in its original
+	 * size. Ignored if A4 output is enabled, which splits pages as well.
+	 *
+	 * @param splitPages <code>true</code> to enable single page output.
+	 */
+	public void setSplitPages(boolean splitPages) {
+		this.splitPages = splitPages;
+	}
+
+	/**
+	 * Enables cover splitting. The cover is cut into back cover, spine and
+	 * front cover. The front cover becomes the first page of the document, the
+	 * back cover the last one, and the spine is skipped. The cover parts keep
+	 * their original size, or are fitted onto A4 if A4 output is enabled.
+	 *
+	 * @param splitCover <code>true</code> to enable cover splitting.
+	 */
+	public void setSplitCover(boolean splitCover) {
+		this.splitCover = splitCover;
+	}
+
+	/**
 	 * Performs conversion of the given MCF input file to XSL-FO data.
 	 *
 	 * @param mcfFile MCF input file.
@@ -153,6 +204,40 @@ public class Mcf2FoConverter {
 	 * has an invalid format.
 	 */
 	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum, int maxPageNo, double sx) throws IOException, SAXException {
+		convert(mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo, sx, null);
+	}
+
+	/**
+	 * Performs conversion of the given MCF input file to XSL-FO data.
+	 * Supports both .mcf files and native CEWE .mcfx databases.
+	 *
+	 * @param mcfFile MCF input file (.mcf) or database file (.mcfx).
+	 * @param xslFoOut Stream to write the XSL-FO data to.
+	 * @param dpi Resolution, in dots per inch, to use for image rendering. The
+	 * higher the value, the better the quality, but the more RAM is consumed.
+	 * @param maxPageNo Renders only up to the given page number (e.g. for testing settings).
+	 * A value of -1 indicates to render all pages.
+	 * @param dbFilename Optional MCF entry selection when a database contains
+	 * more than one .mcf file.
+	 *
+	 * @throws IOException If any I/O related problem occurs, e.g. reading the
+	 * input file or any referenced image files.
+	 *
+	 * @throws SAXException If any XML related problem occurs, e.g. the input file
+	 * has an invalid format.
+	 */
+	public void convert(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum, int maxPageNo, double sx, String dbFilename) throws IOException, SAXException {
+		if (mcfFile.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".mcfx")) {
+			try (McfxProject project = McfxProject.extract(mcfFile, dbFilename)) {
+				convertMcf(project.getMcfFile(), xslFoOut, dpi, binding, pageNum, maxPageNo, sx);
+			}
+		} else {
+			convertMcf(mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo, sx);
+		}
+	}
+
+	private void convertMcf(File mcfFile, OutputStream xslFoOut, int dpi, boolean binding, boolean pageNum,
+			int maxPageNo, double sx) throws IOException, SAXException {
 		// build MCF DOM
 		log.debug("Reading MCF file");
 		McfFotobook book = new FotobookBuilder().readFotobook(mcfFile);
@@ -160,6 +245,10 @@ public class Mcf2FoConverter {
 		// retrieve global information
 		File baseDir = mcfFile.getParentFile().getAbsoluteFile();
 		File imageDir = new File(baseDir, book.getImageDir());
+		if (!imageDir.isDirectory()) {
+			log.warn("Image directory '" + imageDir.getAbsolutePath() + "' (imagedir=\"" + book.getImageDir()
+					+ "\" in the project) does not exist; images will only be found next to the project file");
+		}
 
 		albumType = getAlbumType(book.getProductName());
 		// fallback workaround
@@ -199,8 +288,40 @@ public class Mcf2FoConverter {
 		}
 		
 		// setting master pages
-		docBuilder.addPageMaster("cover", coverPageWidthPX, coverPageHeightPX);
-		docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
+		int a4ShortPX = context.toPixel(A4_WIDTH_MM);
+		int a4LongPX = context.toPixel(A4_HEIGHT_MM);
+		// in A4 mode, orientation follows the shape of a single album page / the cover
+		boolean pageLandscape = pageWidthPX / 2 > pageHeightPX;
+		boolean coverLandscape = coverPageWidthPX > coverPageHeightPX;
+		int a4PageW = pageLandscape ? a4LongPX : a4ShortPX;
+		int a4PageH = pageLandscape ? a4ShortPX : a4LongPX;
+		int a4CoverW = coverLandscape ? a4LongPX : a4ShortPX;
+		int a4CoverH = coverLandscape ? a4ShortPX : a4LongPX;
+		boolean split = splitToA4 || splitPages;
+		int singlePageW = pageWidthPX / 2;
+
+		// cover split: back cover | spine | front cover
+		int spinePX = 0;
+		int coverPartW = coverPageWidthPX;
+		if (splitCover && coverPageWidthPX > 0) {
+			spinePX = computeSpineWidthPX(book, coverPageWidthPX, singlePageW);
+			coverPartW = (coverPageWidthPX - spinePX) / 2;
+			boolean partLandscape = coverPartW > coverPageHeightPX;
+			a4CoverW = partLandscape ? a4LongPX : a4ShortPX;
+			a4CoverH = partLandscape ? a4ShortPX : a4LongPX;
+		}
+		int coverOutW = splitCover ? coverPartW : coverPageWidthPX;
+
+		if (splitToA4) {
+			docBuilder.addPageMaster("cover", a4CoverW, a4CoverH);
+			docBuilder.addPageMaster("default", a4PageW, a4PageH);
+		} else if (splitPages) {
+			docBuilder.addPageMaster("cover", coverOutW, coverPageHeightPX);
+			docBuilder.addPageMaster("default", singlePageW, pageHeightPX);
+		} else {
+			docBuilder.addPageMaster("cover", coverOutW, coverPageHeightPX);
+			docBuilder.addPageMaster("default", pageWidthPX, pageHeightPX);
+		}
 
 		// prepare temporary folder
 		log.debug("Preparing temporary working directory");
@@ -218,13 +339,27 @@ public class Mcf2FoConverter {
 			}
 		}
 
+		BitmapPageBuilder coverBuilder = null;
+		BufferedImage backCover = null;
 		if (leftCover != null) {
 			log.info("Rendering cover...");
-			currentPage = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
+			coverBuilder = new BitmapPageBuilder(coverPageWidthPX, coverPageHeightPX, context, tempImageDir);
+			if (splitToA4) {
+				coverBuilder.setOutputPage(a4CoverW, a4CoverH, false, true, true);
+			}
+			currentPage = coverBuilder;
 			processDoublePage(leftCover, rightCover, imageDir, false, false,
 					book, coverPageWidthPX, coverPageHeightPX);
 			docBuilder.startFlow("cover");
-			currentPage.addToDocumentBuilder(docBuilder);
+			if (splitCover) {
+				// front cover first, back cover is added after the last page
+				BufferedImage cover = coverBuilder.renderImage();
+				backCover = cover.getSubimage(0, 0, coverPartW, cover.getHeight());
+				coverBuilder.addImage(docBuilder,
+						cover.getSubimage(cover.getWidth() - coverPartW, 0, coverPartW, cover.getHeight()));
+			} else {
+				coverBuilder.addToDocumentBuilder(docBuilder);
+			}
 			docBuilder.endFlow();
 		}
 
@@ -246,20 +381,29 @@ public class Mcf2FoConverter {
 		// now, process pages as a pair
 		docBuilder.startFlow("default");
 		log.debug("Starting rendering of " + normalPages.size() + " pages");
-		currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
-
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering pages " + i + "+" + (i+1) + "...");
-			processDoublePage(normalPages.get(i),
-					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					imageDir, binding, pageNum, book, pageWidthPX, pageHeightPX);
-			currentPage.addToDocumentBuilder(docBuilder);
-			if (i < normalPages.size() - 2) {
-				currentPage = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
+			McfPage left = normalPages.get(i);
+			McfPage right = i + 1 < normalPages.size() ? normalPages.get(i + 1) : null;
+			BitmapPageBuilder spread = new BitmapPageBuilder(pageWidthPX, pageHeightPX, context, tempImageDir);
+			// binding shadow makes no sense on separate sheets
+			if (splitToA4) {
+				spread.setOutputPage(a4PageW, a4PageH, true, isPrintable(left), isPrintable(right));
+			} else if (splitPages) {
+				spread.setOutputPage(singlePageW, pageHeightPX, true, isPrintable(left), isPrintable(right));
 			}
+			currentPage = spread;
+			processDoublePage(left, right, imageDir, binding && !split, pageNum, book, pageWidthPX, pageHeightPX);
+			currentPage.addToDocumentBuilder(docBuilder);
 		}
 
 		docBuilder.endFlow();
+
+		if (backCover != null) {
+			docBuilder.startFlow("cover");
+			coverBuilder.addImage(docBuilder, backCover);
+			docBuilder.endFlow();
+		}
 
 		// create and write document
 		log.debug("Creating XSL-FO data");
@@ -309,6 +453,82 @@ public class Mcf2FoConverter {
 		if (addBinding) {
 			currentPage.addDrawable(new PageBinding(resources.getBinding()));
 		}
+	}
+
+	/** Cover wrap of most CEWE hardcover products (<code>coverextrahorizontal="40"</code>), in mm. */
+	private static final float DEFAULT_COVER_WRAP_MM = 4f;
+
+	/**
+	 * Computes the spine width of the cover. The cover consists of back cover,
+	 * spine and front cover. Sources, in this order:
+	 * <ol>
+	 * <li>the cover wrap (<code>coverextrahorizontal</code>) of the album type:
+	 * back and front cover are one album page plus the wrap each;</li>
+	 * <li>the thickness of the rotated spine text area in the centre of the
+	 * cover, which CEWE sizes to the spine (CEWE 6.1 used a normal text area
+	 * rotated by 90 degrees; the spine logo area is smaller and not used);</li>
+	 * <li>the usual CEWE cover wrap of 4 mm (newer product catalogues do not
+	 * contain the wrap any more);</li>
+	 * <li>otherwise everything between two album pages is treated as spine.</li>
+	 * </ol>
+	 */
+	private int computeSpineWidthPX(McfFotobook book, int coverWidthPX, int singlePageWidthPX) {
+		int extraPX = context.toPixel(albumType.getCoverExtraHorizontal() / 10.0f);
+		int spinePX = coverWidthPX - 2 * (singlePageWidthPX + extraPX);
+		if (extraPX > 0 && isPlausibleSpine(spinePX, coverWidthPX)) {
+			log.debug("Spine width from album type: " + spinePX + " px");
+			return spinePX;
+		}
+
+		int fromAreas = 0;
+		for (McfPage p : book.getPages()) {
+			if (!McfPage.FULLCOVER.matcher(p.getType()).matches()) {
+				continue;
+			}
+			for (McfArea a : p.getAreas()) {
+				int rotation = Math.round(a.getRotation()) % 180;
+				boolean textArea = a.getAreaType() != null
+						&& (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()
+								|| McfArea.TEXTAREA.matcher(a.getAreaType()).matches());
+				if (!textArea || rotation != 90 && rotation != -90) {
+					continue;
+				}
+				// rotated by 90 degrees around its centre: its height is the horizontal extent
+				int centerPX = context.toPixel((a.getLeft() + a.getWidth() / 2) / 10.0f);
+				int thicknessPX = context.toPixel(a.getHeight() / 10.0f);
+				if (Math.abs(centerPX - coverWidthPX / 2) <= coverWidthPX / 100
+						&& isPlausibleSpine(thicknessPX, coverWidthPX)) {
+					fromAreas = Math.max(fromAreas, thicknessPX);
+				}
+			}
+		}
+		if (fromAreas > 0) {
+			log.debug("Spine width from spine text area: " + fromAreas + " px");
+			return fromAreas;
+		}
+
+		spinePX = coverWidthPX - 2 * (singlePageWidthPX + context.toPixel(DEFAULT_COVER_WRAP_MM));
+		if (isPlausibleSpine(spinePX, coverWidthPX)) {
+			log.info("Spine width not defined by the product; assuming the usual cover wrap of "
+					+ DEFAULT_COVER_WRAP_MM + " mm, spine " + spinePX + " px");
+			return spinePX;
+		}
+
+		spinePX = coverWidthPX - 2 * singlePageWidthPX;
+		if (!isPlausibleSpine(spinePX, coverWidthPX)) {
+			spinePX = 0;
+		}
+		log.warn("Spine width of the cover is unknown; assuming " + spinePX
+				+ " px, cover parts may contain a part of the spine");
+		return spinePX;
+	}
+
+	private static boolean isPlausibleSpine(int spinePX, int coverWidthPX) {
+		return spinePX > 0 && spinePX <= coverWidthPX / 3;
+	}
+
+	private static boolean isPrintable(McfPage page) {
+		return page != null && !McfPage.EMPTY.matcher(page.getType()).matches();
 	}
 
 	private McfAlbumType getAlbumType(String albumTypeName) throws IOException {

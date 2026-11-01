@@ -2,7 +2,6 @@ package net.sf.mcf2pdf.pagebuild;
 
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfImage;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.Assert;
 import org.mockito.Mockito;
@@ -52,21 +51,18 @@ public class PageImageTest {
     }
 
     @Test
-    @Ignore //TODO add PageRenderContext
-    public void testRenderAsBitmap() throws IOException {
+    public void testRenderAsBitmapWithoutFilenameReturnsTransparentImage() throws IOException {
         McfImage image = Mockito.mock(McfImage.class);
         McfArea area = Mockito.mock(McfArea.class);
         Mockito.when(image.getArea()).thenReturn(area);
         Mockito.when(area.getWidth()).thenReturn(400f);
         Mockito.when(area.getHeight()).thenReturn(500f);
         Mockito.when(image.getFileName()).thenReturn("");
-        PageImage pageImage = new PageImage(image);
-        //PageRenderContext context = Mockito.mock(PageRenderContext.class);
-      //  Mockito.when(context.toPixel(Mockito.anyFloat())).thenReturn(600);
-        Point drawOffsetPixels = new Point();
-       // BufferedImage result = pageImage.renderAsBitmap(context, drawOffsetPixels, 700, 800);
-       // Assert.assertNotNull(result);
-       // Assert.assertEquals(600, result.getWidth());
-        //Assert.assertEquals(600, result.getHeight());
+        PageRenderContext context = new PageRenderContext(254, 1, null, null);
+        BufferedImage result = new PageImage(image).renderAsBitmap(context, new Point(), 700, 800);
+        Assert.assertEquals(400, result.getWidth());
+        Assert.assertEquals(500, result.getHeight());
+        Assert.assertEquals(0, result.getRGB(0, 0));
+        Assert.assertEquals(0, result.getRGB(200, 250));
     }
 }

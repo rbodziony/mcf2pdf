@@ -8,6 +8,9 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,17 +42,20 @@ public class BitmapPageBuilderTest {
 
     private McfAlbumType albumType;
 
-/*    @TempDir
-    static Path tempDir;*/
+    /*
+     * @TempDir
+     * static Path tempDir;
+     */
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
+
     @Before
     // final class PageRenderContext
     public void setUp() throws IOException {
         resources = mock(McfResourceScanner.class);
         albumType = mock(McfAlbumType.class);
         context = new PageRenderContext(100, 1.0, resources, albumType);
-        tempImageDir =  folder.getRoot();
+        tempImageDir = folder.getRoot();
         builder = new BitmapPageBuilder(widthPX, heightPX, context, tempImageDir);
     }
 
@@ -59,7 +65,8 @@ public class BitmapPageBuilderTest {
         PageDrawable drawable = mock(PageDrawable.class);
         List<PageDrawable> drawables = new Vector<>();
         drawables.add(drawable);
-        when(drawable.renderAsBitmap(any(), any(), anyInt(), anyInt())).thenReturn(new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB));
+        when(drawable.renderAsBitmap(any(), any(), anyInt(), anyInt()))
+                .thenReturn(new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB));
         builder.addToDocumentBuilder(docBuilder);
         verify(docBuilder).addPageElement(anyString());
     }
@@ -69,16 +76,18 @@ public class BitmapPageBuilderTest {
         XslFoDocumentBuilder docBuilder = mock(XslFoDocumentBuilder.class);
         File wrongpath = new File("/aaaa/aaa/aa");
         builder = new BitmapPageBuilder(widthPX, heightPX, context, wrongpath);
-        //when(tempImageDir.isFile()).thenReturn(true);
+        // when(tempImageDir.isFile()).thenReturn(true);
         builder.addToDocumentBuilder(docBuilder);
     }
 
-   /* @Test
-    public void testCreateImgFoElement() throws IOException {
-        BufferedImage img = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-        Namespace xslFoNs = mock(Namespace.class);
-        String src = builder.createImgFoElement(img, xslFoNs);
-        assertNotNull(src);
-        assertTrue(new File(src).exists());
-    }*/
+    /*
+     * @Test
+     * public void testCreateImgFoElement() throws IOException {
+     * BufferedImage img = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+     * Namespace xslFoNs = mock(Namespace.class);
+     * String src = builder.createImgFoElement(img, xslFoNs);
+     * assertNotNull(src);
+     * assertTrue(new File(src).exists());
+     * }
+     */
 }

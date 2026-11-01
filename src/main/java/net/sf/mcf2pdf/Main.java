@@ -55,6 +55,10 @@ public class Main {
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
+		options.addOption("1", false, "Single pages: split every double page into two PDF pages in the original album page size (cover stays one page). Default keeps double pages.");
+		options.addOption("o", false, "Split the cover: the front cover becomes the first page, the back cover the last page, the spine is skipped.");
+		options.addOption("a", false, "A4 output: split every double page into two A4 pages (orientation follows the album page; cover is fitted on one A4 page). Default keeps the page size from the MCF/MCFX file.");
+		options.addOption("f", true, "Select an MCF entry when a .mcfx database contains more than one.");
 
 		CommandLine cl;
 		try {
@@ -115,11 +119,34 @@ public class Main {
 
 		File mcfFile = new File(cl.getArgs()[0]);
 		if (!mcfFile.isFile()) {
-			printUsage(options, new ParseException("MCF input file does not exist."));
+			printUsage(options, new ParseException("MCF input file or database does not exist."));
 			System.exit(3);
 			return;
 		}
 		mcfFile = mcfFile.getAbsoluteFile();
+
+		// Validate file type
+		String fileName = mcfFile.getName().toLowerCase(java.util.Locale.ROOT);
+		boolean isDatabase = fileName.endsWith(".mcfx");
+		boolean isMcfFile = fileName.endsWith(".mcf");
+
+		if (!isDatabase && !isMcfFile) {
+			printUsage(options, new ParseException("Input file must be either .mcf (file) or .mcfx (database)."));
+			System.exit(3);
+			return;
+		}
+
+		if (!isDatabase && cl.hasOption("f")) {
+			printUsage(options, new ParseException("Option -f can only be used with a .mcfx database."));
+			System.exit(3);
+			return;
+		}
+
+		// For native CEWE databases, the sole MCF entry is selected automatically.
+		String dbFilename = null;
+		if (isDatabase) {
+			dbFilename = cl.getOptionValue("f");
+		}
 
 		File tempImages = new File(new File(System.getProperty("user.home")), ".mcf2pdf");
 		if (cl.hasOption("w")) {
@@ -209,8 +236,12 @@ public class Main {
 		Log log = LogFactory.getLog(Main.class);
 
 		try {
-			new Mcf2FoConverter(installDir, tempDir, tempImages,hpsDirPath).convert(
-					mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo,sx);
+			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath);
+			converter.setSplitToA4(cl.hasOption("a"));
+			converter.setSplitPages(cl.hasOption("1"));
+			converter.setSplitCover(cl.hasOption("o"));
+			converter.convert(
+					mcfFile, xslFoOut, dpi, binding, pageNum, maxPageNo,sx, dbFilename);
 			xslFoOut.flush();
 
 			if (!cl.hasOption("x")) {

@@ -26,6 +26,7 @@ import net.sf.mcf2pdf.mcfconfig.Fading;
 import net.sf.mcf2pdf.mcfconfig.Fotoarea;
 import net.sf.mcf2pdf.mcfconfig.Template;
 import net.sf.mcf2pdf.mcfelements.util.DigesterUtil;
+import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 
 /**
@@ -53,27 +54,14 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		@Override
 		protected Object convertToType(Class type, Object value) throws Throwable {
 			if (value instanceof String) {
-				// could be full INT when containing Alpha channel
-				if (!value.toString().startsWith("#")) {
-					return longToColor(Long.parseLong(value.toString()));
-				}
-
-				// could still be full INT, but in HEX notation...
-				if (value.toString().length() > 7) {
-					return longToColor(Long.parseLong(value.toString().substring(1), 16));
-				}
-
-				return Color.decode(value.toString());
+				// empty values such as "#" mean "no colour"
+				return McfColorParser.parse(value.toString());
 			}
 
 			if (value instanceof Color)
 				return value;
 
 			throw new ConversionException("Cannot convert to color: " + value);
-		}
-
-		private Color longToColor(long colorValue) {
-			return new Color((int)(colorValue & 0xFFFFFFFF), true);
 		}
 	};
 
@@ -127,6 +115,16 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/decoration/border", getSpecialBorderAttributes());
 		digester.addSetNext("fotobook/page/area/decoration/border", "setBorder");
 
+		// Corners occur directly under area in older files and under decoration in newer ones.
+		for (String path : new String[] {"fotobook/page/area/corners", "fotobook/page/area/decoration/corners"}) {
+			digester.addObjectCreate(path, McfCornersImpl.class);
+			digester.addSetProperties(path);
+			digester.addSetNext(path, "setCorner");
+			digester.addObjectCreate(path + "/corner", McfCornerImpl.class);
+			digester.addSetProperties(path + "/corner");
+			digester.addSetNext(path + "/corner", "addCorner");
+		}
+
 		// text element, including textFormat element
 		digester.addObjectCreate("fotobook/page/area/text", getTextClass());
 		digester.addSetProperties("fotobook/page/area/text");
@@ -138,6 +136,9 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		// clipart element
 		digester.addObjectCreate("fotobook/page/area/clipart", getClipartClass());
 		digester.addSetProperties("fotobook/page/area/clipart");
+		digester.addCallMethod("fotobook/page/area/clipart/ClipartConfiguration/colors/color", "addColorMapping", 2);
+		digester.addCallParam("fotobook/page/area/clipart/ClipartConfiguration/colors/color", 0, "source");
+		digester.addCallParam("fotobook/page/area/clipart/ClipartConfiguration/colors/color", 1, "target");
 		digester.addSetNext("fotobook/page/area/clipart", "setContent");
 		digester.addSetTop("fotobook/page/area/clipart", "setArea");
 
@@ -295,6 +296,9 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "fading", "fading" });
 		result.add(new String[] { "hue", "hue" });
 		result.add(new String[] { "rotation", "rotation" });
+		result.add(new String[] { "alignment", "alignment" });
+		result.add(new String[] { "type", "type" });
+		result.add(new String[] { "layout", "layout" });
 		return result;
 	}
 
@@ -337,6 +341,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "backgroundColor", "backgroundColorAlpha" });
 		result.add(new String[] { "VerticalIndentMargin", "verticalIndentMargin" });
 		result.add(new String[] { "IndentMargin", "indentMargin" });
+		result.add(new String[] { "Alignment", "alignment" });
 		return result;
 	}
 
