@@ -1,6 +1,6 @@
 # mcf2pdf Converter for Mein CEWE Fotobuch (My CEWE Photobook) files to PDF
 
-Latest Release: Version **0.7.6**
+Latest Release: Version **0.8.5**
 
 
 Initial Author: Florian Albrecht
@@ -107,14 +107,14 @@ GitHub Actions builds and tests every push and pull request on Linux, Windows, a
 with Java 25. Test reports and build packages are available as workflow artifacts.
 
 To publish a release, commit a non-SNAPSHOT project version in `pom.xml`, then
-push a matching tag. For example, after setting the version to `0.7.6`:
+push a matching tag. For example, after setting the version to `0.8.5`:
 
 ```sh
-git tag mcf2pdf-0.7.6
-git push origin mcf2pdf-0.7.6
+git tag mcf2pdf-0.8.5
+git push origin mcf2pdf-0.8.5
 ```
 
-Tags `0.7.6` and `v0.7.6` are also supported. The tagged commit must contain the
+Tags `0.8.5` and `v0.8.5` are also supported. The tagged commit must contain the
 workflow. Linux, Windows, and macOS builds must all succeed before publishing. A tag
 that does not match the project version fails the release check; SNAPSHOT
 versions never create a release.
