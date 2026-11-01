@@ -15,6 +15,7 @@ public interface McfBackground {
 	public String getDesignElementId();
 	public int getType();
 
+	/** 1 if this background only names a page layout schema and has no picture. */
 	public int getLayout();
 
 	public int getHue();

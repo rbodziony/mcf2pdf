@@ -82,6 +82,55 @@ public class DigesterConfiguratorImplTest {
     }
 
     @Test
+    public void testParsesLegacyCornersWithoutEnabledAttribute() throws Exception {
+        String xml = "<fotobook><page><area><corners>"
+                + "<corner length=\"1000\" shape=\"convex\" where=\"bottom-left\"/>"
+                + "</corners></area></page></fotobook>";
+        configurator.configureDigester(digester, null);
+        McfFotobook book = digester.parse(new StringReader(xml));
+        McfCorners corners = book.getPages().get(0).getAreas().get(0).getCorners();
+        assertNotNull(corners);
+        assertTrue(corners.isEnabled());
+        assertEquals(1000, corners.getCorners().get(0).getLength());
+        assertEquals("bottom-left", corners.getCorners().get(0).getWhere());
+    }
+
+    @Test
+    public void testParsesPage68Corners() throws Exception {
+        String xml = "<fotobook><page pagenr=\"68\"><area><decoration>"
+                + "<corners enabled=\"yes\">"
+                + "<corner length=\"5000\" shape=\"convex\" where=\"top-left\"/>"
+                + "<corner length=\"5000\" shape=\"convex\" where=\"bottom-right\"/>"
+                + "</corners></decoration></area></page></fotobook>";
+        configurator.configureDigester(digester, null);
+        McfFotobook book = digester.parse(new StringReader(xml));
+        McfCorners corners = book.getPages().get(0).getAreas().get(0).getCorners();
+        assertNotNull(corners);
+        assertEquals(2, corners.getCorners().size());
+        assertEquals(5000, corners.getCorners().get(0).getLength());
+        assertEquals("convex", corners.getCorners().get(0).getShape());
+        assertEquals("top-left", corners.getCorners().get(0).getWhere());
+        assertEquals("bottom-right", corners.getCorners().get(1).getWhere());
+    }
+
+    @Test
+    public void testParsesBackgroundLayoutAndAlignmentAttributes() throws IOException, SAXException {
+        String xml = "<fotobook><page>" +
+                "<background templatename=\"fotobook_full_landscape_47,normal\" layout=\"1\"/>" +
+                "<background alignment=\"3\" templatename=\"Weiss,normal,\" type=\"1\" rotation=\"0\"/>" +
+                "</page></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+        McfPage page = fotobook.getPages().get(0);
+
+        assertEquals(1, page.getBackgrounds().get(0).getLayout());
+        assertEquals(0, page.getBackgrounds().get(1).getLayout());
+        assertEquals(3, page.getBackgrounds().get(1).getAlignment());
+        assertEquals(1, page.getBackgrounds().get(1).getType());
+    }
+
+    @Test
     public void testParsesClipartColorMappings() throws IOException, SAXException {
         String xml = "<fotobook><page><area><clipart designElementId=\"120115\">" +
                 "<ClipartConfiguration applySpotColor=\"0\"><colors>" +

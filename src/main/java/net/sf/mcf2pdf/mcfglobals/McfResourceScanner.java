@@ -131,8 +131,11 @@ public class McfResourceScanner {
 						String type = spec.get(0).getType();
 
 						String designElementId = spec.get(0).getDesignElementId();
-						if (designElementId != null)
+						if (designElementId != null) {
 							foundDecorations.put(spec.get(0).getDesignElementId(), spec.get(0).getFading());
+							// old MCF files reference frames by name, e.g. 6222-DECO-CC
+							registerDecorationName(spec.get(0));
+						}
 						else {
 							if(type.equalsIgnoreCase("fading")) {
 								String fadingdesignElementId = spec.get(0).getFading().getDesignElementId();
@@ -199,6 +202,12 @@ public class McfResourceScanner {
 			}
 		}
 		log.debug("finished scanning ");
+	}
+
+	private void registerDecorationName(Decoration decoration) {
+		if (decoration.getId() != null && decoration.getFading() != null) {
+			foundDecorations.putIfAbsent(decoration.getId(), decoration.getFading());
+		}
 	}
 
 	private static Font loadFont(File f) throws IOException {

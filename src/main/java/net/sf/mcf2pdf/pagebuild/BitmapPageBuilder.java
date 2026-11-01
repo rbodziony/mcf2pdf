@@ -77,8 +77,8 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 					g2d.drawImage(pdImg, left + offset.x, top + offset.y, null);
 			}
 			catch (FileNotFoundException e) {
-				// ignore
-				// throw e;
+				// the page is still rendered, but without this element
+				context.getLog().warn("Skipping page element, " + e.getMessage());
 			}
 		}
 

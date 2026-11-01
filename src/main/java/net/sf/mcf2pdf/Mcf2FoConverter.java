@@ -195,6 +195,10 @@ public class Mcf2FoConverter {
 		// retrieve global information
 		File baseDir = mcfFile.getParentFile().getAbsoluteFile();
 		File imageDir = new File(baseDir, book.getImageDir());
+		if (!imageDir.isDirectory()) {
+			log.warn("Image directory '" + imageDir.getAbsolutePath() + "' (imagedir=\"" + book.getImageDir()
+					+ "\" in the project) does not exist; images will only be found next to the project file");
+		}
 
 		albumType = getAlbumType(book.getProductName());
 		// fallback workaround

@@ -232,6 +232,10 @@ public class PageBackground implements PageDrawable {
 	private Resolved resolveBackground(List<? extends McfBackground> bgs, PageRenderContext context,
 			boolean typeOneOnly) {
 		for (McfBackground bg : bgs) {
+			// layout="1" backgrounds are page layout schemas (e.g. fotobook_full_landscape_47), not pictures
+			if (bg.getLayout() != 0) {
+				continue;
+			}
 			if ((bg.getType() == 1) != typeOneOnly) {
 				continue;
 			}

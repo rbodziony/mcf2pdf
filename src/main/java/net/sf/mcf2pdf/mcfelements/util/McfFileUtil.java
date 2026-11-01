@@ -41,19 +41,24 @@ public final class McfFileUtil {
 			// Version 4.x
 			fileName = fileName.substring(14);
 		}
-		File f = new File(new File(fotobook.getFile().getParentFile(), fotobook.getImageDir()), fileName);
+		File imageDirInBookDir = new File(fotobook.getFile().getParentFile(), fotobook.getImageDir());
+		File f = new File(imageDirInBookDir, fileName);
 		if (f.isFile())
 			return f;
 		
-		f = new File(new File(fotobook.getImageDir()), fileName);
+		File imageDirInWorkingDir = new File(fotobook.getImageDir());
+		f = new File(imageDirInWorkingDir, fileName);
 		if (f.isFile())
 			return f;
 		
-		f = new File(fotobook.getFile().getParentFile(), fileName);
-		if (f.isFile())
-			return f;
+		File inBookDir = new File(fotobook.getFile().getParentFile(), fileName);
+		if (inBookDir.isFile())
+			return inBookDir;
 
-		throw new FileNotFoundException(fileName);
+		throw new FileNotFoundException("Image file '" + fileName + "' not found; searched "
+				+ imageDirInBookDir.getAbsolutePath() + (imageDirInBookDir.isDirectory() ? "" : " (directory does not exist)")
+				+ ", " + imageDirInWorkingDir.getAbsolutePath()
+				+ " and " + inBookDir.getParentFile().getAbsolutePath());
 	}
 
 }

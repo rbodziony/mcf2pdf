@@ -171,7 +171,14 @@ public final class PageRenderContext {
 		if ("Weiss".equals(name)) {
 			name = "Weiß";
 		}
-		return resources.getColorImage(name);
+		File color = resources.getColorImage(name);
+		if (color != null) {
+			return color;
+		}
+
+		// newer CEWE installations only know the numeric IDs of the single-colour backgrounds
+		String legacyId = LegacyBackgroundNames.idFor(name);
+		return legacyId == null ? null : resources.getImage(legacyId);
 	}
 
 	/**

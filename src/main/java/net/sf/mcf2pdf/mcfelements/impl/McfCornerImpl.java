@@ -29,6 +29,7 @@ public class McfCornerImpl implements McfCorner {
 
 	public void setShape(String text) {
 		log.debug("setShape");
+		this.shape = text;
 	}
 
 	@Override

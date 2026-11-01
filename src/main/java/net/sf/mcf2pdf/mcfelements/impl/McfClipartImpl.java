@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.sf.mcf2pdf.mcfelements.McfClipart;
+import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfClipart {
 	
@@ -39,7 +40,11 @@ public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfCli
 	}
 
 	public void addColorMapping(String source, String target) {
-		colorMappings.put(Color.decode(source), Color.decode(target));
+		Color from = McfColorParser.parse(source);
+		Color to = McfColorParser.parse(target);
+		if (from != null && to != null) {
+			colorMappings.put(from, to);
+		}
 	}
 
 	@Override
