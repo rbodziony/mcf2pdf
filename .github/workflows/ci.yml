@@ -34,7 +34,7 @@ jobs:
       - name: Build and test
         run: mvn --batch-mode --no-transfer-progress "-Djava.awt.headless=true" verify
 
-      - name: Test release version checks
+      - name: Test release automation
         run: python -m unittest discover -s .github/scripts -p "test_*.py"
 
       - name: Upload test reports
@@ -78,6 +78,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Check release version
         id: version
@@ -88,6 +89,12 @@ jobs:
       - name: Download tested build artifacts
         if: ${{ steps.version.outputs.publish == 'true' }}
         run: gh run download "$GITHUB_RUN_ID" --name build-ubuntu-latest --dir release-assets
+
+      - name: Generate release notes with all commits
+        if: ${{ steps.version.outputs.publish == 'true' }}
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python .github/scripts/release_notes.py
 
       - name: Create or update GitHub Release
         if: ${{ steps.version.outputs.publish == 'true' }}
@@ -107,7 +114,8 @@ jobs:
           done
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+            gh release edit "$RELEASE_TAG" --notes-file release-notes.md
           else
             gh release create "$RELEASE_TAG" "${assets[@]}" \
-              --verify-tag --title "$RELEASE_VERSION" --generate-notes
+              --verify-tag --title "$RELEASE_VERSION" --notes-file release-notes.md
           fi

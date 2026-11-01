@@ -119,9 +119,16 @@ workflow. Both Linux and Windows builds must succeed before publishing. A tag
 that does not match the project version fails the release check; SNAPSHOT
 versions never create a release.
 
-The GitHub Release includes generated release notes, the JAR, the Linux tarball,
-the Windows ZIP, and the source tarball. Re-running the workflow updates the
-assets of an existing release instead of creating a duplicate.
+The GitHub Release includes generated PR notes and a list of every commit since
+the nearest previous published release in the tagged commit's history. Each
+entry links to the commit and includes its subject and author, including direct
+pushes without a PR and commits from merged branches. Unreleased tags and draft
+releases are excluded when choosing the previous release. For the first release,
+the list includes the entire history.
+
+The release also includes the JAR, the Linux tarball, the Windows ZIP, and the
+source tarball. Re-running the workflow regenerates the notes and updates the
+assets of the existing release instead of creating a duplicate.
 
 ## Troubleshooting
 
