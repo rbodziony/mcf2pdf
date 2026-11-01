@@ -32,7 +32,7 @@ jobs:
           cache: maven
 
       - name: Build and test
-        run: mvn --batch-mode --no-transfer-progress -Djava.awt.headless=true verify
+        run: mvn --batch-mode --no-transfer-progress "-Djava.awt.headless=true" verify
 
       - name: Upload test reports
         if: ${{ always() }}
