@@ -13,6 +13,10 @@ import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 public class McfClipartImpl extends AbstractMcfAreaContentImpl implements McfClipart {
 	
+	private String mirror;
+	public String getMirror() { return mirror; }
+	public void setMirror(String mirror) { this.mirror = mirror; }
+
 	private String uniqueName;
 	private String designElementId;
 	private final Map<Color, Color> colorMappings = new LinkedHashMap<Color, Color>();

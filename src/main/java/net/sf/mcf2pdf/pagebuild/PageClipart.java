@@ -69,11 +69,27 @@ public class PageClipart implements PageDrawable {
 		drawOffsetPixels.x = drawOffsetPixels.y = 0;
 		BufferedImage loadedClip = ImageUtil.loadClpFile(f, widthPixel, heightPixel);
 		ImageUtil.replaceColors(loadedClip, clipart.getColorMappings());
+		loadedClip = mirror(loadedClip, clipart.getMirror());
 		// apply rotation
 		if (clipart.getArea().getRotation() != 0) {
 			loadedClip = ImageUtil.rotateImage(loadedClip, (float)Math.toRadians(clipart.getArea().getRotation()), drawOffsetPixels);
 		}
 		return loadedClip;
+	}
+
+	static BufferedImage mirror(BufferedImage image, String mirror) {
+		boolean x = "x".equals(mirror) || "both".equals(mirror);
+		boolean y = "y".equals(mirror) || "both".equals(mirror);
+		if (!x && !y) return image;
+		int w = image.getWidth(), h = image.getHeight();
+		BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		java.awt.Graphics2D g = result.createGraphics();
+		try {
+			g.drawImage(image, x ? w : 0, y ? h : 0, x ? -w : w, y ? -h : h, null);
+		} finally {
+			g.dispose();
+		}
+		return result;
 	}
 
 	@Override
