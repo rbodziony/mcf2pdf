@@ -3,6 +3,10 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.mcfelements;
 
+import java.awt.Color;
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * TODO comment
  */
@@ -29,8 +33,8 @@ public interface McfImage extends McfAreaContent {
 	public String getPassepartoutDesignElementId();
 
 	/** Frame clipart colour substitutions; photographs and masks keep their original colours. */
-	default java.util.Map<java.awt.Color, java.awt.Color> getColorMappings() {
-		return java.util.Collections.emptyMap();
+	default Map<Color, Color> getColorMappings() {
+		return Collections.emptyMap();
 	}
 
 }

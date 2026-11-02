@@ -4,12 +4,13 @@
 package net.sf.mcf2pdf.mcfelements.impl;
 
 import java.awt.Color;
-import java.util.Map;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
+import java.util.Map;
+
 import net.sf.mcf2pdf.mcfelements.McfCutout;
 import net.sf.mcf2pdf.mcfelements.McfImage;
+import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage {
 	
@@ -48,8 +49,6 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 	public Map<Color, Color> getColorMappings() {
 		return Collections.unmodifiableMap(colorMappings);
 	}
-
-
 
 	@Override
 	public ContentType getContentType() {
