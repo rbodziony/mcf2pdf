@@ -8,6 +8,11 @@ package net.sf.mcf2pdf.mcfelements;
  */
 public interface McfImage extends McfAreaContent {
 
+	/** Nested cutout used by modern photo and background elements. */
+	default McfCutout getCutout() {
+		return null;
+	}
+
 	public String getParentChildRelationshipNature();
 
 	public float getScale();

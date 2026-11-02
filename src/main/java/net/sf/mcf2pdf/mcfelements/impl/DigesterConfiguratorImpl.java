@@ -160,6 +160,11 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetNext("fotobook/page/area/imagebackground", "setContent");
 		digester.addSetTop("fotobook/page/area/imagebackground", "setArea");
 
+		// Background photographs use the same nested cutout as modern images.
+		digester.addObjectCreate("fotobook/page/area/imagebackground/cutout", getCutoutClass());
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/imagebackground/cutout", getSpecialCutoutAttributes());
+		digester.addSetNext("fotobook/page/area/imagebackground/cutout", "setCutout", McfCutout.class.getName());
+
 		// position element
 		digester.addObjectCreate("fotobook/page/area/position", getPositionClass());
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/position", getSpecialPositionAttributes());
