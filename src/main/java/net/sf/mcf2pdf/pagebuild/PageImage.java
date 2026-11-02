@@ -121,8 +121,8 @@ public class PageImage implements PageDrawable {
 
 		double scale = image.getScale() / ImageUtil.SQRT_2;
 
-		double sw = (tmmX * resX) / scale;
-		double sh = (tmmY * resY) / scale;
+		double sw = sourceExtent(tmmX, resX, scale);
+		double sh = sourceExtent(tmmY, resY, scale);
 
 		// draw border and / or shadow?
 		int borderWidth = (maskFile != null || !image.getArea().isBorderEnabled()) ? 0
@@ -269,6 +269,10 @@ public class PageImage implements PageDrawable {
 		}
 
 		return img;
+	}
+
+	protected double sourceExtent(double millimeters, double pixelsPerMM, double scale) {
+		return millimeters * pixelsPerMM / scale;
 	}
 
 	private static boolean hasRoundedCorners(McfCorners corners) {

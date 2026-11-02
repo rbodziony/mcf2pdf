@@ -8,6 +8,8 @@ package net.sf.mcf2pdf.mcfelements;
  */
 public interface McfImage extends McfAreaContent {
 
+	default McfCutout getCutout() { return null; }
+
 	public String getParentChildRelationshipNature();
 
 	public float getScale();

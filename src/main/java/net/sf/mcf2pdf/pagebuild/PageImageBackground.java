@@ -24,6 +24,14 @@ public class PageImageBackground extends PageImage {
 	}
 	
 	@Override
+	protected double sourceExtent(double millimeters, double pixelsPerMM, double scale) {
+		// A nested cutout stores tenths of a millimeter per source pixel, independent of DPI.
+		if (image.getCutout() != null && image.getScale() > 0)
+			return millimeters * 10 / image.getScale();
+		return super.sourceExtent(millimeters, pixelsPerMM, scale);
+	}
+
+	@Override
 	public BufferedImage renderAsBitmap(PageRenderContext context,
 			Point drawOffsetPixels, int widthPX, int heightPX) throws IOException {
 		BufferedImage img = super.renderAsBitmap(context, drawOffsetPixels, widthPX, heightPX);
