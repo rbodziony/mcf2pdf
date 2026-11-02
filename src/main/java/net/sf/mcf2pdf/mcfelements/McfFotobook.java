@@ -10,6 +10,8 @@ import java.util.List;
  * TODO comment
  */
 public interface McfFotobook {
+
+	default java.awt.Color getFlyleafColor() { return java.awt.Color.WHITE; }
 	
 	public File getFile();
 	

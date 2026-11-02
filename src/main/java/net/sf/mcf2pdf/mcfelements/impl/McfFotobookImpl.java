@@ -15,6 +15,25 @@ import net.sf.mcf2pdf.mcfelements.McfPageNum;
 
 public class McfFotobookImpl implements McfFotobook {
 	
+	private java.awt.Color flyleafColor = java.awt.Color.WHITE;
+
+	public java.awt.Color getFlyleafColor() { return flyleafColor; }
+
+	public void addAddOnVariant(String variant) {
+		if (variant == null || !variant.startsWith("flyleafcolor:")) return;
+		String color = variant.substring("flyleafcolor:".length());
+		if ("white".equalsIgnoreCase(color)) flyleafColor = java.awt.Color.WHITE;
+		else if ("black".equalsIgnoreCase(color)) flyleafColor = java.awt.Color.BLACK;
+		else {
+			try {
+				java.awt.Color parsed = net.sf.mcf2pdf.mcfelements.util.McfColorParser.parse(color);
+				if (parsed != null) flyleafColor = parsed;
+			} catch (NumberFormatException ex) {
+				org.apache.commons.logging.LogFactory.getLog(getClass()).warn("Unknown flyleaf color: " + color);
+			}
+		}
+	}
+
 	public File file;
 	
 	private int productType;
