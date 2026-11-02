@@ -74,6 +74,9 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addObjectCreate("fotobook", getFotobookClass());
 		DigesterUtil.addSetProperties(digester, "fotobook", getSpecialFotobookAttributes());
 		
+		digester.addCallMethod("fotobook/addOns/addOn", "addAddOnVariant", 1);
+		digester.addCallParam("fotobook/addOns/addOn", 0, "variant");
+
 		// pagenumbering element
 		digester.addObjectCreate("fotobook/pagenumbering", getPageNumClass());
 		digester.addSetTop("fotobook/pagenumbering", "setFotobook");

@@ -12,10 +12,13 @@ import java.io.Writer;
 import java.util.List;
 
 import net.sf.mcf2pdf.mcfelements.McfBackground;
+import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 
 
 public class PageBackground implements PageDrawable {
+
+	private static final String FLYLEAF_DESIGN_ELEMENT_ID = "99";
 
 	private List<? extends McfBackground> leftBg;
 
@@ -48,7 +51,7 @@ public class PageBackground implements PageDrawable {
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
-		boolean legacyWhole = left != null && right != null && left.file.equals(right.file)
+		boolean legacyWhole = left != null && right != null && left.file != null && left.file.equals(right.file)
 				&& left.bg.getAlignment() == 0 && right.bg.getAlignment() == 0;
 		if (legacyWhole) {
 			// no alignment information: draw the background image on whole page
@@ -69,6 +72,11 @@ public class PageBackground implements PageDrawable {
 
 	private void drawBackground(Resolved r, Graphics2D g2d, int x, int y, int width, int height,
 			boolean useAlignment, boolean rightPage) throws IOException {
+		if (r.file == null) {
+			g2d.setColor(r.bg.getPage().getFotobook().getFlyleafColor());
+			g2d.fillRect(x, y, width, height);
+			return;
+		}
 		BufferedImage img = ImageUtil.readImage(r.file);
 		if (img == null) {
 			throw new IOException("Could not read image file: " + r.file.getAbsolutePath());
@@ -239,6 +247,10 @@ public class PageBackground implements PageDrawable {
 			if ((bg.getType() == 1) != typeOneOnly) {
 				continue;
 			}
+			if (FLYLEAF_DESIGN_ELEMENT_ID.equals(bg.getDesignElementId())
+					&& bg.getPage().getType() != null
+					&& McfPage.EMPTY.matcher(bg.getPage().getType()).matches())
+				return new Resolved(null, bg);
 			String tn = bg.getTemplateName();
 			String designElementId = bg.getDesignElementId();
 			if (designElementId != null) {
