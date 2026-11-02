@@ -136,7 +136,8 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		// clipart element
 		digester.addObjectCreate("fotobook/page/area/clipart", getClipartClass());
 		digester.addSetProperties("fotobook/page/area/clipart");
-		digester.addSetProperties("fotobook/page/area/clipart/ClipartConfiguration", "mirror", "mirror");
+		digester.addCallMethod("fotobook/page/area/clipart/ClipartConfiguration", "setMirror", 1);
+		digester.addCallParam("fotobook/page/area/clipart/ClipartConfiguration", 0, "mirror");
 		digester.addCallMethod("fotobook/page/area/clipart/ClipartConfiguration/colors/color", "addColorMapping", 2);
 		digester.addCallParam("fotobook/page/area/clipart/ClipartConfiguration/colors/color", 0, "source");
 		digester.addCallParam("fotobook/page/area/clipart/ClipartConfiguration/colors/color", 1, "target");

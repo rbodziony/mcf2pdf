@@ -3,6 +3,7 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.pagebuild;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -78,12 +79,14 @@ public class PageClipart implements PageDrawable {
 	}
 
 	static BufferedImage mirror(BufferedImage image, String mirror) {
-		boolean x = "x".equals(mirror) || "both".equals(mirror);
-		boolean y = "y".equals(mirror) || "both".equals(mirror);
+		// CEWE names the reflection axis: x flips top/bottom, y flips left/right.
+		// Verified against CEWE 8.0.5, page 26, clipart 121285 (including mirror=x at rotation 10).
+		boolean x = "y".equals(mirror) || "both".equals(mirror);
+		boolean y = "x".equals(mirror) || "both".equals(mirror);
 		if (!x && !y) return image;
 		int w = image.getWidth(), h = image.getHeight();
 		BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-		java.awt.Graphics2D g = result.createGraphics();
+		Graphics2D g = result.createGraphics();
 		try {
 			g.drawImage(image, x ? w : 0, y ? h : 0, x ? -w : w, y ? -h : h, null);
 		} finally {
