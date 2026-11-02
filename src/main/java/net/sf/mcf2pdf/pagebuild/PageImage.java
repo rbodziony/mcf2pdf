@@ -256,6 +256,7 @@ public class PageImage implements PageDrawable {
 			int y = 0;
 			context.getLog().debug("Applying clipart file " + maskFile);
 			BufferedImage imgClipart = ImageUtil.loadClpFile(clipartFile, widthPixel, heightPixel);
+			ImageUtil.replaceColors(imgClipart, image.getColorMappings());
 			
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 			g2d.drawImage(imgClipart, x, y, null);

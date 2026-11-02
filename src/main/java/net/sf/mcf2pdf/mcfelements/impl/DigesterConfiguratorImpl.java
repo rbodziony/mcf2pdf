@@ -150,6 +150,10 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetNext("fotobook/page/area/image", "setContent");
 		digester.addSetTop("fotobook/page/area/image", "setArea");
 
+		digester.addCallMethod("fotobook/page/area/image/ClipartConfiguration/colors/color", "addColorMapping", 2);
+		digester.addCallParam("fotobook/page/area/image/ClipartConfiguration/colors/color", 0, "source");
+		digester.addCallParam("fotobook/page/area/image/ClipartConfiguration/colors/color", 1, "target");
+
 		// cutout element Version 4.x
 		digester.addObjectCreate("fotobook/page/area/image/cutout", getCutoutClass());
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/image/cutout", getSpecialCutoutAttributes());
