@@ -1,35 +1,50 @@
 /*******************************************************************************
- * ${licenseText}     
+ * ${licenseText}
  *******************************************************************************/
 package net.sf.mcf2pdf.mcfelements.impl;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfPageNum;
-
+import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 public class McfFotobookImpl implements McfFotobook {
-	
-	private java.awt.Color flyleafColor = java.awt.Color.WHITE;
 
-	public java.awt.Color getFlyleafColor() { return flyleafColor; }
+	private static final Log log = LogFactory.getLog(McfFotobookImpl.class);
+
+	private Color flyleafColor = Color.WHITE;
+
+	public Color getFlyleafColor() {
+		return flyleafColor;
+	}
 
 	public void addAddOnVariant(String variant) {
-		if (variant == null || !variant.startsWith("flyleafcolor:")) return;
+		if (variant == null || !variant.startsWith("flyleafcolor:"))
+			return;
 		String color = variant.substring("flyleafcolor:".length());
-		if ("white".equalsIgnoreCase(color)) flyleafColor = java.awt.Color.WHITE;
-		else if ("black".equalsIgnoreCase(color)) flyleafColor = java.awt.Color.BLACK;
+		if ("white".equalsIgnoreCase(color))
+			flyleafColor = Color.WHITE;
+		else if ("black".equalsIgnoreCase(color))
+			flyleafColor = Color.BLACK;
 		else {
 			try {
-				java.awt.Color parsed = net.sf.mcf2pdf.mcfelements.util.McfColorParser.parse(color);
-				if (parsed != null) flyleafColor = parsed;
-			} catch (NumberFormatException ex) {
-				org.apache.commons.logging.LogFactory.getLog(getClass()).warn("Unknown flyleaf color: " + color);
+				Color parsed = McfColorParser.parse(color);
+				if (parsed != null)
+					flyleafColor = parsed;
+			}
+			catch (NumberFormatException ex) {
+				// TODO: extend named colors when additional CEWE flyleaf variants are
+				// verified.
+				log.warn("Unknown flyleaf color: " + color);
 			}
 		}
 	}

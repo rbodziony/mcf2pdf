@@ -12,10 +12,13 @@ import java.io.Writer;
 import java.util.List;
 
 import net.sf.mcf2pdf.mcfelements.McfBackground;
+import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
 
 
 public class PageBackground implements PageDrawable {
+
+	private static final String FLYLEAF_DESIGN_ELEMENT_ID = "99";
 
 	private List<? extends McfBackground> leftBg;
 
@@ -244,9 +247,9 @@ public class PageBackground implements PageDrawable {
 			if ((bg.getType() == 1) != typeOneOnly) {
 				continue;
 			}
-			if ("99".equals(bg.getDesignElementId())
+			if (FLYLEAF_DESIGN_ELEMENT_ID.equals(bg.getDesignElementId())
 					&& bg.getPage().getType() != null
-					&& net.sf.mcf2pdf.mcfelements.McfPage.EMPTY.matcher(bg.getPage().getType()).matches())
+					&& McfPage.EMPTY.matcher(bg.getPage().getType()).matches())
 				return new Resolved(null, bg);
 			String tn = bg.getTemplateName();
 			String designElementId = bg.getDesignElementId();

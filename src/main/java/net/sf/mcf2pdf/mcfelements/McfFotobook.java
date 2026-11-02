@@ -3,6 +3,7 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.mcfelements;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.List;
 
@@ -11,7 +12,9 @@ import java.util.List;
  */
 public interface McfFotobook {
 
-	default java.awt.Color getFlyleafColor() { return java.awt.Color.WHITE; }
+	default Color getFlyleafColor() {
+		return Color.WHITE;
+	}
 	
 	public File getFile();
 	
