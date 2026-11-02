@@ -119,7 +119,7 @@ public class PageImage implements PageDrawable {
 		double resX = res[0] / ImageUtil.MM_PER_INCH;
 		double resY = res[1] / ImageUtil.MM_PER_INCH;
 
-		double scale = image.getScale() / ImageUtil.SQRT_2;
+		double scale = image.getScale();
 
 		double sw = sourceExtent(tmmX, resX, scale);
 		double sh = sourceExtent(tmmY, resY, scale);
@@ -272,7 +272,12 @@ public class PageImage implements PageDrawable {
 	}
 
 	protected double sourceExtent(double millimeters, double pixelsPerMM, double scale) {
-		return millimeters * pixelsPerMM / scale;
+		// Nested cutouts in both photos and backgrounds use tenths of a millimeter per source pixel.
+		// Their source extent must use the same physical scale as McfImageImpl.getLeft()/getTop().
+		if (image.getCutout() != null && scale > 0) {
+			return millimeters * 10 / scale;
+		}
+		return millimeters * pixelsPerMM / (scale / ImageUtil.SQRT_2);
 	}
 
 	private static boolean hasRoundedCorners(McfCorners corners) {
