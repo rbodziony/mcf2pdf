@@ -132,7 +132,7 @@ page. Enter `mcf2pdf -h` to list all options.
 
 ## Automated builds and releases
 
-GitHub Actions builds and tests every push and pull request on Linux, Windows, and macOS
+GitHub Actions builds and tests every push and pull request on Linux and Windows
 with Java 25. Test reports and build packages are available as workflow artifacts.
 
 To publish a release, commit a non-SNAPSHOT project version in `pom.xml`, then
@@ -144,7 +144,7 @@ git push origin mcf2pdf-0.8.0
 ```
 
 Tags `0.8.0` and `v0.8.0` are also supported. The tagged commit must contain the
-workflow. Linux, Windows, and macOS builds must all succeed before publishing. A tag
+workflow. Linux and Windows builds must both succeed before publishing. A tag
 that does not match the project version fails the release check; SNAPSHOT
 versions never create a release.
 
