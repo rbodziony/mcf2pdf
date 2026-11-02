@@ -3,6 +3,11 @@
  *******************************************************************************/
 package net.sf.mcf2pdf.mcfelements.impl;
 
+import java.awt.Color;
+import java.util.Map;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 import net.sf.mcf2pdf.mcfelements.McfCutout;
 import net.sf.mcf2pdf.mcfelements.McfImage;
 
@@ -29,6 +34,22 @@ public class McfImageImpl extends AbstractMcfAreaContentImpl implements McfImage
 	private String passepartoutDesignElementId;
 
 	private McfCutout cutout;
+	private final Map<Color, Color> colorMappings = new LinkedHashMap<Color, Color>();
+
+	public void addColorMapping(String source, String target) {
+		Color from = McfColorParser.parse(source);
+		Color to = McfColorParser.parse(target);
+		if (from != null && to != null) {
+			colorMappings.put(from, to);
+		}
+	}
+
+	@Override
+	public Map<Color, Color> getColorMappings() {
+		return Collections.unmodifiableMap(colorMappings);
+	}
+
+
 
 	@Override
 	public ContentType getContentType() {
