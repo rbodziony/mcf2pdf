@@ -11,6 +11,7 @@ import java.util.Map;
  */
 public interface McfClipart extends McfAreaContent {
 	
+	default String getMirror() { return null; }
 	public String getUniqueName();
 	public String getDesignElementId();
 	public Map<Color, Color> getColorMappings();
