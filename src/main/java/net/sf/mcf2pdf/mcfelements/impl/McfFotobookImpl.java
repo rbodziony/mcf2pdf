@@ -135,6 +135,26 @@ public class McfFotobookImpl implements McfFotobook {
 		this.imageDir = imageDir;
 	}
 
+	private String startDateCalendarium;
+
+	private String holidaysLanguage;
+
+	public String getStartDateCalendarium() {
+		return startDateCalendarium;
+	}
+
+	public void setStartDateCalendarium(String startDateCalendarium) {
+		this.startDateCalendarium = startDateCalendarium;
+	}
+
+	public String getHolidaysLanguage() {
+		return holidaysLanguage;
+	}
+
+	public void setHolidaysLanguage(String holidaysLanguage) {
+		this.holidaysLanguage = holidaysLanguage;
+	}
+
 	public int getNormalPages() {
 		return normalPages;
 	}

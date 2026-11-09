@@ -36,6 +36,12 @@ public interface McfFotobook {
 
 	public int getNormalPages();
 
+	/** Value of <code>startdatecalendarium</code> (dd.MM.yyyy) of a calendar, otherwise <code>null</code>. */
+	public String getStartDateCalendarium();
+
+	/** Language of the holidays settings of a calendar, e.g. <code>pl_PL</code>, otherwise <code>null</code>. */
+	public String getHolidaysLanguage();
+
 	public int getTotalPages();
 
 }

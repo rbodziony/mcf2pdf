@@ -6,6 +6,7 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -76,6 +77,17 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		
 		digester.addCallMethod("fotobook/addOns/addOn", "addAddOnVariant", 1);
 		digester.addCallParam("fotobook/addOns/addOn", 0, "variant");
+
+		digester.addCallMethod("fotobook/holidays", "setHolidaysLanguage", 1);
+		digester.addCallParam("fotobook/holidays", 0, "language");
+
+		// calendar part of a calendar area
+		digester.addObjectCreate("fotobook/page/area/calendararea", McfCalendarAreaImpl.class);
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/calendararea", Arrays.asList(
+				new String[] { "layoutschema", "layoutSchema" },
+				new String[] { "colorschema", "colorSchema" }));
+		digester.addSetNext("fotobook/page/area/calendararea", "setContent");
+		digester.addSetTop("fotobook/page/area/calendararea", "setArea");
 
 		// pagenumbering element
 		digester.addObjectCreate("fotobook/pagenumbering", getPageNumClass());
@@ -262,6 +274,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "productname", "productName" });
 		result.add(new String[] { "imagedir", "imageDir" });
 		result.add(new String[] { "normalpages", "normalPages" });
+		result.add(new String[] { "startdatecalendarium", "startDateCalendarium" });
 		result.add(new String[] { "totalpages", "totalPages" });
 		result.add(new String[] { "producttype", "productType" });
 		result.add(new String[] { "programversion", "programVersion" });

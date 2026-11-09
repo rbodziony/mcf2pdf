@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.regex.Matcher;
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfBundlesize;
+import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
@@ -35,6 +37,7 @@ import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
 import net.sf.mcf2pdf.pagebuild.BitmapPageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageBackground;
 import net.sf.mcf2pdf.pagebuild.PageBinding;
+import net.sf.mcf2pdf.pagebuild.PageCalendar;
 import net.sf.mcf2pdf.pagebuild.PageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageClipart;
 import net.sf.mcf2pdf.pagebuild.PageImage;
@@ -72,6 +75,11 @@ public class Mcf2FoConverter {
 	private PageBuilder currentPage;
 
 	private PageRenderContext context;
+
+	/** Calendar being converted and the month of the sheet being built (<code>null</code> on the cover). */
+	private McfFotobook calendarBook;
+
+	private LocalDate calendarMonth;
 
 	private File tempImageDir;
 
@@ -463,6 +471,14 @@ public class Mcf2FoConverter {
 			else if (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageText((McfText)a.getContent()));
 			}
+			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
+					&& a.getContent() instanceof McfCalendarArea) {
+				PageCalendar calendar = PageCalendar.create(calendarBook.getStartDateCalendarium(),
+						calendarBook.getHolidaysLanguage(), a, (McfCalendarArea)a.getContent(), calendarMonth);
+				if (calendar != null) {
+					currentPage.addDrawable(calendar);
+				}
+			}
 		}
 	}
 
@@ -521,14 +537,17 @@ public class Mcf2FoConverter {
 		tempImageDir.mkdirs();
 		docBuilder.startFlow("default");
 
+		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
+		calendarBook = book;
 		if (coverBack != null || coverFront != null) {
 			log.info("Rendering cover...");
-			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack);
+			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack, null);
 		}
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
 			addCalendarSheet(docBuilder, widthPX, heightPX, normalPages.get(i),
-					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null);
+					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
+					firstMonth == null ? null : firstMonth.withDayOfMonth(1).plusMonths(i / 2));
 		}
 
 		docBuilder.endFlow();
@@ -536,7 +555,8 @@ public class Mcf2FoConverter {
 	}
 
 	private void addCalendarSheet(XslFoDocumentBuilder docBuilder, int widthPX, int heightPX,
-			McfPage top, McfPage bottom) throws IOException {
+			McfPage top, McfPage bottom, LocalDate month) throws IOException {
+		calendarMonth = month;
 		BitmapPageBuilder sheet = new BitmapPageBuilder(widthPX, heightPX, context, tempImageDir);
 		currentPage = sheet;
 		currentPage.addDrawable(new PageBackground(
