@@ -24,10 +24,19 @@ public class PageBackground implements PageDrawable {
 
 	private List<? extends McfBackground> rightBg;
 
+	/** Vertical spread (wall calendar): the first list is the top page, the second the bottom page. */
+	private boolean stacked;
+
 	public PageBackground(List<? extends McfBackground> leftBg,
 			List<? extends McfBackground> rightBg) {
 		this.leftBg = leftBg;
 		this.rightBg = rightBg;
+	}
+
+	public PageBackground(List<? extends McfBackground> topBg,
+			List<? extends McfBackground> bottomBg, boolean stacked) {
+		this(topBg, bottomBg);
+		this.stacked = stacked;
 	}
 
 	@Override
@@ -53,7 +62,16 @@ public class PageBackground implements PageDrawable {
 
 		boolean legacyWhole = left != null && right != null && left.file != null && left.file.equals(right.file)
 				&& left.bg.getAlignment() == 0 && right.bg.getAlignment() == 0;
-		if (legacyWhole) {
+		if (stacked) {
+			if (left != null) {
+				drawBackground(left, g2d, 0, 0, img.getWidth(), img.getHeight() / 2, false, false);
+			}
+			if (right != null) {
+				int half = img.getHeight() / 2;
+				drawBackground(right, g2d, 0, half, img.getWidth(), img.getHeight() - half, false, false);
+			}
+		}
+		else if (legacyWhole) {
 			// no alignment information: draw the background image on whole page
 			drawBackground(left, g2d, 0, 0, img.getWidth(), img.getHeight(), false, false);
 		}
