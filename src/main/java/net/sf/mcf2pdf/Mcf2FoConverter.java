@@ -15,9 +15,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+import java.util.regex.Matcher;
 
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
+import net.sf.mcf2pdf.mcfelements.McfBundlesize;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
@@ -265,6 +267,12 @@ public class Mcf2FoConverter {
 		// prepare page render context
 		context = new PageRenderContext(dpi, sx, resources, albumType);
 
+		String product = book.getProductName();
+		if (product != null && product.startsWith("CAL")) {
+			convertCalendar(book, xslFoOut, maxPageNo);
+			return;
+		}
+
 		// create XSL-FO document
 		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
 
@@ -426,6 +434,19 @@ public class Mcf2FoConverter {
 		if (rightPage != null)
 			areas.addAll(rightPage.getAreas());
 
+		addAreaDrawables(areas);
+
+		if (addPageNum) {
+			currentPage.addDrawable(new PageNum(book, leftPage, "left", pageWidth, pageHeight));
+			currentPage.addDrawable(new PageNum(book, rightPage, "right", pageWidth, pageHeight));
+		}
+
+		if (addBinding) {
+			currentPage.addDrawable(new PageBinding(resources.getBinding()));
+		}
+	}
+
+	private void addAreaDrawables(List<? extends McfArea> areas) {
 		for (McfArea a : areas) {
 			if (McfArea.IMAGEBACKGROUNDAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent()));
@@ -442,17 +463,92 @@ public class Mcf2FoConverter {
 			else if (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageText((McfText)a.getContent()));
 			}
+		}
+	}
 
+	/**
+	 * Converts a wall calendar (CAL8). Every sheet is a vertical double page: the first
+	 * page record is the top half and the second the bottom half of one page of the
+	 * output. The areas of both records use the coordinates of the whole sheet.
+	 * Month names and day tables (calendar areas) are not rendered yet.
+	 */
+	private void convertCalendar(McfFotobook book, OutputStream xslFoOut, int maxPageNo) throws IOException {
+		if (!"CAL8".equals(book.getProductName())) {
+			throw new IOException("Calendar product '" + book.getProductName() + "' is not supported, only CAL8");
 		}
-		
-		if (addPageNum) {
-			currentPage.addDrawable(new PageNum(book, leftPage, "left", pageWidth, pageHeight));
-			currentPage.addDrawable(new PageNum(book, rightPage, "right", pageWidth, pageHeight));
+		if (splitToA4 || splitPages || splitCover) {
+			log.warn("The options for single pages, A4 output and cover splitting are ignored for calendars");
 		}
 
-		if (addBinding) {
-			currentPage.addDrawable(new PageBinding(resources.getBinding()));
+		McfPage coverBack = null;
+		McfPage coverFront = null;
+		List<McfPage> normalPages = new Vector<McfPage>();
+		boolean calendarAreas = false;
+		for (McfPage p : book.getPages()) {
+			for (McfArea a : p.getAreas()) {
+				if ("svgarea".equalsIgnoreCase(a.getAreaType())) {
+					throw new IOException("Calendars with SVG calendar areas (CEWE 5.x) are not supported yet");
+				}
+				calendarAreas |= "calendariumarea".equalsIgnoreCase(a.getAreaType());
+			}
+			Matcher cover = McfPage.CALENDAR_COVER.matcher(p.getType());
+			if (cover.matches()) {
+				if ("back".equals(cover.group(1))) {
+					coverBack = p;
+				} else {
+					coverFront = p;
+				}
+			}
+			else if (McfPage.CONTENT.matcher(p.getType()).matches()) {
+				if (maxPageNo < 0 || p.getPageNr() <= maxPageNo) {
+					normalPages.add(p);
+				}
+			}
 		}
+		if (normalPages.isEmpty() && coverBack == null) {
+			throw new IOException("No calendar pages found for rendering");
+		}
+		if (calendarAreas) {
+			log.warn("Calendar areas (month names, day tables, year) are not rendered yet");
+		}
+
+		McfBundlesize size = book.getPages().get(0).getBundlesize();
+		int widthPX = context.toPixel(size.getWidth() / 10.0f);
+		int heightPX = context.toPixel(size.getHeight() / 10.0f);
+
+		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
+		docBuilder.addPageMaster("default", widthPX, heightPX);
+		tempImageDir.mkdirs();
+		docBuilder.startFlow("default");
+
+		if (coverBack != null || coverFront != null) {
+			log.info("Rendering cover...");
+			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack);
+		}
+		for (int i = 0; i < normalPages.size(); i += 2) {
+			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
+			addCalendarSheet(docBuilder, widthPX, heightPX, normalPages.get(i),
+					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null);
+		}
+
+		docBuilder.endFlow();
+		new XMLOutputter().output(docBuilder.createDocument(), xslFoOut);
+	}
+
+	private void addCalendarSheet(XslFoDocumentBuilder docBuilder, int widthPX, int heightPX,
+			McfPage top, McfPage bottom) throws IOException {
+		BitmapPageBuilder sheet = new BitmapPageBuilder(widthPX, heightPX, context, tempImageDir);
+		currentPage = sheet;
+		currentPage.addDrawable(new PageBackground(
+				top == null ? Collections.<McfBackground>emptyList() : top.getBackgrounds(),
+				bottom == null ? Collections.<McfBackground>emptyList() : bottom.getBackgrounds(), true));
+		List<McfArea> areas = new Vector<McfArea>();
+		if (top != null)
+			areas.addAll(top.getAreas());
+		if (bottom != null)
+			areas.addAll(bottom.getAreas());
+		addAreaDrawables(areas);
+		sheet.addToDocumentBuilder(docBuilder);
 	}
 
 	/** Cover wrap of most CEWE hardcover products (<code>coverextrahorizontal="40"</code>), in mm. */
