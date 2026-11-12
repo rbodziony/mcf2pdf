@@ -81,7 +81,7 @@ public class Mcf2FoConverter {
 	/** Calendar being converted and the month of the sheet being built (<code>null</code> on the cover). */
 	private McfFotobook calendarBook;
 
-	private LocalDate calendarMonth;
+	private CalendarDateModel.CalendarMonth calendarDateMonth;
 
 	private File tempImageDir;
 
@@ -480,12 +480,17 @@ public class Mcf2FoConverter {
 			}
 			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
 					&& a.getContent() instanceof McfCalendarArea) {
-				PageCalendar calendar = PageCalendar.create(calendarBook.getStartDateCalendarium(),
-						calendarBook.getHolidaysLanguage(), a, (McfCalendarArea)a.getContent(), calendarMonth,
+				McfCalendarArea calendarArea = (McfCalendarArea)a.getContent();
+				PageCalendar calendar = PageCalendar.createFromDateModel(calendarBook.getStartDateCalendarium(),
+						calendarBook.getHolidaysLanguage(), a, calendarArea, calendarDateMonth,
 						calendarResources.getLayouts(), calendarResources.getColors(),
 						calendarBook.getCalendarColorSchemas());
 				if (calendar != null) {
 					currentPage.addDrawable(calendar);
+				}
+				else if (calendarDateMonth != null
+						&& !PageCalendar.isLayoutSupported(calendarArea.getLayoutSchema())) {
+					log.warn("Calendar layout schema '" + calendarArea.getLayoutSchema() + "' is not rendered yet");
 				}
 			}
 		}
@@ -495,7 +500,7 @@ public class Mcf2FoConverter {
 	 * Converts a wall calendar (CAL8). Every sheet is a vertical double page: the first
 	 * page record is the top half and the second the bottom half of one page of the
 	 * output. The areas of both records use the coordinates of the whole sheet.
-	 * Month names and day tables (calendar areas) are not rendered yet.
+	 * Titles and the OneDayPerRow (1) day table are rendered from the CEWE catalogues.
 	 */
 	private void convertCalendar(McfFotobook book, OutputStream xslFoOut, int maxPageNo) throws IOException {
 		if (!"CAL8".equals(book.getProductName())) {
@@ -508,13 +513,11 @@ public class Mcf2FoConverter {
 		McfPage coverBack = null;
 		McfPage coverFront = null;
 		List<McfPage> normalPages = new Vector<McfPage>();
-		boolean calendarAreas = false;
 		for (McfPage p : book.getPages()) {
 			for (McfArea a : p.getAreas()) {
 				if ("svgarea".equalsIgnoreCase(a.getAreaType())) {
 					throw new IOException("Calendars with SVG calendar areas (CEWE 5.x) are not supported yet");
 				}
-				calendarAreas |= "calendariumarea".equalsIgnoreCase(a.getAreaType());
 			}
 			Matcher cover = McfPage.CALENDAR_COVER.matcher(p.getType());
 			if (cover.matches()) {
@@ -536,9 +539,6 @@ public class Mcf2FoConverter {
 		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage(),
 				book.getHolidaysCountry());
 		warnForUnknownCalendarCatalogEntries(book);
-		if (calendarAreas) {
-			log.warn("Calendar day tables, holidays and user events are not rendered yet");
-		}
 
 		McfBundlesize size = book.getPages().get(0).getBundlesize();
 		int widthPX = context.toPixel(size.getWidth() / 10.0f);
@@ -565,9 +565,9 @@ public class Mcf2FoConverter {
 		}
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
+			CalendarDateModel.CalendarMonth month = dateModel == null ? null : dateModel.getMonth(i / 2);
 			addCalendarSheet(docBuilder, widthPX, heightPX, normalPages.get(i),
-					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					dateModel == null ? null : dateModel.getMonth(i / 2).getFirstDay());
+					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null, month);
 		}
 
 		docBuilder.endFlow();
@@ -595,8 +595,8 @@ public class Mcf2FoConverter {
 	}
 
 	private void addCalendarSheet(XslFoDocumentBuilder docBuilder, int widthPX, int heightPX,
-			McfPage top, McfPage bottom, LocalDate month) throws IOException {
-		calendarMonth = month;
+			McfPage top, McfPage bottom, CalendarDateModel.CalendarMonth dateMonth) throws IOException {
+		calendarDateMonth = dateMonth;
 		BitmapPageBuilder sheet = new BitmapPageBuilder(widthPX, heightPX, context, tempImageDir);
 		currentPage = sheet;
 		currentPage.addDrawable(new PageBackground(
