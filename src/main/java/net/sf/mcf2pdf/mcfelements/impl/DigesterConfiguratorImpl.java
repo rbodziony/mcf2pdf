@@ -80,12 +80,16 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 
 		digester.addCallMethod("fotobook/holidays", "setHolidaysLanguage", 1);
 		digester.addCallParam("fotobook/holidays", 0, "language");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysCountry", 1);
+		digester.addCallParam("fotobook/holidays", 0, "country");
 
 		// calendar part of a calendar area
 		digester.addObjectCreate("fotobook/page/area/calendararea", McfCalendarAreaImpl.class);
 		DigesterUtil.addSetProperties(digester, "fotobook/page/area/calendararea", Arrays.asList(
 				new String[] { "layoutschema", "layoutSchema" },
-				new String[] { "colorschema", "colorSchema" }));
+				new String[] { "colorschema", "colorSchema" },
+				new String[] { "font", "font" },
+				new String[] { "fontsize_percentage", "fontSizePercentage" }));
 		digester.addSetNext("fotobook/page/area/calendararea", "setContent");
 		digester.addSetTop("fotobook/page/area/calendararea", "setArea");
 

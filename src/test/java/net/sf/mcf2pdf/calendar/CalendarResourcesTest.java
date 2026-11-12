@@ -21,7 +21,8 @@ public class CalendarResourcesTest {
 		write(resources, "calendar_layout.xml",
 				"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><calendar_layout>"
 				+ "<calendararea schema=\"Month\" type=\"CALENDAR_MONTH\" renderinfo=\"MONTH\">"
-				+ "<cell type=\"CALENDAR_CELL_TYPE_MONTH\" textalign=\"AlignCenter\" fontsize=\"12\"/>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_MONTH\" textalign=\"AlignCenter\">"
+				+ "<font size=\"22\" face=\"FranklinGothic\"/></cell>"
 				+ "</calendararea></calendar_layout>");
 		write(resources, "calendar_schema.xml",
 				"<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><calendar_schema>"
@@ -43,7 +44,10 @@ public class CalendarResourcesTest {
 
 		CalendarLayoutCatalogue.Layout month = loaded.getLayouts().getLayout("Month");
 		Assert.assertEquals("CALENDAR_MONTH", month.getType());
-		Assert.assertEquals("AlignCenter", month.getCell("CALENDAR_CELL_TYPE_MONTH").get("textalign"));
+		Assert.assertEquals("AlignCenter",
+				month.getCell("CALENDAR_CELL_TYPE_MONTH").getAttributes().get("textalign"));
+		Assert.assertEquals("22",
+				month.getCell("CALENDAR_CELL_TYPE_MONTH").getFontAttributes().get("size"));
 		CalendarColorCatalogue.ColorSchema colors = loaded.getColors().getSchema("Legacy colors");
 		Assert.assertEquals("New colors", colors.getSchema());
 		Assert.assertEquals("#ff0000", colors.getCell("CALENDAR_CELL_TYPE_SUNDAY").get("bgcolor"));
@@ -73,8 +77,24 @@ public class CalendarResourcesTest {
 			CalendarResources.load(resources, ".._..");
 			Assert.fail("Invalid locale should fail");
 		} catch (IOException e) {
-			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Invalid or missing calendar language"));
+			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Invalid calendar language"));
 		}
+	}
+
+	@Test
+	public void infersHolidayCatalogueFromCountryWhenProjectHasNoLanguage() throws Exception {
+		File resources = temporaryFolder.newFolder("country-resources");
+		write(resources, "calendar_layout.xml", "<calendar_layout/>");
+		write(resources, "calendar_schema.xml", "<calendar_schema/>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+		File entries = new File(resources, "calendarentries");
+		Assert.assertTrue(entries.mkdir());
+		Files.write(new File(entries, "pl_PL.xml").toPath(),
+				"<holidays><country iso=\"Polska\" locale=\"pl_PL\"/></holidays>".getBytes(StandardCharsets.UTF_8));
+
+		CalendarResources loaded = CalendarResources.load(resources, null, "Polska");
+
+		Assert.assertEquals("pl_PL", loaded.getHolidays().getCountryAttributes().get("locale"));
 	}
 
 	private static void write(File directory, String name, String contents) throws IOException {

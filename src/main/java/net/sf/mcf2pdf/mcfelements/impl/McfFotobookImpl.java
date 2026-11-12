@@ -139,6 +139,8 @@ public class McfFotobookImpl implements McfFotobook {
 
 	private String holidaysLanguage;
 
+	private String holidaysCountry;
+
 	public String getStartDateCalendarium() {
 		return startDateCalendarium;
 	}
@@ -153,6 +155,14 @@ public class McfFotobookImpl implements McfFotobook {
 
 	public void setHolidaysLanguage(String holidaysLanguage) {
 		this.holidaysLanguage = holidaysLanguage;
+	}
+
+	public String getHolidaysCountry() {
+		return holidaysCountry;
+	}
+
+	public void setHolidaysCountry(String holidaysCountry) {
+		this.holidaysCountry = holidaysCountry;
 	}
 
 	public int getNormalPages() {

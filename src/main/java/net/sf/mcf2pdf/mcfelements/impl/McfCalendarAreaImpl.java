@@ -10,6 +10,8 @@ public class McfCalendarAreaImpl extends AbstractMcfAreaContentImpl implements M
 
 	private String font;
 
+	private int fontSizePercentage;
+
 	@Override
 	public ContentType getContentType() {
 		return ContentType.CALENDAR;
@@ -40,6 +42,15 @@ public class McfCalendarAreaImpl extends AbstractMcfAreaContentImpl implements M
 
 	public void setFont(String font) {
 		this.font = font;
+	}
+
+	@Override
+	public int getFontSizePercentage() {
+		return fontSizePercentage;
+	}
+
+	public void setFontSizePercentage(int fontSizePercentage) {
+		this.fontSizePercentage = fontSizePercentage;
 	}
 
 }

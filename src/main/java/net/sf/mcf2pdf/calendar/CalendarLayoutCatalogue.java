@@ -31,7 +31,7 @@ public final class CalendarLayoutCatalogue {
 			if (schema.isEmpty()) {
 				continue;
 			}
-			Map<String, Map<String, String>> cells = new LinkedHashMap<String, Map<String, String>>();
+			Map<String, Cell> cells = new LinkedHashMap<String, Cell>();
 			NodeList cellNodes = element.getChildNodes();
 			for (int j = 0; j < cellNodes.getLength(); j++) {
 				Node cellNode = cellNodes.item(j);
@@ -39,7 +39,7 @@ public final class CalendarLayoutCatalogue {
 					Element cell = (Element) cellNode;
 					String type = cell.getAttribute("type");
 					if (!type.isEmpty()) {
-						cells.put(type, attributes(cell));
+						cells.put(type, readCell(cell));
 					}
 				}
 			}
@@ -67,16 +67,29 @@ public final class CalendarLayoutCatalogue {
 		return Collections.unmodifiableMap(result);
 	}
 
+	private static Cell readCell(Element element) {
+		Map<String, String> fontAttributes = Collections.emptyMap();
+		NodeList children = element.getChildNodes();
+		for (int i = 0; i < children.getLength(); i++) {
+			Node child = children.item(i);
+			if (child instanceof Element && "font".equals(child.getNodeName())) {
+				fontAttributes = attributes((Element) child);
+				break;
+			}
+		}
+		return new Cell(attributes(element), fontAttributes);
+	}
+
 	public static final class Layout {
 
 		private final String schema;
 		private final String type;
 		private final String renderInfo;
 		private final Map<String, String> attributes;
-		private final Map<String, Map<String, String>> cells;
+		private final Map<String, Cell> cells;
 
 		private Layout(String schema, String type, String renderInfo, Map<String, String> attributes,
-				Map<String, Map<String, String>> cells) {
+				Map<String, Cell> cells) {
 			this.schema = schema;
 			this.type = type;
 			this.renderInfo = renderInfo;
@@ -100,12 +113,31 @@ public final class CalendarLayoutCatalogue {
 			return attributes;
 		}
 
-		public Map<String, Map<String, String>> getCells() {
+		public Map<String, Cell> getCells() {
 			return cells;
 		}
 
-		public Map<String, String> getCell(String type) {
+		public Cell getCell(String type) {
 			return cells.get(type);
+		}
+	}
+
+	public static final class Cell {
+
+		private final Map<String, String> attributes;
+		private final Map<String, String> fontAttributes;
+
+		private Cell(Map<String, String> attributes, Map<String, String> fontAttributes) {
+			this.attributes = attributes;
+			this.fontAttributes = fontAttributes;
+		}
+
+		public Map<String, String> getAttributes() {
+			return attributes;
+		}
+
+		public Map<String, String> getFontAttributes() {
+			return fontAttributes;
 		}
 	}
 }

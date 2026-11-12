@@ -207,6 +207,10 @@ public final class PageRenderContext {
 		return resources.getFont(fontFamily);
 	}
 
+	public Font getFont(String fontFamily, boolean bold) {
+		return resources.getFont(fontFamily, bold);
+	}
+
 	/**
 	 * Returns fotoframe used for photo, consists of:
 	 * <ul>

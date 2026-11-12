@@ -480,7 +480,8 @@ public class Mcf2FoConverter {
 			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
 					&& a.getContent() instanceof McfCalendarArea) {
 				PageCalendar calendar = PageCalendar.create(calendarBook.getStartDateCalendarium(),
-						calendarBook.getHolidaysLanguage(), a, (McfCalendarArea)a.getContent(), calendarMonth);
+						calendarBook.getHolidaysLanguage(), a, (McfCalendarArea)a.getContent(), calendarMonth,
+						calendarResources.getLayouts(), calendarResources.getColors());
 				if (calendar != null) {
 					currentPage.addDrawable(calendar);
 				}
@@ -530,7 +531,8 @@ public class Mcf2FoConverter {
 		if (normalPages.isEmpty() && coverBack == null) {
 			throw new IOException("No calendar pages found for rendering");
 		}
-		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage());
+		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage(),
+				book.getHolidaysCountry());
 		warnForUnknownCalendarCatalogEntries(book);
 		if (calendarAreas) {
 			log.warn("Calendar areas (month names, day tables, year) are not rendered yet");

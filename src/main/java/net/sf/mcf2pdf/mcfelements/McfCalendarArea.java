@@ -14,4 +14,7 @@ public interface McfCalendarArea extends McfAreaContent {
 	/** Font family name. */
 	public String getFont();
 
+	/** Percentage adjustment to the font size defined by the selected layout. */
+	public int getFontSizePercentage();
+
 }

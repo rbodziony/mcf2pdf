@@ -42,6 +42,9 @@ public interface McfFotobook {
 	/** Language of the holidays settings of a calendar, e.g. <code>pl_PL</code>, otherwise <code>null</code>. */
 	public String getHolidaysLanguage();
 
+	/** Country selected in the holidays settings, otherwise <code>null</code>. */
+	public String getHolidaysCountry();
+
 	public int getTotalPages();
 
 }

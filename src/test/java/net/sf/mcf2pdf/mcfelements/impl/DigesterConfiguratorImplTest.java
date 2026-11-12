@@ -143,4 +143,30 @@ public class DigesterConfiguratorImplTest {
 
         assertEquals(new Color(0xaabb91), clipart.getColorMappings().get(Color.WHITE));
     }
+
+    @Test
+    public void testParsesCalendarFontAndSizePercentage() throws IOException, SAXException {
+        String xml = "<fotobook><page><area areatype=\"calendariumarea\">"
+                + "<calendararea layoutschema=\"Month\" colorschema=\"Gray\" font=\"FranklinGothic\" "
+                + "fontsize_percentage=\"-20\"/></area></page></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+        McfCalendarArea calendar = (McfCalendarArea) fotobook.getPages().get(0).getAreas().get(0).getContent();
+
+        assertEquals("Month", calendar.getLayoutSchema());
+        assertEquals("Gray", calendar.getColorSchema());
+        assertEquals("FranklinGothic", calendar.getFont());
+        assertEquals(-20, calendar.getFontSizePercentage());
+    }
+
+    @Test
+    public void testParsesHolidaysCountryWithoutLanguage() throws IOException, SAXException {
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(
+                new StringReader("<fotobook><holidays country=\"Polska\"/></fotobook>"));
+
+        assertNull(fotobook.getHolidaysLanguage());
+        assertEquals("Polska", fotobook.getHolidaysCountry());
+    }
 }
