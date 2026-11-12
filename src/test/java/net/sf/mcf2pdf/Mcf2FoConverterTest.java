@@ -43,6 +43,21 @@ public class Mcf2FoConverterTest {
                 + "<product name=\"CAL28\" safetymargin=\"0\" bleedmargin=\"0\"><usablesize width=\"2970\" height=\"4200\"/></product>"
                 + "</description>";
         Files.write(new File(products, "calendars.xml").toPath(), catalogue.getBytes(StandardCharsets.UTF_8));
+        File resources = new File(install, "Resources");
+        Files.write(new File(resources, "calendar_layout.xml").toPath(),
+                "<calendar_layout><calendararea schema=\"Month\" type=\"MONTH\" renderinfo=\"MONTH_NAME\"/></calendar_layout>"
+                        .getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(resources, "calendar_schema.xml").toPath(),
+                "<calendar_schema><calendararea schema=\"Black\" gridcolor=\"#000000\"/></calendar_schema>"
+                        .getBytes(StandardCharsets.UTF_8));
+        Files.write(new File(resources, "calendar_synonym.xml").toPath(),
+                "<synonyms><synonym old=\"Legacy black\" new=\"Black\"/></synonyms>"
+                        .getBytes(StandardCharsets.UTF_8));
+        File entries = new File(resources, "calendarentries");
+        Assert.assertTrue(entries.mkdir());
+        Files.write(new File(entries, "pl_PL.xml").toPath(),
+                ("<holidays><country iso=\"Polska\" locale=\"pl_PL\"><day id=\"19\" honor=\"free\" name=\"Nowy Rok\"/>"
+                        + "</country></holidays>").getBytes(StandardCharsets.UTF_8));
         tempImageDir = tmp.newFolder("images");
         return new Mcf2FoConverter(install, tmp.newFolder("mcftemp"), tempImageDir, tmp.newFolder("hps"));
     }
@@ -52,7 +67,8 @@ public class Mcf2FoConverterTest {
         File file = new File(dir, "calendar.mcf");
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 + "<fotobook imagedir=\"images\" productname=\"" + productName + "\" programversion=\"6003007\" "
-                + "version=\"3.0\" startdatecalendarium=\"01.01.2019\">" + pagesXml + "</fotobook>";
+                + "version=\"3.0\" startdatecalendarium=\"01.01.2019\"><holidays language=\"pl_PL\"/>"
+                + pagesXml + "</fotobook>";
         Files.write(file.toPath(), xml.getBytes(StandardCharsets.UTF_8));
         return file;
     }

@@ -31,6 +31,7 @@ import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.McfxProject;
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
+import net.sf.mcf2pdf.calendar.CalendarResources;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
 import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
@@ -83,6 +84,10 @@ public class Mcf2FoConverter {
 
 	private File tempImageDir;
 
+	private File calendarResourcesDirectory;
+
+	private CalendarResources calendarResources;
+
 	/** A4 portrait width, in mm. */
 	public static final float A4_WIDTH_MM = 210f;
 
@@ -118,6 +123,7 @@ public class Mcf2FoConverter {
 		if (!resourcesDir.isDirectory()) {
 			throw new IOException("MCF Resources Directory " + resourcesDir.getAbsolutePath() + " does not exist");
 		}
+		calendarResourcesDirectory = resourcesDir;
 
 		scanForProducts(resourcesDir, McfProductCatalogue.CatalogueVersion.PRE_V6);
 		File productsDir = new File(resourcesDir, "products");
@@ -524,6 +530,8 @@ public class Mcf2FoConverter {
 		if (normalPages.isEmpty() && coverBack == null) {
 			throw new IOException("No calendar pages found for rendering");
 		}
+		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage());
+		warnForUnknownCalendarCatalogEntries(book);
 		if (calendarAreas) {
 			log.warn("Calendar areas (month names, day tables, year) are not rendered yet");
 		}
@@ -552,6 +560,25 @@ public class Mcf2FoConverter {
 
 		docBuilder.endFlow();
 		new XMLOutputter().output(docBuilder.createDocument(), xslFoOut);
+	}
+
+	private void warnForUnknownCalendarCatalogEntries(McfFotobook book) {
+		for (McfPage page : book.getPages()) {
+			for (McfArea area : page.getAreas()) {
+				if (!(area.getContent() instanceof McfCalendarArea)) {
+					continue;
+				}
+				McfCalendarArea calendar = (McfCalendarArea) area.getContent();
+				if (calendar.getLayoutSchema() != null
+						&& calendarResources.getLayouts().getLayout(calendar.getLayoutSchema()) == null) {
+					log.warn("Unknown calendar layout schema '" + calendar.getLayoutSchema() + "'");
+				}
+				if (calendar.getColorSchema() != null
+						&& calendarResources.getColors().getSchema(calendar.getColorSchema()) == null) {
+					log.warn("Unknown calendar color schema '" + calendar.getColorSchema() + "'");
+				}
+			}
+		}
 	}
 
 	private void addCalendarSheet(XslFoDocumentBuilder docBuilder, int widthPX, int heightPX,
