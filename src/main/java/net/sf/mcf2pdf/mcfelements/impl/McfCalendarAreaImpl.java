@@ -12,6 +12,14 @@ public class McfCalendarAreaImpl extends AbstractMcfAreaContentImpl implements M
 
 	private int fontSizePercentage;
 
+	private int fontSizePercentageHolidays;
+
+	private String showHoliday;
+
+	private String optimizedSize;
+
+	private String extraInformation;
+
 	@Override
 	public ContentType getContentType() {
 		return ContentType.CALENDAR;
@@ -51,6 +59,42 @@ public class McfCalendarAreaImpl extends AbstractMcfAreaContentImpl implements M
 
 	public void setFontSizePercentage(int fontSizePercentage) {
 		this.fontSizePercentage = fontSizePercentage;
+	}
+
+	@Override
+	public int getFontSizePercentageHolidays() {
+		return fontSizePercentageHolidays;
+	}
+
+	public void setFontSizePercentageHolidays(int fontSizePercentageHolidays) {
+		this.fontSizePercentageHolidays = fontSizePercentageHolidays;
+	}
+
+	@Override
+	public String getShowHoliday() {
+		return showHoliday;
+	}
+
+	public void setShowHoliday(String showHoliday) {
+		this.showHoliday = showHoliday;
+	}
+
+	@Override
+	public String getOptimizedSize() {
+		return optimizedSize;
+	}
+
+	public void setOptimizedSize(String optimizedSize) {
+		this.optimizedSize = optimizedSize;
+	}
+
+	@Override
+	public String getExtraInformation() {
+		return extraInformation;
+	}
+
+	public void setExtraInformation(String extraInformation) {
+		this.extraInformation = extraInformation;
 	}
 
 }

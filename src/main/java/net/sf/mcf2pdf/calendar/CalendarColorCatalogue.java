@@ -2,10 +2,12 @@ package net.sf.mcf2pdf.calendar;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import net.sf.mcf2pdf.mcfelements.McfCalendarColorSchema;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -24,8 +26,36 @@ public final class CalendarColorCatalogue {
 	}
 
 	public ColorSchema getSchema(String name) {
+		return getSchema(name, Collections.<McfCalendarColorSchema>emptyList());
+	}
+
+	public ColorSchema getSchema(String name, Collection<? extends McfCalendarColorSchema> userSchemas) {
+		if (name == null) {
+			return null;
+		}
+		for (McfCalendarColorSchema userSchema : userSchemas) {
+			if (name.equals(userSchema.getSchema())) {
+				return fromUserSchema(userSchema);
+			}
+		}
 		String resolved = resolveSchemaName(name);
 		return resolved == null ? null : schemas.get(resolved);
+	}
+
+	private static ColorSchema fromUserSchema(McfCalendarColorSchema schema) {
+		Map<String, Map<String, String>> cells = new LinkedHashMap<String, Map<String, String>>();
+		for (Map.Entry<String, Map<String, String>> entry : schema.getCells().entrySet()) {
+			Map<String, String> attributes = new LinkedHashMap<String, String>(schema.getCellDefault());
+			attributes.putAll(entry.getValue());
+			cells.put(entry.getKey(), Collections.unmodifiableMap(attributes));
+		}
+		Map<String, String> attributes = new LinkedHashMap<String, String>();
+		attributes.put("schema", schema.getSchema());
+		if (schema.getGridColor() != null) {
+			attributes.put("gridcolor", schema.getGridColor());
+		}
+		return new ColorSchema(schema.getSchema(), schema.getGridColor(),
+				Collections.unmodifiableMap(attributes), cells, schema.getCellDefault());
 	}
 
 	public String resolveSchemaName(String name) {
@@ -78,7 +108,7 @@ public final class CalendarColorCatalogue {
 				}
 			}
 			result.put(schema, new ColorSchema(schema, element.getAttribute("gridcolor"),
-					attributes(element), cells));
+					attributes(element), cells, Collections.<String, String>emptyMap()));
 		}
 		return Collections.unmodifiableMap(result);
 	}
@@ -117,13 +147,15 @@ public final class CalendarColorCatalogue {
 		private final String gridColor;
 		private final Map<String, String> attributes;
 		private final Map<String, Map<String, String>> cells;
+		private final Map<String, String> defaultCellAttributes;
 
 		private ColorSchema(String schema, String gridColor, Map<String, String> attributes,
-				Map<String, Map<String, String>> cells) {
+				Map<String, Map<String, String>> cells, Map<String, String> defaultCellAttributes) {
 			this.schema = schema;
 			this.gridColor = gridColor;
 			this.attributes = attributes;
 			this.cells = Collections.unmodifiableMap(cells);
+			this.defaultCellAttributes = Collections.unmodifiableMap(defaultCellAttributes);
 		}
 
 		public String getSchema() {
@@ -143,7 +175,8 @@ public final class CalendarColorCatalogue {
 		}
 
 		public Map<String, String> getCell(String type) {
-			return cells.get(type);
+			Map<String, String> cell = cells.get(type);
+			return cell == null ? defaultCellAttributes : cell;
 		}
 	}
 }

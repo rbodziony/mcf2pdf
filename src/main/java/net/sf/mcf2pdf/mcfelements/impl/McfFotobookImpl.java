@@ -15,6 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfPage;
 import net.sf.mcf2pdf.mcfelements.McfPageNum;
+import net.sf.mcf2pdf.mcfelements.McfCalendarEvent;
+import net.sf.mcf2pdf.mcfelements.McfCalendarColorSchema;
 import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 public class McfFotobookImpl implements McfFotobook {
@@ -70,6 +72,10 @@ public class McfFotobookImpl implements McfFotobook {
 	private McfPageNum pageNumbering;
 	
 	private List<McfPage> pages = new Vector<McfPage>();
+
+	private List<McfCalendarEvent> calendarEvents = new Vector<McfCalendarEvent>();
+
+	private List<McfCalendarColorSchema> calendarColorSchemas = new Vector<McfCalendarColorSchema>();
 	
 	public void addPage(McfPage page) {
 		pages.add(page);
@@ -77,6 +83,24 @@ public class McfFotobookImpl implements McfFotobook {
 	
 	public List<? extends McfPage> getPages() {
 		return Collections.unmodifiableList(pages);
+	}
+
+	public void addCalendarEvent(McfCalendarEvent event) {
+		calendarEvents.add(event);
+	}
+
+	@Override
+	public List<? extends McfCalendarEvent> getCalendarEvents() {
+		return Collections.unmodifiableList(calendarEvents);
+	}
+
+	public void addCalendarColorSchema(McfCalendarColorSchema schema) {
+		calendarColorSchemas.add(schema);
+	}
+
+	@Override
+	public List<? extends McfCalendarColorSchema> getCalendarColorSchemas() {
+		return Collections.unmodifiableList(calendarColorSchemas);
 	}
 	
 	public void addPageNum(McfPageNum pageNumbering) {
@@ -141,6 +165,14 @@ public class McfFotobookImpl implements McfFotobook {
 
 	private String holidaysCountry;
 
+	private String holidaysProvince;
+
+	private String holidaysFeatures;
+
+	private String holidaysWeekHeadline;
+
+	private String holidaysWeekText;
+
 	public String getStartDateCalendarium() {
 		return startDateCalendarium;
 	}
@@ -163,6 +195,38 @@ public class McfFotobookImpl implements McfFotobook {
 
 	public void setHolidaysCountry(String holidaysCountry) {
 		this.holidaysCountry = holidaysCountry;
+	}
+
+	public String getHolidaysProvince() {
+		return holidaysProvince;
+	}
+
+	public void setHolidaysProvince(String holidaysProvince) {
+		this.holidaysProvince = holidaysProvince;
+	}
+
+	public String getHolidaysFeatures() {
+		return holidaysFeatures;
+	}
+
+	public void setHolidaysFeatures(String holidaysFeatures) {
+		this.holidaysFeatures = holidaysFeatures;
+	}
+
+	public String getHolidaysWeekHeadline() {
+		return holidaysWeekHeadline;
+	}
+
+	public void setHolidaysWeekHeadline(String holidaysWeekHeadline) {
+		this.holidaysWeekHeadline = holidaysWeekHeadline;
+	}
+
+	public String getHolidaysWeekText() {
+		return holidaysWeekText;
+	}
+
+	public void setHolidaysWeekText(String holidaysWeekText) {
+		this.holidaysWeekText = holidaysWeekText;
 	}
 
 	public int getNormalPages() {

@@ -12,13 +12,13 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.Locale;
 
 import net.sf.mcf2pdf.calendar.CalendarColorCatalogue;
+import net.sf.mcf2pdf.calendar.CalendarDateModel;
 import net.sf.mcf2pdf.calendar.CalendarLayoutCatalogue;
 import net.sf.mcf2pdf.mcfelements.McfArea;
+import net.sf.mcf2pdf.mcfelements.McfCalendarColorSchema;
 import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
 import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
@@ -29,8 +29,6 @@ import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
  * which approximates the sizes shown by CEWE.
  */
 public class PageCalendar implements PageDrawable {
-
-	private static final DateTimeFormatter START_DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
 	private final McfArea area;
 
@@ -82,6 +80,13 @@ public class PageCalendar implements PageDrawable {
 
 	public static PageCalendar create(String startDate, String language, McfArea area, McfCalendarArea calendar,
 			LocalDate month, CalendarLayoutCatalogue layouts, CalendarColorCatalogue colors) {
+		return create(startDate, language, area, calendar, month, layouts, colors,
+				java.util.Collections.<McfCalendarColorSchema>emptyList());
+	}
+
+	public static PageCalendar create(String startDate, String language, McfArea area, McfCalendarArea calendar,
+			LocalDate month, CalendarLayoutCatalogue layouts, CalendarColorCatalogue colors,
+			java.util.Collection<? extends McfCalendarColorSchema> userColorSchemas) {
 		String schema = calendar.getLayoutSchema();
 		if (schema == null) {
 			return null;
@@ -90,23 +95,20 @@ public class PageCalendar implements PageDrawable {
 			LocalDate start = parse(startDate);
 			return start == null ? null
 					: createTitle(area, calendar, String.valueOf(start.getYear()), "CALENDAR_CELL_TYPE_YEAR",
-							"AlignVCenter,AlignHCenter", 0.42f, layouts, colors);
+							"AlignVCenter,AlignHCenter", 0.42f, layouts, colors, userColorSchemas);
 		}
 		if (("Month".equals(schema) || "Month_center".equals(schema)) && month != null) {
-			Locale locale = language == null || language.isEmpty() ? Locale.getDefault()
-					: Locale.forLanguageTag(language.replace('_', '-'));
-			String name = month.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale);
-			name = name.substring(0, 1).toUpperCase(locale) + name.substring(1);
+			String name = CalendarDateModel.monthName(month.getMonth(), language);
 			String defaultAlignment = "Month_center".equals(schema) ? "AlignTop,AlignHCenter" : "AlignTop,AlignLeft";
 			return createTitle(area, calendar, name, "CALENDAR_CELL_TYPE_MONTH", defaultAlignment, 0.58f,
-					layouts, colors);
+					layouts, colors, userColorSchemas);
 		}
 		return null;
 	}
 
 	private static PageCalendar createTitle(McfArea area, McfCalendarArea calendar, String text, String cellType,
 			String defaultAlignment, float heightFactor, CalendarLayoutCatalogue layouts,
-			CalendarColorCatalogue colors) {
+			CalendarColorCatalogue colors, java.util.Collection<? extends McfCalendarColorSchema> userColorSchemas) {
 		CalendarLayoutCatalogue.Layout layout = layouts == null ? null : layouts.getLayout(calendar.getLayoutSchema());
 		CalendarLayoutCatalogue.Cell cell = layout == null ? null : layout.getCell(cellType);
 		Map<String, String> cellAttributes = cell == null ? null : cell.getAttributes();
@@ -125,7 +127,8 @@ public class PageCalendar implements PageDrawable {
 
 		String textColor = null;
 		if (colors != null && calendar.getColorSchema() != null) {
-			CalendarColorCatalogue.ColorSchema colorSchema = colors.getSchema(calendar.getColorSchema());
+			CalendarColorCatalogue.ColorSchema colorSchema = colors.getSchema(calendar.getColorSchema(),
+					userColorSchemas);
 			Map<String, String> colorAttributes = colorSchema == null ? null : colorSchema.getCell(cellType);
 			if (colorAttributes != null) {
 				textColor = colorAttributes.get("textcolor");
@@ -149,12 +152,7 @@ public class PageCalendar implements PageDrawable {
 
 	/** Parses <code>startdatecalendarium</code>; <code>null</code> if missing or malformed. */
 	public static LocalDate parse(String startDate) {
-		try {
-			return startDate == null ? null : LocalDate.parse(startDate, START_DATE);
-		}
-		catch (java.time.format.DateTimeParseException e) {
-			return null;
-		}
+		return CalendarDateModel.parseStartDate(startDate);
 	}
 
 	String getText() {

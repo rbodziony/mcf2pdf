@@ -32,6 +32,7 @@ import net.sf.mcf2pdf.mcfelements.McfxProject;
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 import net.sf.mcf2pdf.calendar.CalendarResources;
+import net.sf.mcf2pdf.calendar.CalendarDateModel;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
 import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
@@ -481,7 +482,8 @@ public class Mcf2FoConverter {
 					&& a.getContent() instanceof McfCalendarArea) {
 				PageCalendar calendar = PageCalendar.create(calendarBook.getStartDateCalendarium(),
 						calendarBook.getHolidaysLanguage(), a, (McfCalendarArea)a.getContent(), calendarMonth,
-						calendarResources.getLayouts(), calendarResources.getColors());
+						calendarResources.getLayouts(), calendarResources.getColors(),
+						calendarBook.getCalendarColorSchemas());
 				if (calendar != null) {
 					currentPage.addDrawable(calendar);
 				}
@@ -535,7 +537,7 @@ public class Mcf2FoConverter {
 				book.getHolidaysCountry());
 		warnForUnknownCalendarCatalogEntries(book);
 		if (calendarAreas) {
-			log.warn("Calendar areas (month names, day tables, year) are not rendered yet");
+			log.warn("Calendar day tables, holidays and user events are not rendered yet");
 		}
 
 		McfBundlesize size = book.getPages().get(0).getBundlesize();
@@ -548,6 +550,14 @@ public class Mcf2FoConverter {
 		docBuilder.startFlow("default");
 
 		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
+		CalendarDateModel dateModel = firstMonth == null ? null
+				: new CalendarDateModel(firstMonth, book.getHolidaysLanguage(), book.getHolidaysProvince(),
+						calendarResources.getHolidays(), book.getCalendarEvents());
+		if (dateModel != null) {
+			for (String id : dateModel.getUnsupportedHolidayIds()) {
+				log.warn("Unknown CEWE calendar holiday id '" + id + "'");
+			}
+		}
 		calendarBook = book;
 		if (coverBack != null || coverFront != null) {
 			log.info("Rendering cover...");
@@ -557,7 +567,7 @@ public class Mcf2FoConverter {
 			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
 			addCalendarSheet(docBuilder, widthPX, heightPX, normalPages.get(i),
 					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null,
-					firstMonth == null ? null : firstMonth.withDayOfMonth(1).plusMonths(i / 2));
+					dateModel == null ? null : dateModel.getMonth(i / 2).getFirstDay());
 		}
 
 		docBuilder.endFlow();
@@ -576,7 +586,8 @@ public class Mcf2FoConverter {
 					log.warn("Unknown calendar layout schema '" + calendar.getLayoutSchema() + "'");
 				}
 				if (calendar.getColorSchema() != null
-						&& calendarResources.getColors().getSchema(calendar.getColorSchema()) == null) {
+						&& calendarResources.getColors().getSchema(calendar.getColorSchema(),
+								book.getCalendarColorSchemas()) == null) {
 					log.warn("Unknown calendar color schema '" + calendar.getColorSchema() + "'");
 				}
 			}

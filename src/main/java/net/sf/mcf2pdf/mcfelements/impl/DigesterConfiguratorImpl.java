@@ -82,6 +82,35 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addCallParam("fotobook/holidays", 0, "language");
 		digester.addCallMethod("fotobook/holidays", "setHolidaysCountry", 1);
 		digester.addCallParam("fotobook/holidays", 0, "country");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysProvince", 1);
+		digester.addCallParam("fotobook/holidays", 0, "province");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysFeatures", 1);
+		digester.addCallParam("fotobook/holidays", 0, "features");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekHeadline", 1);
+		digester.addCallParam("fotobook/holidays", 0, "weekHeadline");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekText", 1);
+		digester.addCallParam("fotobook/holidays", 0, "weekText");
+
+		for (String eventPath : new String[] {
+				"fotobook/CalendarEvents/CalendarEvent", "fotobook/calendarEvents/calendarEvent" }) {
+			digester.addObjectCreate(eventPath, McfCalendarEventImpl.class);
+			digester.addBeanPropertySetter(eventPath + "/Name", "name");
+			digester.addBeanPropertySetter(eventPath + "/DateTime", "dateTime");
+			digester.addBeanPropertySetter(eventPath + "/Recurrent", "recurrent");
+			digester.addSetNext(eventPath, "addCalendarEvent", McfCalendarEvent.class.getName());
+		}
+
+		for (String schemaPath : new String[] {
+				"fotobook/colorSchemata/calendararea", "fotobook/colorschemata/calendararea" }) {
+			digester.addObjectCreate(schemaPath, McfCalendarColorSchemaImpl.class);
+			DigesterUtil.addSetProperties(digester, schemaPath, Arrays.asList(
+					new String[] { "schema", "schema" },
+					new String[] { "colorschema", "schema" },
+					new String[] { "gridcolor", "gridColor" }));
+			addCalendarColorCellRules(digester, schemaPath + "/celldefault", false);
+			addCalendarColorCellRules(digester, schemaPath + "/cell", true);
+			digester.addSetNext(schemaPath, "addCalendarColorSchema", McfCalendarColorSchema.class.getName());
+		}
 
 		// calendar part of a calendar area
 		digester.addObjectCreate("fotobook/page/area/calendararea", McfCalendarAreaImpl.class);
@@ -89,7 +118,11 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 				new String[] { "layoutschema", "layoutSchema" },
 				new String[] { "colorschema", "colorSchema" },
 				new String[] { "font", "font" },
-				new String[] { "fontsize_percentage", "fontSizePercentage" }));
+				new String[] { "fontsize_percentage", "fontSizePercentage" },
+				new String[] { "fontsize_percentage_holiddays", "fontSizePercentageHolidays" },
+				new String[] { "show_holiday", "showHoliday" },
+				new String[] { "optimizedSize", "optimizedSize" },
+				new String[] { "extrainformation", "extraInformation" }));
 		digester.addSetNext("fotobook/page/area/calendararea", "setContent");
 		digester.addSetTop("fotobook/page/area/calendararea", "setArea");
 
@@ -230,6 +263,24 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetProperties("decorations/decoration/fading/fotoarea");
 		digester.addSetNext("decorations/decoration/fading/fotoarea", "setFotoarea");
 		digester.addSetNext("decorations/decoration", "add");
+	}
+
+	private static void addCalendarColorCellRules(Digester digester, String path, boolean withType) {
+		digester.addObjectCreate(path, McfCalendarColorCellImpl.class);
+		List<String[]> attributes = new LinkedList<String[]>();
+		if (withType) {
+			attributes.add(new String[] { "type", "type" });
+		}
+		attributes.add(new String[] { "textcolor", "textColor" });
+		attributes.add(new String[] { "bgcolor", "backgroundColor" });
+		attributes.add(new String[] { "bordercolor", "borderColor" });
+		DigesterUtil.addSetProperties(digester, path, attributes);
+		if (withType) {
+			digester.addSetNext(path, "addCell", McfCalendarColorCell.class.getName());
+		}
+		else {
+			digester.addSetNext(path, "setCellDefault", McfCalendarColorCell.class.getName());
+		}
 	}
 
 	private final static Substitutor FLOAT_SUBSTITUTOR = new Substitutor() {

@@ -17,4 +17,16 @@ public interface McfCalendarArea extends McfAreaContent {
 	/** Percentage adjustment to the font size defined by the selected layout. */
 	public int getFontSizePercentage();
 
+	/** Percentage adjustment for holiday text. */
+	public int getFontSizePercentageHolidays();
+
+	/** Raw CEWE show_holiday value (commonly 0 or 1). */
+	public String getShowHoliday();
+
+	/** CEWE optimizedSize value, for example <code>600cm2</code>. */
+	public String getOptimizedSize();
+
+	/** Additional layout-specific calendar information. */
+	public String getExtraInformation();
+
 }

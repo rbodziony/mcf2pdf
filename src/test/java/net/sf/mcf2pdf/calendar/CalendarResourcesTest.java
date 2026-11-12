@@ -10,6 +10,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import net.sf.mcf2pdf.mcfelements.impl.McfCalendarColorCellImpl;
+import net.sf.mcf2pdf.mcfelements.impl.McfCalendarColorSchemaImpl;
+
 public class CalendarResourcesTest {
 
 	@Rule
@@ -79,6 +82,39 @@ public class CalendarResourcesTest {
 		} catch (IOException e) {
 			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Invalid calendar language"));
 		}
+	}
+
+	@Test
+	public void userColorSchemaUsesCellOverridesAndDefaultColors() throws Exception {
+		File resources = temporaryFolder.newFolder("user-schema-resources");
+		write(resources, "calendar_layout.xml", "<calendar_layout/>");
+		write(resources, "calendar_schema.xml", "<calendar_schema/>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+		File entries = new File(resources, "calendarentries");
+		Assert.assertTrue(entries.mkdir());
+		Files.write(new File(entries, "pl_PL.xml").toPath(),
+				"<holidays><country iso=\"Polska\" locale=\"pl_PL\"/></holidays>".getBytes(StandardCharsets.UTF_8));
+		CalendarResources loaded = CalendarResources.load(resources, "pl_PL");
+
+		McfCalendarColorSchemaImpl userSchema = new McfCalendarColorSchemaImpl();
+		userSchema.setSchema("USER_custom");
+		userSchema.setGridColor("#123456");
+		McfCalendarColorCellImpl defaultCell = new McfCalendarColorCellImpl();
+		defaultCell.setTextColor("#000000");
+		defaultCell.setBackgroundColor("transparent");
+		userSchema.setCellDefault(defaultCell);
+		McfCalendarColorCellImpl monthCell = new McfCalendarColorCellImpl();
+		monthCell.setType("CALENDAR_CELL_TYPE_MONTH");
+		monthCell.setTextColor("#333333");
+		userSchema.addCell(monthCell);
+
+		CalendarColorCatalogue.ColorSchema resolved = loaded.getColors().getSchema("USER_custom",
+				java.util.Collections.singletonList(userSchema));
+
+		Assert.assertEquals("#123456", resolved.getGridColor());
+		Assert.assertEquals("#333333", resolved.getCell("CALENDAR_CELL_TYPE_MONTH").get("textcolor"));
+		Assert.assertEquals("transparent", resolved.getCell("CALENDAR_CELL_TYPE_MONTH").get("bgcolor"));
+		Assert.assertEquals("#000000", resolved.getCell("CALENDAR_CELL_TYPE_YEAR").get("textcolor"));
 	}
 
 	@Test
