@@ -24,6 +24,39 @@ import net.sf.mcf2pdf.mcfelements.impl.McfCalendarEventImpl;
 
 public class CalendarDateModelTest {
 
+	@Test
+	public void allDaysAppearExactlyOnceAcrossSampleYearsAndLeapYears() throws Exception {
+		HolidayCatalogue catalogue = catalogueForIds();
+		for (int year = 2017; year <= 2028; year++) {
+			CalendarDateModel model = new CalendarDateModel(LocalDate.of(year, 1, 1), "pl_PL", null,
+					catalogue, Collections.emptyList());
+			for (int month = 1; month <= 12; month++) {
+				List<CalendarDay> days = model.getMonth(month - 1).getDays();
+				Assert.assertEquals(YearMonth.of(year, month).lengthOfMonth(), days.size());
+				for (int day = 1; day <= days.size(); day++) {
+					Assert.assertEquals(LocalDate.of(year, month, day), days.get(day - 1).getDate());
+				}
+			}
+		}
+	}
+
+	@Test
+	public void disabledHolidaysDoNotColorOrLabelDaysButKeepPersonalEvents() throws Exception {
+		HolidayCatalogue catalogue = catalogueForIds(19);
+		McfCalendarEventImpl event = new McfCalendarEventImpl();
+		event.setName("Appointment");
+		event.setDateTime("2019-01-01");
+		CalendarDateModel disabled = new CalendarDateModel(LocalDate.of(2019, 1, 1), "pl_PL", null,
+				catalogue, Collections.singletonList(event), false);
+		CalendarDay day = disabled.getDay(LocalDate.of(2019, 1, 1));
+		Assert.assertTrue(day.getHolidays().isEmpty());
+		Assert.assertFalse(day.isHoliday());
+		Assert.assertEquals(1, day.getEvents().size());
+		Assert.assertTrue(disabled.getDay(LocalDate.of(2019, 1, 6)).isSunday());
+		Assert.assertEquals("Pon", CalendarDateModel.weekdayAbbreviation(DayOfWeek.MONDAY, "pl_PL"));
+		Assert.assertEquals("Sob", CalendarDateModel.weekdayAbbreviation(DayOfWeek.SATURDAY, "pl_PL"));
+	}
+
 	private static final String[] EASTER_SUNDAYS = {
 			"2010-04-04", "2011-04-24", "2012-04-08", "2013-03-31",
 			"2014-04-20", "2015-04-05", "2016-03-27", "2017-04-16",

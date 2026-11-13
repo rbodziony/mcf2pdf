@@ -15,6 +15,35 @@ import net.sf.mcf2pdf.mcfelements.impl.McfCalendarColorSchemaImpl;
 
 public class CalendarResourcesTest {
 
+	@Test
+	public void loadsProjectSidecarColorsWithEmbeddedSchemaTakingPrecedence() throws Exception {
+		File resources = temporaryFolder.newFolder("sidecar-resources");
+		write(resources, "calendar_schema.xml", "<calendar_schema/>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+		File images = temporaryFolder.newFolder("project_mcf-Dateien");
+		write(images, "000-user-calendar-schema.xml", "<calendar_schema>"
+				+ "<calendararea schema=\"USER_sample\" gridcolor=\"#ffffff\">"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_MONTH\" textcolor=\"#ffffff\" bgcolor=\"#00000000\"/>"
+				+ "</calendararea></calendar_schema>");
+		// Unrelated XML in the image directory must not be parsed.
+		write(images, "unrelated.xml", "not XML");
+		CalendarColorCatalogue catalogue = new CalendarColorCatalogue(new File(resources, "calendar_schema.xml"),
+				new File(resources, "calendar_synonym.xml"), images);
+		Assert.assertEquals("#ffffff", catalogue.getSchema("USER_sample")
+				.getCell("CALENDAR_CELL_TYPE_MONTH").get("textcolor"));
+		McfCalendarColorSchemaImpl embedded = new McfCalendarColorSchemaImpl();
+		embedded.setSchema("USER_sample");
+		McfCalendarColorCellImpl cell = new McfCalendarColorCellImpl();
+		cell.setType("CALENDAR_CELL_TYPE_MONTH");
+		cell.setTextColor("#123456");
+		embedded.addCell(cell);
+		Assert.assertEquals("#123456", catalogue.getSchema("USER_sample", java.util.Collections.singletonList(embedded))
+				.getCell("CALENDAR_CELL_TYPE_MONTH").get("textcolor"));
+		Assert.assertNull(new CalendarColorCatalogue(new File(resources, "calendar_schema.xml"),
+				new File(resources, "calendar_synonym.xml"), new File(images, "missing"))
+				.getSchema("USER_sample"));
+	}
+
 	@Rule
 	public TemporaryFolder temporaryFolder = new TemporaryFolder();
 

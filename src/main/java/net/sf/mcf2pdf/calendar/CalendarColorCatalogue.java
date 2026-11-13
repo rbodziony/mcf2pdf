@@ -21,7 +21,24 @@ public final class CalendarColorCatalogue {
 	private final Map<String, String> synonyms;
 
 	public CalendarColorCatalogue(File schemaFile, File synonymFile) throws IOException {
-		schemas = readSchemas(schemaFile);
+		this(schemaFile, synonymFile, null);
+	}
+
+	/** Embedded project schemas take precedence over these sidecar schemas in getSchema. */
+	public CalendarColorCatalogue(File schemaFile, File synonymFile, File projectImageDirectory) throws IOException {
+		Map<String, ColorSchema> loaded = new LinkedHashMap<String, ColorSchema>(readSchemas(schemaFile));
+		if (projectImageDirectory != null && projectImageDirectory.isDirectory()) {
+			File[] files = projectImageDirectory.listFiles(file -> file.isFile()
+					&& file.getName().toLowerCase(java.util.Locale.ROOT).endsWith("-user-calendar-schema.xml"));
+			if (files == null) {
+				throw new IOException("Cannot read project calendar schema directory: " + projectImageDirectory);
+			}
+			java.util.Arrays.sort(files, java.util.Comparator.comparing(File::getName));
+			for (File file : files) {
+				loaded.putAll(readSchemas(file));
+			}
+		}
+		schemas = Collections.unmodifiableMap(loaded);
 		synonyms = readSynonyms(synonymFile);
 	}
 

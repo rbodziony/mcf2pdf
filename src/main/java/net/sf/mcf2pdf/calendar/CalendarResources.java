@@ -24,6 +24,11 @@ public final class CalendarResources {
 	}
 
 	public static CalendarResources load(File resourcesDirectory, String locale, String country) throws IOException {
+		return load(resourcesDirectory, locale, country, null);
+	}
+
+	public static CalendarResources load(File resourcesDirectory, String locale, String country,
+			File projectImageDirectory) throws IOException {
 		if (locale != null && !locale.isEmpty() && !locale.matches("[A-Za-z]{2,3}_[A-Za-z]{2,3}")) {
 			throw new IOException("Invalid calendar language: " + locale);
 		}
@@ -40,7 +45,7 @@ public final class CalendarResources {
 			holidays = findHolidayCatalogue(entriesDirectory, country);
 		}
 		return new CalendarResources(new CalendarLayoutCatalogue(layoutFile),
-				new CalendarColorCatalogue(schemaFile, synonymFile), holidays);
+				new CalendarColorCatalogue(schemaFile, synonymFile, projectImageDirectory), holidays);
 	}
 
 	private static HolidayCatalogue findHolidayCatalogue(File entriesDirectory, String country) throws IOException {

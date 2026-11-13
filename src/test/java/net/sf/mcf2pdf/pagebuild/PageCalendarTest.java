@@ -63,6 +63,19 @@ public class PageCalendarTest {
 				+ "bordertype=\"CALENDAR_BORDER_BOTTOM\"><font size=\"13\" face=\"SansSerif\"/></cell>"
 				+ "<cell type=\"CALENDAR_CELL_TYPE_HEAD_SUNDAY\" paddingleft=\"15\" "
 				+ "bordertype=\"CALENDAR_BORDER_BOTTOM\"><font bold=\"true\" size=\"13\" face=\"SansSerif\"/></cell>"
+				+ "</calendararea>"
+				+ "<calendararea schema=\"OneDayPerRow (2)\" renderinfo=\"CALENDAR_RENDER_WEEK_OF_YEAR\">"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_TOPLINE\" bordertype=\"CALENDAR_BORDER_TOP,CALENDAR_BORDER_BOTTOM,CALENDAR_BORDER_LEFT,CALENDAR_BORDER_RIGHT\"><font size=\"10\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_WEEKDAY\" bordertype=\"CALENDAR_BORDER_TOP,CALENDAR_BORDER_BOTTOM,CALENDAR_BORDER_LEFT,CALENDAR_BORDER_RIGHT\"><font size=\"10\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_SATURDAY\" bordertype=\"CALENDAR_BORDER_TOP,CALENDAR_BORDER_BOTTOM,CALENDAR_BORDER_LEFT,CALENDAR_BORDER_RIGHT\"><font size=\"10\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_SUNDAY\" bordertype=\"CALENDAR_BORDER_TOP,CALENDAR_BORDER_BOTTOM,CALENDAR_BORDER_LEFT,CALENDAR_BORDER_RIGHT\"><font size=\"10\" bold=\"true\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_HEAD_SUNDAY\" bordertype=\"CALENDAR_BORDER_BOTTOM\"><font size=\"10\" bold=\"true\"/></cell>"
+				+ "</calendararea>"
+				+ "<calendararea schema=\"OneDayPerRow (4col)\">"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_TOPLINE\" bordertype=\"CALENDAR_BORDER_ALL\"><font size=\"12\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_WEEKDAY\" bordertype=\"CALENDAR_BORDER_ALL\"><font size=\"12\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_SATURDAY\" bordertype=\"CALENDAR_BORDER_ALL\"><font size=\"12\"/></cell>"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_SUNDAY\" bordertype=\"CALENDAR_BORDER_ALL\"><font size=\"12\" bold=\"true\"/></cell>"
 				+ "</calendararea></calendar_layout>").getBytes(StandardCharsets.UTF_8));
 		File schemaFile = temporaryFolder.newFile("calendar_schema.xml");
 		Files.write(schemaFile.toPath(), ("<calendar_schema><calendararea schema=\"Gray\" gridcolor=\"#eeeeee\">"
@@ -181,11 +194,89 @@ public class PageCalendarTest {
 
 		int firstRowY = Math.round(image.getHeight() / 31f * 0.5f);
 		int saturdayRowY = Math.round(image.getHeight() / 31f * 2.5f);
-		Assert.assertEquals(0xffffff, image.getRGB(image.getWidth() - 2, firstRowY) & 0xffffff);
+		Assert.assertEquals(0xd2d2d2, image.getRGB(image.getWidth() - 2, firstRowY) & 0xffffff);
 		Assert.assertEquals(0xd2d2d2, image.getRGB(image.getWidth() - 2, saturdayRowY) & 0xffffff);
-		Assert.assertTrue(countDarkPixels(image, image.getWidth() / 2, firstRowY - 10,
-				image.getWidth() / 2 - 2, 20) > 0);
-		Assert.assertTrue(countDarkPixels(image, 0, 0, image.getWidth() / 10, image.getHeight() / 5) > 0);
+		Assert.assertTrue(countDarkPixels(image, image.getWidth() / 5, firstRowY - 10,
+				image.getWidth() * 3 / 5, 20) > 0);
+		// (1) has no week-number gutter: the first date occupies the leftmost cell.
+		Assert.assertTrue(countDarkPixels(image, 0, 0, image.getWidth() / 10, 52) > 0);
+	}
+
+	@Test
+	public void testOneDayPerRowTwoAndSundayFirstDay() throws Exception {
+		File holidayFile = temporaryFolder.newFile("empty-holidays.xml");
+		Files.write(holidayFile.toPath(), "<holidays><country/></holidays>".getBytes(StandardCharsets.UTF_8));
+		CalendarDateModel model = new CalendarDateModel(LocalDate.of(2026, 2, 1), "pl_PL", null,
+				new HolidayCatalogue(holidayFile), Collections.<McfCalendarEvent>emptyList());
+		McfArea area = Mockito.mock(McfArea.class);
+		Mockito.when(area.getWidth()).thenReturn(900f);
+		Mockito.when(area.getHeight()).thenReturn(1610f);
+		PageRenderContext context = new PageRenderContext(254, 1, Mockito.mock(McfResourceScanner.class), null);
+		for (String layout : new String[] { "OneDayPerRow (1)", "OneDayPerRow (2)", "OneDayPerRow (4col)" }) {
+			PageCalendar table = PageCalendar.createFromDateModel("01.02.2026", "pl_PL", area, schema(layout),
+					model.getMonth(0), layouts, colors,
+					Collections.<net.sf.mcf2pdf.mcfelements.McfCalendarColorSchema>emptyList());
+			Assert.assertNotNull(layout, table);
+			BufferedImage image = table.renderAsBitmap(context, new Point(), 0, 0);
+			int sundayY = Math.round(image.getHeight() / 28f * 0.5f);
+			int mondayY = Math.round(image.getHeight() / 28f * 1.5f);
+			Assert.assertEquals(layout, 0xd2d2d2, image.getRGB(image.getWidth() - 3, sundayY) & 0xffffff);
+			Assert.assertEquals(layout, 0xffffff, image.getRGB(image.getWidth() - 3, mondayY) & 0xffffff);
+			if (layout.endsWith("(2)")) {
+				int dateLeft = Math.round(image.getWidth() * 0.06f);
+				Assert.assertEquals(0xeeeeee, image.getRGB(dateLeft, sundayY) & 0xffffff);
+			}
+			if (layout.endsWith("(4col)")) {
+				int writingLeft = Math.round(image.getWidth() * 0.08f) + Math.round(image.getWidth() * 0.09f);
+				for (int column = 1; column < 4; column++) {
+					int x = writingLeft + Math.round((image.getWidth() - writingLeft) * column / 4f);
+					Assert.assertEquals("Family column border " + column, 0xeeeeee,
+							image.getRGB(x, mondayY) & 0xffffff);
+				}
+			}
+		}
+	}
+
+	@Test
+	public void testFamilyCalendarKeepsLastDayAndClipsLongEntriesToFirstWritingColumn() throws Exception {
+		File holidayFile = temporaryFolder.newFile("family-holidays.xml");
+		Files.write(holidayFile.toPath(), "<holidays><country/></holidays>".getBytes(StandardCharsets.UTF_8));
+		HolidayCatalogue holidays = new HolidayCatalogue(holidayFile);
+		McfCalendarEvent event = Mockito.mock(McfCalendarEvent.class);
+		Mockito.when(event.getName()).thenReturn("A long family appointment that must not overwrite other columns");
+		Mockito.when(event.getDateTime()).thenReturn("2026-01-01");
+		CalendarDateModel withEvent = new CalendarDateModel(LocalDate.of(2026, 1, 1), "pl_PL", null,
+				holidays, Collections.singletonList(event));
+		CalendarDateModel withoutEvent = new CalendarDateModel(LocalDate.of(2026, 1, 1), "pl_PL", null,
+				holidays, Collections.<McfCalendarEvent>emptyList());
+		McfArea area = Mockito.mock(McfArea.class);
+		Mockito.when(area.getWidth()).thenReturn(900f);
+		Mockito.when(area.getHeight()).thenReturn(1610f);
+		McfCalendarArea calendar = schema("OneDayPerRow (4col)");
+		Mockito.when(calendar.getExtraInformation()).thenReturn("$$$$");
+		Mockito.when(calendar.getFontSizePercentageHolidays()).thenReturn(-50);
+		PageRenderContext context = new PageRenderContext(254, 1, Mockito.mock(McfResourceScanner.class), null);
+		BufferedImage actual = PageCalendar.createFromDateModel("01.01.2026", "pl_PL", area, calendar,
+				withEvent.getMonth(0), layouts, colors, Collections.emptyList())
+				.renderAsBitmap(context, new Point(), 0, 0);
+		BufferedImage empty = PageCalendar.createFromDateModel("01.01.2026", "pl_PL", area, calendar,
+				withoutEvent.getMonth(0), layouts, colors, Collections.emptyList())
+				.renderAsBitmap(context, new Point(), 0, 0);
+		int writingLeft = Math.round(actual.getWidth() * 0.08f) + Math.round(actual.getWidth() * 0.09f);
+		int secondColumn = writingLeft + Math.round((actual.getWidth() - writingLeft) / 4f);
+		int changes = 0;
+		for (int y = 1; y < 50; y++) {
+			for (int x = writingLeft + 1; x < secondColumn - 1; x++) {
+				if (actual.getRGB(x, y) != empty.getRGB(x, y)) changes++;
+			}
+			for (int x = secondColumn; x < actual.getWidth(); x++) {
+				Assert.assertEquals("Entry must stay inside its column", empty.getRGB(x, y), actual.getRGB(x, y));
+			}
+		}
+		Assert.assertTrue("Entry is visible", changes > 0);
+		Assert.assertTrue("Last day is visible", countDarkPixels(actual, 2, actual.getHeight() - 50,
+				writingLeft - 4, 48) > 0);
+		Assert.assertTrue(PageCalendar.isLayoutSupported("OneDayPerRow (4col)"));
 	}
 
 	private static int countDarkPixels(BufferedImage image, int x, int y, int width, int height) {

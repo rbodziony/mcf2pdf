@@ -169,10 +169,11 @@ public class DigesterConfiguratorImplTest {
     public void testParsesHolidaysCountryWithoutLanguage() throws IOException, SAXException {
         configurator.configureDigester(digester, null);
         McfFotobook fotobook = (McfFotobook) digester.parse(
-                new StringReader("<fotobook><holidays country=\"Polska\"/></fotobook>"));
+                new StringReader("<fotobook><holidays country=\"Polska\" showHolidays=\"0\"/></fotobook>"));
 
         assertNull(fotobook.getHolidaysLanguage());
         assertEquals("Polska", fotobook.getHolidaysCountry());
+        assertEquals("0", fotobook.getHolidaysShowHolidays());
     }
 
     @Test

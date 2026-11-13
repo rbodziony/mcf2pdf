@@ -83,6 +83,8 @@ public class Mcf2FoConverter {
 
 	private CalendarDateModel.CalendarMonth calendarDateMonth;
 
+	private String calendarLanguage;
+
 	private File tempImageDir;
 
 	private File calendarResourcesDirectory;
@@ -284,7 +286,7 @@ public class Mcf2FoConverter {
 
 		String product = book.getProductName();
 		if (product != null && product.startsWith("CAL")) {
-			convertCalendar(book, xslFoOut, maxPageNo);
+			convertCalendar(book, xslFoOut, maxPageNo, imageDir);
 			return;
 		}
 
@@ -482,7 +484,7 @@ public class Mcf2FoConverter {
 					&& a.getContent() instanceof McfCalendarArea) {
 				McfCalendarArea calendarArea = (McfCalendarArea)a.getContent();
 				PageCalendar calendar = PageCalendar.createFromDateModel(calendarBook.getStartDateCalendarium(),
-						calendarBook.getHolidaysLanguage(), a, calendarArea, calendarDateMonth,
+						calendarLanguage, a, calendarArea, calendarDateMonth,
 						calendarResources.getLayouts(), calendarResources.getColors(),
 						calendarBook.getCalendarColorSchemas());
 				if (calendar != null) {
@@ -500,9 +502,9 @@ public class Mcf2FoConverter {
 	 * Converts a wall calendar (CAL8). Every sheet is a vertical double page: the first
 	 * page record is the top half and the second the bottom half of one page of the
 	 * output. The areas of both records use the coordinates of the whole sheet.
-	 * Titles and the OneDayPerRow (1) day table are rendered from the CEWE catalogues.
+	 * Titles and supported day tables are rendered from the CEWE catalogues.
 	 */
-	private void convertCalendar(McfFotobook book, OutputStream xslFoOut, int maxPageNo) throws IOException {
+	private void convertCalendar(McfFotobook book, OutputStream xslFoOut, int maxPageNo, File imageDir) throws IOException {
 		if (!"CAL8".equals(book.getProductName())) {
 			throw new IOException("Calendar product '" + book.getProductName() + "' is not supported, only CAL8");
 		}
@@ -537,7 +539,11 @@ public class Mcf2FoConverter {
 			throw new IOException("No calendar pages found for rendering");
 		}
 		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage(),
-				book.getHolidaysCountry());
+				book.getHolidaysCountry(), imageDir);
+		calendarLanguage = book.getHolidaysLanguage();
+		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
+			calendarLanguage = calendarResources.getHolidays().getCountryAttributes().get("locale");
+		}
 		warnForUnknownCalendarCatalogEntries(book);
 
 		McfBundlesize size = book.getPages().get(0).getBundlesize();
@@ -551,8 +557,8 @@ public class Mcf2FoConverter {
 
 		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
 		CalendarDateModel dateModel = firstMonth == null ? null
-				: new CalendarDateModel(firstMonth, book.getHolidaysLanguage(), book.getHolidaysProvince(),
-						calendarResources.getHolidays(), book.getCalendarEvents());
+				: new CalendarDateModel(firstMonth, calendarLanguage, book.getHolidaysProvince(),
+						calendarResources.getHolidays(), book.getCalendarEvents(), calendarHolidaysEnabled(book));
 		if (dateModel != null) {
 			for (String id : dateModel.getUnsupportedHolidayIds()) {
 				log.warn("Unknown CEWE calendar holiday id '" + id + "'");
@@ -572,6 +578,15 @@ public class Mcf2FoConverter {
 
 		docBuilder.endFlow();
 		new XMLOutputter().output(docBuilder.createDocument(), xslFoOut);
+	}
+
+	static boolean calendarHolidaysEnabled(McfFotobook book) {
+		String features = book.getHolidaysFeatures();
+		if (features != null) {
+			return java.util.Arrays.asList(features.trim().split("\\s*,\\s*")).contains("holidays");
+		}
+		String legacy = book.getHolidaysShowHolidays();
+		return legacy == null || !("0".equals(legacy.trim()) || "false".equalsIgnoreCase(legacy.trim()));
 	}
 
 	private void warnForUnknownCalendarCatalogEntries(McfFotobook book) {

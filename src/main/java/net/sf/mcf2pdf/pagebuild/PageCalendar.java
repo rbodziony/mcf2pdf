@@ -28,12 +28,12 @@ import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
 import net.sf.mcf2pdf.mcfelements.util.McfColorParser;
 
 /**
- * Draws the title parts of a wall calendar: the year (layout schemas starting with
- * <code>Year</code>) and the month name (<code>Month</code>, <code>Month_center</code>).
- * Day tables are not supported yet. The text size is derived from the height of the area,
- * which approximates the sizes shown by CEWE.
+ * Draws calendar titles and supported one-day-per-row day tables.
  */
 public class PageCalendar implements PageDrawable {
+
+	// Scale of resource font sizes calibrated against the CEWE preview PNGs.
+	private static final float LAYOUT_FONT_DPI = 96f;
 
 	private final McfArea area;
 
@@ -130,7 +130,7 @@ public class PageCalendar implements PageDrawable {
 		if (calendar == null) {
 			return null;
 		}
-		if (month != null && "OneDayPerRow (1)".equals(calendar.getLayoutSchema())) {
+		if (month != null && isDayTableLayout(calendar.getLayoutSchema())) {
 			CalendarLayoutCatalogue.Layout layout = layouts == null ? null : layouts.getLayout(calendar.getLayoutSchema());
 			if (layout == null) {
 				return null;
@@ -148,7 +148,12 @@ public class PageCalendar implements PageDrawable {
 
 	public static boolean isLayoutSupported(String schema) {
 		return schema != null && (schema.startsWith("Year") || "Month".equals(schema)
-				|| "Month_center".equals(schema) || "OneDayPerRow (1)".equals(schema));
+				|| "Month_center".equals(schema) || isDayTableLayout(schema));
+	}
+
+	private static boolean isDayTableLayout(String schema) {
+		return "OneDayPerRow (1)".equals(schema) || "OneDayPerRow (2)".equals(schema)
+				|| "OneDayPerRow (4col)".equals(schema);
 	}
 
 	private static PageCalendar createTitle(McfArea area, McfCalendarArea calendar, String text, String cellType,
@@ -255,7 +260,7 @@ public class PageCalendar implements PageDrawable {
 		}
 		float fontSize = Float.isNaN(fontSizePoints)
 				? h * heightFactor
-				: context.toPixel(fontSizePoints * 25.4f / 72.0f);
+				: context.toPixel(fontSizePoints * 25.4f / LAYOUT_FONT_DPI);
 		Font font = base.deriveFont(Math.max(1f, fontSize));
 		g.setFont(font);
 		g.setColor(resolveTextColor(context));
@@ -283,11 +288,15 @@ public class PageCalendar implements PageDrawable {
 			return;
 		}
 
-		int weekWidth = Math.round(width * 0.11f);
-		int dateWidth = Math.round(width * 0.12f);
-		int weekdayWidth = Math.round(width * 0.15f);
+		boolean family = "OneDayPerRow (4col)".equals(calendar.getLayoutSchema());
+		boolean showWeeks = dayTableLayout.getRenderInfo().contains("CALENDAR_RENDER_WEEK_OF_YEAR");
+		int weekWidth = showWeeks ? Math.round(width * 0.06f) : 0;
+		int dateWidth = Math.round(width * 0.08f);
+		int weekdayWidth = Math.round(width * 0.09f);
 		float rowHeight = (float) height / days.size();
-		renderWeekNumbers(g, context, days, weekWidth, rowHeight);
+		if (showWeeks) {
+			renderWeekNumbers(g, context, days, weekWidth, rowHeight);
+		}
 
 		for (int i = 0; i < days.size(); i++) {
 			CalendarDateModel.CalendarDay day = days.get(i);
@@ -297,7 +306,7 @@ public class PageCalendar implements PageDrawable {
 			String dayType = dayType(day);
 			String headType = headType(day);
 			String dateType = i == 0 ? "CALENDAR_CELL_TYPE_TOPLINE" : dayType;
-			Map<String, String> dateColors = colorAttributes(dateType);
+			Map<String, String> dateColors = colorAttributes(dayType);
 			Map<String, String> headColors = colorAttributes(headType);
 			Map<String, String> commentColors = colorAttributes("CALENDAR_CELL_TYPE_COMMENT");
 			if (!commentColors.containsKey("textcolor")) {
@@ -315,13 +324,29 @@ public class PageCalendar implements PageDrawable {
 
 			String description = dayDescription(day);
 			if (!description.isEmpty()) {
+				int descriptionWidth = width - weekWidth - dateWidth - weekdayWidth;
+				if (family) {
+					descriptionWidth = Math.round(descriptionWidth / 4f);
+				}
 				drawCellText(g, context, description, "CALENDAR_CELL_TYPE_COMMENT", commentColors,
 						weekWidth + dateWidth + weekdayWidth, y,
-						width - weekWidth - dateWidth - weekdayWidth, cellHeight,
+						descriptionWidth, cellHeight,
 						calendar.getFontSizePercentageHolidays(), false, 13f, false);
 			}
 
-			drawBottomBorder(g, context, dateType, dateColors, weekWidth, y + cellHeight - 1, width - weekWidth);
+			drawCellBorders(g, context, dateType, dateColors, weekWidth, y, dateWidth, cellHeight);
+			drawCellBorders(g, context, headType, headColors, weekWidth + dateWidth, y, weekdayWidth, cellHeight);
+			drawCellBorders(g, context, dateType, dateColors, weekWidth + dateWidth + weekdayWidth, y,
+					width - weekWidth - dateWidth - weekdayWidth, cellHeight);
+			if (family) {
+				// Four equal writing columns, in addition to the date and weekday cells.
+				int left = weekWidth + dateWidth + weekdayWidth;
+				for (int column = 0; column < 4; column++) {
+					int x = left + Math.round((width - left) * column / 4f);
+					int right = left + Math.round((width - left) * (column + 1) / 4f);
+					drawCellBorders(g, context, dateType, dateColors, x, y, right - x, cellHeight);
+				}
+			}
 		}
 	}
 
@@ -370,6 +395,9 @@ public class PageCalendar implements PageDrawable {
 			Map<String, String> colors, int x, int y, int width, int height, int extraFontPercentage,
 			boolean bold, float defaultSize, boolean alignRight) {
 		CalendarLayoutCatalogue.Cell cell = dayTableLayout.getCell(type);
+		if (cell == null && "CALENDAR_CELL_TYPE_COMMENT".equals(type)) {
+			cell = dayTableLayout.getCell("CALENDAR_CELL_TYPE_HEAD_WEEKDAY");
+		}
 		Font font = tableFont(context, cell, extraFontPercentage, bold, defaultSize);
 		g.setFont(font);
 		g.setColor(resolveColor(context, colors.get("textcolor"), Color.BLACK));
@@ -382,7 +410,10 @@ public class PageCalendar implements PageDrawable {
 				: alignRight || alignment.contains("AlignRight") ? x + width - right - textWidth : x + left;
 		LineMetrics metrics = font.getLineMetrics(value, g.getFontRenderContext());
 		float textY = y + (height - metrics.getHeight()) / 2f + metrics.getAscent();
+		java.awt.Shape originalClip = g.getClip();
+		g.clipRect(x, y, width, height);
 		g.drawString(value, textX, textY);
+		g.setClip(originalClip);
 	}
 
 	private Font tableFont(PageRenderContext context, CalendarLayoutCatalogue.Cell cell, int extraPercentage,
@@ -404,25 +435,37 @@ public class PageCalendar implements PageDrawable {
 		}
 		size *= (100 + calendar.getFontSizePercentage()) / 100f;
 		size *= (100 + extraPercentage) / 100f;
-		float pixels = context.toPixel(size * 25.4f / 72.0f);
+		float pixels = context.toPixel(size * 25.4f / LAYOUT_FONT_DPI);
 		return base.deriveFont(Math.max(1f, pixels));
 	}
 
-	private void drawBottomBorder(Graphics2D g, PageRenderContext context, String type,
-			Map<String, String> colors, int x, int y, int width) {
+	private void drawCellBorders(Graphics2D g, PageRenderContext context, String type,
+			Map<String, String> colors, int x, int y, int width, int height) {
 		CalendarLayoutCatalogue.Cell cell = dayTableLayout.getCell(type);
 		String borderType = cell == null ? null : cell.getAttributes().get("bordertype");
-		if (borderType == null || !borderType.contains("BOTTOM")) {
+		if (borderType == null || width <= 0 || height <= 0) {
 			return;
 		}
 		String borderColor = colors.get("bordercolor");
-		if (borderColor == null || borderColor.isEmpty() || "transparent".equalsIgnoreCase(borderColor)) {
+		if (borderColor == null || borderColor.isEmpty()) {
 			borderColor = dayTableColors == null ? null : dayTableColors.getGridColor();
 		}
 		Color resolved = resolveColor(context, borderColor, null);
 		if (resolved != null && resolved.getAlpha() > 0) {
 			g.setColor(resolved);
-			g.drawLine(x, y, x + width - 1, y);
+			boolean all = borderType.contains("_ALL");
+			if (all || borderType.contains("_TOP")) {
+				g.drawLine(x, y, x + width - 1, y);
+			}
+			if (all || borderType.contains("_BOTTOM")) {
+				g.drawLine(x, y + height - 1, x + width - 1, y + height - 1);
+			}
+			if (all || borderType.contains("_LEFT")) {
+				g.drawLine(x, y, x, y + height - 1);
+			}
+			if (all || borderType.contains("_RIGHT")) {
+				g.drawLine(x + width - 1, y, x + width - 1, y + height - 1);
+			}
 		}
 	}
 
@@ -463,7 +506,7 @@ public class PageCalendar implements PageDrawable {
 	}
 
 	private static String dayType(CalendarDateModel.CalendarDay day) {
-		if (day.isSunday()) {
+		if (day.isSunday() || day.isHoliday()) {
 			return "CALENDAR_CELL_TYPE_SUNDAY";
 		}
 		if (day.getDayOfWeek() == java.time.DayOfWeek.SATURDAY) {
@@ -473,7 +516,7 @@ public class PageCalendar implements PageDrawable {
 	}
 
 	private static String headType(CalendarDateModel.CalendarDay day) {
-		if (day.isSunday()) {
+		if (day.isSunday() || day.isHoliday()) {
 			return "CALENDAR_CELL_TYPE_HEAD_SUNDAY";
 		}
 		if (day.getDayOfWeek() == java.time.DayOfWeek.SATURDAY) {

@@ -29,7 +29,7 @@ public final class CalendarDateModel {
 			"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
 			"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
 	};
-	private static final String[] POLISH_WEEKDAYS = { "Pn", "Wt", "Śr", "Czw", "Pt", "Sb", "Nd" };
+	private static final String[] POLISH_WEEKDAYS = { "Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd" };
 
 	private final YearMonth startMonth;
 	private final Locale locale;
@@ -37,9 +37,15 @@ public final class CalendarDateModel {
 	private final HolidayCatalogue holidays;
 	private final List<EventDate> events;
 	private final Set<String> unsupportedHolidayIds;
+	private final boolean includeHolidays;
 
 	public CalendarDateModel(LocalDate startDate, String language, String province, HolidayCatalogue holidays,
 			Collection<? extends McfCalendarEvent> calendarEvents) {
+		this(startDate, language, province, holidays, calendarEvents, true);
+	}
+
+	public CalendarDateModel(LocalDate startDate, String language, String province, HolidayCatalogue holidays,
+			Collection<? extends McfCalendarEvent> calendarEvents, boolean includeHolidays) {
 		if (startDate == null) {
 			throw new IllegalArgumentException("Calendar start date is required");
 		}
@@ -50,6 +56,7 @@ public final class CalendarDateModel {
 		locale = parseLocale(language);
 		selectedProvince = province == null ? null : province.trim();
 		this.holidays = holidays;
+		this.includeHolidays = includeHolidays;
 		events = parseEvents(calendarEvents);
 		unsupportedHolidayIds = findUnsupportedHolidayIds(holidays.getHolidays(), startMonth.getYear());
 	}
@@ -135,6 +142,9 @@ public final class CalendarDateModel {
 	}
 
 	private List<HolidayOccurrence> resolveHolidays(LocalDate date) {
+		if (!includeHolidays) {
+			return Collections.emptyList();
+		}
 		List<HolidayOccurrence> result = new ArrayList<HolidayOccurrence>();
 		for (Holiday holiday : holidays.getHolidays()) {
 			if (!provinceMatches(holiday.getProvince())) {

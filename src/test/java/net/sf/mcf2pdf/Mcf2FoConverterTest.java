@@ -19,6 +19,20 @@ import net.sf.mcf2pdf.mcfelements.McfPage;
 
 public class Mcf2FoConverterTest {
 
+    @Test
+    public void calendarHolidaySwitchSupportsLegacyAndModernProjects() {
+        McfFotobook book = Mockito.mock(McfFotobook.class);
+        Assert.assertTrue(Mcf2FoConverter.calendarHolidaysEnabled(book));
+        Mockito.when(book.getHolidaysShowHolidays()).thenReturn("0");
+        Assert.assertFalse(Mcf2FoConverter.calendarHolidaysEnabled(book));
+        Mockito.when(book.getHolidaysShowHolidays()).thenReturn("1");
+        Assert.assertTrue(Mcf2FoConverter.calendarHolidaysEnabled(book));
+        Mockito.when(book.getHolidaysFeatures()).thenReturn("personalEntries, holiday_colors");
+        Assert.assertFalse(Mcf2FoConverter.calendarHolidaysEnabled(book));
+        Mockito.when(book.getHolidaysFeatures()).thenReturn("holidays, holiday_colors, personalEntries");
+        Assert.assertTrue(Mcf2FoConverter.calendarHolidaysEnabled(book));
+    }
+
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
 
@@ -33,6 +47,7 @@ public class Mcf2FoConverterTest {
             + "<page pagenr=\"4\" type=\"normalpage\">" + BUNDLE + "</page>";
 
     private File tempImageDir;
+	private File calendarLayoutFile;
 
     private Mcf2FoConverter createConverter() throws IOException, SAXException {
         File install = tmp.newFolder("install");
@@ -44,6 +59,7 @@ public class Mcf2FoConverterTest {
                 + "</description>";
         Files.write(new File(products, "calendars.xml").toPath(), catalogue.getBytes(StandardCharsets.UTF_8));
         File resources = new File(install, "Resources");
+		calendarLayoutFile = new File(resources, "calendar_layout.xml");
         Files.write(new File(resources, "calendar_layout.xml").toPath(),
                 "<calendar_layout><calendararea schema=\"Month\" type=\"MONTH\" renderinfo=\"MONTH_NAME\"/></calendar_layout>"
                         .getBytes(StandardCharsets.UTF_8));
@@ -85,6 +101,96 @@ public class Mcf2FoConverterTest {
         String fo = new String(out.toByteArray(), StandardCharsets.UTF_8);
         Assert.assertTrue(fo.contains("master-name=\"default\""));
         Assert.assertFalse(fo.contains("master-name=\"cover\""));
+    }
+
+    @Test
+    public void acceptsOldCalendarWithCoverAndTwoMonths() throws Exception {
+        assertAcceptanceFixture("acceptance-old.mcf");
+    }
+
+    @Test
+    public void rendersCalendarColorsFromMcfImageDirectory() throws Exception {
+        assertProjectSidecarRendered(false);
+    }
+
+    @Test
+    public void rendersCalendarColorsFromExtractedMcfxImageDirectory() throws Exception {
+        assertProjectSidecarRendered(true);
+    }
+
+    private void assertProjectSidecarRendered(boolean mcfx) throws Exception {
+        Mcf2FoConverter converter = createConverter();
+        File project = writeProject("CAL8", "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
+                + "<area areatype=\"calendariumarea\" left=\"100\" top=\"2300\" width=\"1000\" height=\"200\">"
+                + "<calendararea layoutschema=\"Month\" colorschema=\"USER_sidecar\"/></area></page>");
+        String schema = "<calendar_schema><calendararea schema=\"USER_sidecar\">"
+                + "<cell type=\"CALENDAR_CELL_TYPE_MONTH\" textcolor=\"#ff0000\"/>"
+                + "</calendararea></calendar_schema>";
+        if (mcfx) {
+            File database = new File(project.getParentFile(), "calendar.mcfx");
+            try (java.sql.Connection db = java.sql.DriverManager.getConnection("jdbc:sqlite:" + database.getAbsolutePath());
+                 java.sql.Statement statement = db.createStatement()) {
+                statement.execute("CREATE TABLE Files (Filename TEXT, Data BLOB, LastModified INTEGER)");
+                try (java.sql.PreparedStatement insert = db.prepareStatement("INSERT INTO Files VALUES (?, ?, 0)")) {
+                    insert.setString(1, "data.mcf");
+                    insert.setBytes(2, Files.readAllBytes(project.toPath()));
+                    insert.executeUpdate();
+                    insert.setString(1, "images/000-user-calendar-schema.xml");
+                    insert.setBytes(2, schema.getBytes(StandardCharsets.UTF_8));
+                    insert.executeUpdate();
+                }
+            }
+            project = database;
+        } else {
+            File images = new File(project.getParentFile(), "images");
+            Assert.assertTrue(images.mkdir());
+            Files.write(new File(images, "000-user-calendar-schema.xml").toPath(), schema.getBytes(StandardCharsets.UTF_8));
+        }
+        converter.convert(project, new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "1.jpg"));
+        int redPixels = 0;
+        for (int y = 540; y < 600; y++) {
+            for (int x = 24; x < 270; x++) {
+                int rgb = image.getRGB(x, y);
+                if (((rgb >> 16) & 255) > ((rgb >> 8) & 255) + 80 && (rgb & 255) < 150) redPixels++;
+            }
+        }
+        Assert.assertTrue("Month title must use the project's red schema", redPixels > 20);
+    }
+
+    @Test
+    public void acceptsModernCalendarWithCoverAndTwoMonths() throws Exception {
+        assertAcceptanceFixture("acceptance-modern.mcf");
+    }
+
+    private void assertAcceptanceFixture(String name) throws Exception {
+        Mcf2FoConverter converter = createConverter();
+        StringBuilder layouts = new StringBuilder("<calendar_layout>");
+        for (String schema : new String[] { "OneDayPerRow (1)", "OneDayPerRow (2)", "OneDayPerRow (4col)" }) {
+            layouts.append("<calendararea schema=\"").append(schema).append("\">");
+            for (String type : new String[] { "TOPLINE", "WEEKDAY", "SATURDAY", "SUNDAY", "HEAD_WEEKDAY", "HEAD_SATURDAY", "HEAD_SUNDAY" }) {
+                layouts.append("<cell type=\"CALENDAR_CELL_TYPE_").append(type)
+                        .append("\"><font size=\"12\" face=\"SansSerif\"/></cell>");
+            }
+            layouts.append("</calendararea>");
+        }
+        layouts.append("</calendar_layout>");
+        Files.write(calendarLayoutFile.toPath(), layouts.toString().getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        converter.convert(new File("src/test/resources/calendar/" + name), out, 60, false, false, -1, 1.0);
+        Assert.assertEquals("Cover and two months", 3, tempImageDir.listFiles().length);
+        for (int sheet = 1; sheet <= 3; sheet++) {
+            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, sheet + ".jpg"));
+            Assert.assertEquals(702, image.getWidth());
+            Assert.assertEquals(992, image.getHeight());
+            int ink = 0;
+            for (int y = 540; y < 895; y++) {
+                for (int x = 24; x < 660; x++) {
+                    if ((image.getRGB(x, y) & 0xff) < 120) ink++;
+                }
+            }
+            Assert.assertTrue("Visible calendar on sheet " + sheet, ink > 30);
+        }
     }
 
     @Test
