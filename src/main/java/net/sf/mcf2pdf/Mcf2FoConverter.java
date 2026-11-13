@@ -119,6 +119,12 @@ public class Mcf2FoConverter {
 	 * which are parsed have a format error.
 	 */
 	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir,File hpsDirPath) throws IOException, SAXException {
+		this(mcfInstallDir, mcfTempDir, tempImageDir, hpsDirPath, Collections.<File>emptyList());
+	}
+
+	/** Additional resource directories fill gaps; installed resources take precedence. */
+	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir, File hpsDirPath,
+			List<File> extraResourceDirs) throws IOException, SAXException {
 		this.tempImageDir = tempImageDir;
 
 		// get all products - scan ALL XML files in Resources for fotobookdefinitions
@@ -159,6 +165,12 @@ public class Mcf2FoConverter {
 			hpsDir = hpsDirPath;
 		}
 		List<File> scanDirs = new ArrayList<File>();
+		for (File extra : extraResourceDirs) {
+			if (!extra.isDirectory()) {
+				throw new IOException("Additional resource directory does not exist: " + extra);
+			}
+			scanDirs.add(extra);
+		}
 		scanDirs.add(new File(mcfInstallDir, "Resources"));
 		scanDirs.add(mcfTempDir);
 		if (hpsDir != null) {

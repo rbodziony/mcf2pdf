@@ -50,6 +50,10 @@ public class Mcf2FoConverterTest {
 	private File calendarLayoutFile;
 
     private Mcf2FoConverter createConverter() throws IOException, SAXException {
+        return createConverter(java.util.Collections.emptyList());
+    }
+
+    private Mcf2FoConverter createConverter(java.util.List<File> extraResources) throws IOException, SAXException {
         File install = tmp.newFolder("install");
         File products = new File(new File(install, "Resources"), "products");
         Assert.assertTrue(products.mkdirs());
@@ -59,6 +63,9 @@ public class Mcf2FoConverterTest {
                 + "</description>";
         Files.write(new File(products, "calendars.xml").toPath(), catalogue.getBytes(StandardCharsets.UTF_8));
         File resources = new File(install, "Resources");
+        if (!extraResources.isEmpty()) {
+            writeSolidBackground(resources, "87654322.bmp", java.awt.Color.GREEN);
+        }
 		calendarLayoutFile = new File(resources, "calendar_layout.xml");
         Files.write(new File(resources, "calendar_layout.xml").toPath(),
                 "<calendar_layout><calendararea schema=\"Month\" type=\"MONTH\" renderinfo=\"MONTH_NAME\"/></calendar_layout>"
@@ -75,7 +82,45 @@ public class Mcf2FoConverterTest {
                 ("<holidays><country iso=\"Polska\" locale=\"pl_PL\"><day id=\"19\" honor=\"free\" name=\"Nowy Rok\"/>"
                         + "</country></holidays>").getBytes(StandardCharsets.UTF_8));
         tempImageDir = tmp.newFolder("images");
-        return new Mcf2FoConverter(install, tmp.newFolder("mcftemp"), tempImageDir, tmp.newFolder("hps"));
+        return new Mcf2FoConverter(install, tmp.newFolder("mcftemp"), tempImageDir, tmp.newFolder("hps"), extraResources);
+    }
+
+    private void writeSolidBackground(File directory, String name, java.awt.Color color) throws IOException {
+        java.awt.image.BufferedImage image = new java.awt.image.BufferedImage(8, 8, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D graphics = image.createGraphics();
+        graphics.setColor(color);
+        graphics.fillRect(0, 0, 8, 8);
+        graphics.dispose();
+        javax.imageio.ImageIO.write(image, "bmp", new File(directory, name));
+    }
+
+    @Test
+    public void extraResourcesFillMissingBackgroundsWithoutOverridingInstalledOnes() throws Exception {
+        File extra = tmp.newFolder("extra-resources");
+        writeSolidBackground(extra, "87654321.bmp", java.awt.Color.RED);
+        writeSolidBackground(extra, "87654322.bmp", java.awt.Color.BLUE);
+        Mcf2FoConverter converter = createConverter(java.util.Collections.singletonList(extra));
+        String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
+                + "<background type=\"1\" designElementId=\"87654321\"/></page>"
+                + "<page pagenr=\"2\" type=\"normalpage\">" + BUNDLE
+                + "<background type=\"1\" designElementId=\"87654322\"/></page>";
+        converter.convert(writeProject("CAL8", pages), new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "1.jpg"));
+        int top = image.getRGB(100, 100);
+        int bottom = image.getRGB(100, 800);
+        Assert.assertTrue("Supplemental red background", ((top >> 16) & 255) > 200 && ((top >> 8) & 255) < 30);
+        Assert.assertTrue("Installed green wins over supplemental blue", ((bottom >> 8) & 255) > 200 && (bottom & 255) < 30);
+    }
+
+    @Test
+    public void missingExtraResourceDirectoryReportsItsPath() throws Exception {
+        File missing = new File(tmp.getRoot(), "missing-resources");
+        try {
+            createConverter(java.util.Collections.singletonList(missing));
+            Assert.fail("Missing supplemental resources must fail clearly");
+        } catch (IOException error) {
+            Assert.assertTrue(error.getMessage(), error.getMessage().contains(missing.toString()));
+        }
     }
 
     private File writeProject(String productName, String pagesXml) throws IOException {

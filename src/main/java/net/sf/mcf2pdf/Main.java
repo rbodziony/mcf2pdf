@@ -46,6 +46,7 @@ public class Main {
 		options.addOption("h", false, "Prints this help and exits.");
 		options.addOption("t", true, "Location of MCF temporary files.");
 		options.addOption("c", true, "Location of MCF (hps dir) additional files.");
+		options.addOption("e", "extra-resources", true, "Additional resource directory (repeatable). Installed resources take precedence.");
 		options.addOption("w", true, "Location for temporary images generated during conversion.");
 		options.addOption("r", true, "Sets the resolution to use for page rendering, in DPI. Default is 150.");
 		options.addOption("n", true, "Sets the page number to render up to. Default renders all pages.");
@@ -236,7 +237,12 @@ public class Main {
 		Log log = LogFactory.getLog(Main.class);
 
 		try {
-			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath);
+			java.util.List<File> extraResources = new java.util.ArrayList<File>();
+			String[] extraPaths = cl.getOptionValues("e");
+			if (extraPaths != null) {
+				for (String path : extraPaths) extraResources.add(new File(path));
+			}
+			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath, extraResources);
 			converter.setSplitToA4(cl.hasOption("a"));
 			converter.setSplitPages(cl.hasOption("1"));
 			converter.setSplitCover(cl.hasOption("o"));
