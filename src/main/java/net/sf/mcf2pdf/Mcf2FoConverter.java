@@ -22,6 +22,8 @@ import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfBundlesize;
 import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
+import net.sf.mcf2pdf.mcfelements.impl.McfSvgCalendarImpl;
+import net.sf.mcf2pdf.pagebuild.PageLegacyCalendar;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
@@ -493,6 +495,11 @@ public class Mcf2FoConverter {
 			else if (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageText((McfText)a.getContent()));
 			}
+			else if (calendarBook != null && a.getContent() instanceof McfSvgCalendarImpl) {
+				currentPage.addDrawable(new PageLegacyCalendar(
+						(McfSvgCalendarImpl) a.getContent(),
+						PageCalendar.parse(calendarBook.getStartDateCalendarium()), calendarDateMonth, calendarLanguage));
+			}
 			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
 					&& a.getContent() instanceof McfCalendarArea) {
 				McfCalendarArea calendarArea = (McfCalendarArea)a.getContent();
@@ -530,8 +537,9 @@ public class Mcf2FoConverter {
 		List<McfPage> normalPages = new Vector<McfPage>();
 		for (McfPage p : book.getPages()) {
 			for (McfArea a : p.getAreas()) {
-				if ("svgarea".equalsIgnoreCase(a.getAreaType())) {
-					throw new IOException("Calendars with SVG calendar areas (CEWE 5.x) are not supported yet");
+				if ("svgarea".equalsIgnoreCase(a.getAreaType())
+						&& !(a.getContent() instanceof McfSvgCalendarImpl)) {
+					throw new IOException("SVG calendar areas must contain an SVG document or template reference");
 				}
 			}
 			Matcher cover = McfPage.CALENDAR_COVER.matcher(p.getType());
@@ -569,6 +577,7 @@ public class Mcf2FoConverter {
 		docBuilder.startFlow("default");
 
 		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
+		if (firstMonth == null) throw new IOException("Invalid calendar start date: " + book.getStartDateCalendarium());
 		CalendarDateModel dateModel = firstMonth == null ? null
 				: new CalendarDateModel(firstMonth, calendarLanguage, book.getHolidaysProvince(),
 						calendarResources.getHolidays(), book.getCalendarEvents(), calendarHolidaysEnabled(book));

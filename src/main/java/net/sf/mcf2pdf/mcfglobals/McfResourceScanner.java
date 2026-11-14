@@ -64,6 +64,22 @@ public class McfResourceScanner {
 		log.debug("finished scanning ");
 	}
 
+	/** Resolve an exact CEWE-relative path; later roots retain installation precedence. */
+	public File getCalendarResource(String relativePath) throws IOException {
+		if (relativePath == null || relativePath.trim().isEmpty()) return null;
+		String path = relativePath.replace('\\', '/');
+		if (!path.startsWith("categories/SVGCalendars/") || path.contains("..") || path.contains(":")) {
+			throw new IOException("Invalid calendar resource path: " + relativePath);
+		}
+		for (int i = scanDirs.size() - 1; i >= 0; i--) {
+			for (String prefix : new String[] { "", "photofun/", "Resources/photofun/" }) {
+				File candidate = new File(scanDirs.get(i), prefix + path);
+				if (candidate.isFile()) return candidate;
+			}
+		}
+		return null;
+	}
+
 	private void scanDirectory(File dir) throws IOException {
 		if (!dir.isDirectory())
 			return;

@@ -277,7 +277,7 @@ public class Mcf2FoConverterTest {
     }
 
     @Test
-    public void testCalendarWithSvgAreasIsRejected() throws IOException, SAXException {
+    public void testCalendarWithMalformedSvgAreasIsRejected() throws IOException, SAXException {
         Mcf2FoConverter converter = createConverter();
         String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
                 + "<area areatype=\"svgarea\"><position left=\"0\" top=\"0\" width=\"10\" height=\"10\"/></area></page>";
@@ -288,6 +288,34 @@ public class Mcf2FoConverterTest {
         } catch (IOException e) {
             Assert.assertTrue(e.getMessage(), e.getMessage().contains("SVG calendar areas"));
         }
+    }
+
+    @Test
+    public void rendersLegacyInlineAndReferencedSvgWithLocalStylesAndSplitOutput() throws Exception {
+        File extra = tmp.newFolder("legacy-resources");
+        File global = new File(extra, "categories/SVGCalendars/calendars/globalstyles/black.css");
+        File local = new File(extra, "categories/SVGCalendars/calendars/calendar8/synthetic/black.css");
+        Assert.assertTrue(global.getParentFile().mkdirs());
+        Assert.assertTrue(local.getParentFile().mkdirs());
+        Files.write(global.toPath(), ".background {fill:red;}".getBytes(StandardCharsets.UTF_8));
+        Files.write(local.toPath(), ".background {fill:blue;}".getBytes(StandardCharsets.UTF_8));
+        File template = new File(local.getParentFile(), "month.svg");
+        Files.write(template.toPath(), ("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\">"
+                + "<rect class=\"background\" width=\"100\" height=\"100\"/></svg>").getBytes(StandardCharsets.UTF_8));
+        Mcf2FoConverter converter = createConverter(java.util.Collections.singletonList(extra));
+        converter.setSplitPages(true);
+        String prefix = "<area areatype=\"svgarea\" left=\"0\" top=\"2100\" width=\"100\" height=\"100\">"
+                + "<svg cssSheet=\"categories/SVGCalendars/calendars/globalstyles/black.css\">";
+        String inline = "<svg_image_calendar><cssSheetTitleIdMap StandardSheet=\"categories/SVGCalendars/calendars/calendar8/synthetic/unused.css\"/>"
+                + "<svgDocument>&lt;svg width=\"100\" height=\"100\"&gt;&lt;rect class=\"background\" width=\"100\" height=\"100\"/&gt;&lt;/svg&gt;</svgDocument></svg_image_calendar>";
+        String reference = "<svg_image fileName=\"categories/SVGCalendars/calendars/calendar8/synthetic/month.svg\"/>";
+        String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE + prefix + inline + "</svg></area></page>"
+                + "<page pagenr=\"2\" type=\"normalpage\">" + BUNDLE + prefix + reference + "</svg></area></page>";
+        converter.convert(writeProject("CAL8", pages), new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        Assert.assertEquals(2, tempImageDir.listFiles().length);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "2.jpg"));
+        java.awt.Color pixel = new java.awt.Color(image.getRGB(8, 8));
+        Assert.assertTrue("Local CSS overrides global colour", pixel.getBlue() > 180 && pixel.getRed() < 50);
     }
 
     @Test

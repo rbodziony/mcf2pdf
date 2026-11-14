@@ -91,6 +91,10 @@ public final class PageRenderContext {
 		return resources.getBinding();
 	}
 
+	public File getCalendarResource(String path) throws java.io.IOException {
+		return resources.getCalendarResource(path);
+	}
+
 	private static final Pattern PATTERN_FADING = Pattern.compile("fading_(.+)\\.svg", Pattern.CASE_INSENSITIVE);
 	private static final Pattern PATTERN_CLIPART = Pattern.compile("clipart_(.+)\\.svg", Pattern.CASE_INSENSITIVE);
 	private static final Pattern PATTERN_FOTOFRAME = 

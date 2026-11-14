@@ -128,6 +128,19 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetNext("fotobook/page/area/calendararea", "setContent");
 		digester.addSetTop("fotobook/page/area/calendararea", "setArea");
 
+		// Legacy calendar SVG: svgDocument is escaped XML, not nested elements.
+		digester.addObjectCreate("fotobook/page/area/svg", McfSvgCalendarImpl.class);
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/svg", Arrays.asList(
+				new String[] { "cssSheet", "cssSheet" },
+				new String[] { "customCssSheet", "customCssSheet" }));
+		digester.addBeanPropertySetter("fotobook/page/area/svg/svg_image_calendar/svgDocument", "svgDocument");
+		digester.addCallMethod("fotobook/page/area/svg/svg_image", "setFileName", 1);
+		digester.addCallParam("fotobook/page/area/svg/svg_image", 0, "fileName");
+		digester.addCallMethod("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", "setStandardSheet", 1);
+		digester.addCallParam("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", 0, "StandardSheet");
+		digester.addSetNext("fotobook/page/area/svg", "setContent");
+		digester.addSetTop("fotobook/page/area/svg", "setArea");
+
 		// pagenumbering element
 		digester.addObjectCreate("fotobook/pagenumbering", getPageNumClass());
 		digester.addSetTop("fotobook/pagenumbering", "setFotobook");
