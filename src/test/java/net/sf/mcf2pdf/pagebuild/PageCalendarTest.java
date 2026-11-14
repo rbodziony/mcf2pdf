@@ -218,8 +218,12 @@ public class PageCalendarTest {
 					Collections.<net.sf.mcf2pdf.mcfelements.McfCalendarColorSchema>emptyList());
 			Assert.assertNotNull(layout, table);
 			BufferedImage image = table.renderAsBitmap(context, new Point(), 0, 0);
-			int sundayY = Math.round(image.getHeight() / 28f * 0.5f);
-			int mondayY = Math.round(image.getHeight() / 28f * 1.5f);
+			boolean family = layout.endsWith("(4col)");
+			float rowHeight = image.getHeight() / (family ? 29f : 28f);
+			int sundayY = Math.round(rowHeight * (family ? 1.5f : .5f));
+			int mondayY = Math.round(rowHeight * (family ? 2.5f : 1.5f));
+			if (family) Assert.assertEquals("Empty family header", 0xffffff,
+					image.getRGB(image.getWidth() - 3, Math.round(rowHeight * .5f)) & 0xffffff);
 			Assert.assertEquals(layout, 0xd2d2d2, image.getRGB(image.getWidth() - 3, sundayY) & 0xffffff);
 			Assert.assertEquals(layout, 0xffffff, image.getRGB(image.getWidth() - 3, mondayY) & 0xffffff);
 			if (layout.endsWith("(2)")) {
@@ -265,7 +269,8 @@ public class PageCalendarTest {
 		int writingLeft = Math.round(actual.getWidth() * 0.08f) + Math.round(actual.getWidth() * 0.09f);
 		int secondColumn = writingLeft + Math.round((actual.getWidth() - writingLeft) / 4f);
 		int changes = 0;
-		for (int y = 1; y < 50; y++) {
+		int firstDayTop = Math.round(actual.getHeight() / 32f);
+		for (int y = firstDayTop + 1; y < firstDayTop * 2; y++) {
 			for (int x = writingLeft + 1; x < secondColumn - 1; x++) {
 				if (actual.getRGB(x, y) != empty.getRGB(x, y)) changes++;
 			}

@@ -88,6 +88,8 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addCallParam("fotobook/holidays", 0, "features");
 		digester.addCallMethod("fotobook/holidays", "setHolidaysShowHolidays", 1);
 		digester.addCallParam("fotobook/holidays", 0, "showHolidays");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysShowEvents", 1);
+		digester.addCallParam("fotobook/holidays", 0, "showEvents");
 		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekHeadline", 1);
 		digester.addCallParam("fotobook/holidays", 0, "weekHeadline");
 		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekText", 1);

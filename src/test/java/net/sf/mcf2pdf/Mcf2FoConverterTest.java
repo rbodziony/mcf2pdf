@@ -36,6 +36,24 @@ public class Mcf2FoConverterTest {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
 
+    @Test
+    public void legacyPersonalDatesComeFromHpsOnlyWhenEnabledAndNotEmbedded() throws Exception {
+        Mcf2FoConverter converter = createConverter();
+        Files.write(new File(tmp.getRoot(), "hps/calendarEvents.xml").toPath(),
+                ("<CalendarEvents><CalendarEvent><Name>Birthday</Name><DateTime>2023-03-01T00:00:00</DateTime>"
+                        + "<Recurrent>yes</Recurrent></CalendarEvent></CalendarEvents>").getBytes(StandardCharsets.UTF_8));
+        McfFotobook book = Mockito.mock(McfFotobook.class);
+        Mockito.when(book.getCalendarEvents()).thenReturn(java.util.Collections.emptyList());
+        Assert.assertEquals("Birthday", converter.calendarEvents(book, true).get(0).getName());
+        Assert.assertTrue("Modern projects do not import account dates", converter.calendarEvents(book, false).isEmpty());
+        Mockito.when(book.getHolidaysShowEvents()).thenReturn("0");
+        Assert.assertTrue(converter.calendarEvents(book, true).isEmpty());
+        Mockito.when(book.getHolidaysShowEvents()).thenReturn("1");
+        net.sf.mcf2pdf.mcfelements.McfCalendarEvent embedded = Mockito.mock(net.sf.mcf2pdf.mcfelements.McfCalendarEvent.class);
+        Mockito.doReturn(java.util.Collections.singletonList(embedded)).when(book).getCalendarEvents();
+        Assert.assertSame(embedded, converter.calendarEvents(book, true).get(0));
+    }
+
     private static final String BUNDLE = "<bundlesize width=\"2970\" height=\"4200\"/>";
 
     private static final String CALENDAR_PAGES =

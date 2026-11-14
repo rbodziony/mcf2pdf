@@ -80,6 +80,14 @@ public class McfResourceScanner {
 		return null;
 	}
 
+	public File getCalendarEventsFile() {
+		for (int i = scanDirs.size() - 1; i >= 0; i--) {
+			File file = new File(scanDirs.get(i), "calendarEvents.xml");
+			if (file.isFile()) return file;
+		}
+		return null;
+	}
+
 	private void scanDirectory(File dir) throws IOException {
 		if (!dir.isDirectory())
 			return;

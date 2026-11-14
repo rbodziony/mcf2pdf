@@ -54,6 +54,9 @@ public interface McfFotobook {
 	/** Legacy CEWE showHolidays setting (0 or 1), otherwise null. */
 	public String getHolidaysShowHolidays();
 
+	/** Legacy CEWE showEvents setting (0 or 1), otherwise null. */
+	public String getHolidaysShowEvents();
+
 	/** Week headline setting of the holidays settings, otherwise <code>null</code>. */
 	public String getHolidaysWeekHeadline();
 

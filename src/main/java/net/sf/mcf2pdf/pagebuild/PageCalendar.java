@@ -293,15 +293,35 @@ public class PageCalendar implements PageDrawable {
 		int weekWidth = showWeeks ? Math.round(width * 0.06f) : 0;
 		int dateWidth = Math.round(width * 0.08f);
 		int weekdayWidth = Math.round(width * 0.09f);
-		float rowHeight = (float) height / days.size();
+		float rowHeight = (float) height / (days.size() + (family ? 1 : 0));
+		if (family) {
+			// Family planners reserve a header row for the four writing columns,
+			// even when all column titles in extrainformation are empty.
+			Map<String, String> headerColors = colorAttributes("CALENDAR_CELL_TYPE_TOPLINE");
+			int headerHeight = Math.round(rowHeight);
+			fillCell(g, context, headerColors.get("bgcolor"), 0, 0, width, headerHeight);
+			drawCellBorders(g, context, "CALENDAR_CELL_TYPE_TOPLINE", headerColors, 0, 0, width, headerHeight);
+			int left = weekWidth + dateWidth + weekdayWidth;
+			String extra = calendar.getExtraInformation();
+			String[] titles = extra == null ? new String[0] : extra.split("\\$", -1);
+			for (int column = 0; column < 4; column++) {
+				int x = left + Math.round((width - left) * column / 4f);
+				int right = left + Math.round((width - left) * (column + 1) / 4f);
+				drawCellBorders(g, context, "CALENDAR_CELL_TYPE_TOPLINE", headerColors, x, 0, right - x, headerHeight);
+				if (column < titles.length && !titles[column].isEmpty()) {
+					drawCellText(g, context, titles[column], "CALENDAR_CELL_TYPE_TOPLINE", headerColors,
+							x, 0, right - x, headerHeight, 0, false, 12f, false);
+				}
+			}
+		}
 		if (showWeeks) {
 			renderWeekNumbers(g, context, days, weekWidth, rowHeight);
 		}
 
 		for (int i = 0; i < days.size(); i++) {
 			CalendarDateModel.CalendarDay day = days.get(i);
-			int y = Math.round(i * rowHeight);
-			int nextY = Math.round((i + 1) * rowHeight);
+			int y = Math.round((i + (family ? 1 : 0)) * rowHeight);
+			int nextY = Math.round((i + (family ? 2 : 1)) * rowHeight);
 			int cellHeight = Math.max(1, nextY - y);
 			String dayType = dayType(day);
 			String headType = headType(day);

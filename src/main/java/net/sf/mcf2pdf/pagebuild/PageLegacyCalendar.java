@@ -1,9 +1,11 @@
 package net.sf.mcf2pdf.pagebuild;
 
 import java.awt.Point;
+import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,6 +15,12 @@ import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
+import org.apache.batik.bridge.FontFace;
+import org.apache.batik.bridge.FontFamilyResolver;
+import org.apache.batik.bridge.UserAgent;
+import org.apache.batik.gvt.font.AWTFontFamily;
+import org.apache.batik.gvt.font.GVTFontFace;
+import org.apache.batik.gvt.font.GVTFontFamily;
 import org.w3c.dom.svg.SVGDocument;
 
 import net.sf.mcf2pdf.calendar.CalendarDateModel.CalendarMonth;
@@ -59,7 +67,7 @@ public final class PageLegacyCalendar implements PageDrawable {
             css += "\n" + readRequired(context, svg.getCustomCssSheet());
         }
         SVGDocument document = LegacyCalendarSvg.prepare(source, css, start, month, language);
-        Raster transcoder = new Raster();
+        Raster transcoder = new Raster(context);
         transcoder.addTranscodingHint(ImageTranscoder.KEY_WIDTH, (float) context.toPixel(svg.getArea().getWidth() / 10f));
         transcoder.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, (float) context.toPixel(svg.getArea().getHeight() / 10f));
         try {
@@ -82,8 +90,35 @@ public final class PageLegacyCalendar implements PageDrawable {
     }
 
     private static final class Raster extends ImageTranscoder {
+        private final PageRenderContext context;
         private BufferedImage image;
+        Raster(PageRenderContext context) { this.context = context; }
+        @Override protected UserAgent createUserAgent() {
+            return new SVGAbstractTranscoderUserAgent() {
+                @Override public FontFamilyResolver getFontFamilyResolver() {
+                    return new ContextFonts(context, super.getFontFamilyResolver());
+                }
+            };
+        }
         @Override public BufferedImage createImage(int w, int h) { return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB); }
         @Override public void writeImage(BufferedImage value, TranscoderOutput output) { image = value; }
+    }
+
+    /** Use the font loaded from CEWE, not an OS substitute or synthetic bold face. */
+    static final class ContextFonts implements FontFamilyResolver {
+        private final PageRenderContext context;
+        private final FontFamilyResolver fallback;
+        ContextFonts(PageRenderContext context, FontFamilyResolver fallback) {
+            this.context = context; this.fallback = fallback;
+        }
+        @Override public GVTFontFamily resolve(String family) { return resolve(family, null); }
+        @Override public GVTFontFamily resolve(String family, FontFace face) {
+            Font font = context.getFont(family);
+            return font == null ? (face == null ? fallback.resolve(family) : fallback.resolve(family, face))
+                    : new AWTFontFamily(face == null ? new GVTFontFace(family) : face, font);
+        }
+        @Override public GVTFontFamily loadFont(InputStream in, FontFace face) throws Exception { return fallback.loadFont(in, face); }
+        @Override public GVTFontFamily getDefault() { return fallback.getDefault(); }
+        @Override public GVTFontFamily getFamilyThatCanDisplay(char c) { return fallback.getFamilyThatCanDisplay(c); }
     }
 }

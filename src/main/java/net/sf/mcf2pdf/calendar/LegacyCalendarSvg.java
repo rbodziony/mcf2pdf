@@ -90,11 +90,12 @@ public final class LegacyCalendarSvg {
         if (month == null) throw new IOException("Month placeholder on a legacy calendar cover: " + key);
         if ("cm_year".equals(key)) { e.setTextContent(Integer.toString(month.getYearMonth().getYear())); return; }
         if ("cm_month_full".equals(key)) { e.setTextContent(month.getName()); return; }
-        if ("cm_weekcaption_short".equals(key)) { e.setTextContent(language.startsWith("pl") ? "Tydz." : "KW"); return; }
+        if ("cm_weekcaption_short".equals(key)) { e.setTextContent(language.startsWith("pl") ? "TYD" : "KW"); return; }
         if (key.matches("cm_dayname[0-6]")) {
             int day = key.charAt(key.length() - 1) - '0';
-            e.setTextContent(DayOfWeek.of(day + 1).getDisplayName(TextStyle.FULL,
-                    Locale.forLanguageTag(language.replace('_', '-'))));
+            Locale locale = Locale.forLanguageTag(language.replace('_', '-'));
+            String name = DayOfWeek.of(day + 1).getDisplayName(TextStyle.FULL, locale);
+            e.setTextContent(name.substring(0, 1).toUpperCase(locale) + name.substring(1));
             return;
         }
         Matcher week = WEEK.matcher(key);
@@ -113,7 +114,10 @@ public final class LegacyCalendarSvg {
             CalendarDay day = row < month.getWeeks().size() ? month.getWeeks().get(row).getDays().get(col) : null;
             boolean present = day != null && day.isInMonth();
             if ("_style".equals(cell.group(4))) {
-                e.setAttribute("class", present && (day.isSunday() || day.isDayOff()) ? "cm_cal_sunday" + row : "weekdays");
+                // CEWE uses the holiday colour also for visible non-day-off entries
+                // (e.g. Christmas Eve). Ordinary cells retain the stylesheet's text
+                // colour; forcing the global "weekdays" class changes that colour.
+                e.setAttribute("class", present && (day.isSunday() || day.isHoliday()) ? "cm_cal_sunday" + row : "cm_cal_day");
                 if (!present) e.setAttribute("display", "none");
             } else if ("day".equals(cell.group(1))) {
                 e.setTextContent(present ? Integer.toString(day.getDate().getDayOfMonth()) : "");

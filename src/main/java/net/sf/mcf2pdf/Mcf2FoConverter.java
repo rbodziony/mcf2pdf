@@ -22,6 +22,7 @@ import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 import net.sf.mcf2pdf.mcfelements.McfBundlesize;
 import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
+import net.sf.mcf2pdf.mcfelements.McfCalendarEvent;
 import net.sf.mcf2pdf.mcfelements.impl.McfSvgCalendarImpl;
 import net.sf.mcf2pdf.pagebuild.PageLegacyCalendar;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
@@ -34,6 +35,7 @@ import net.sf.mcf2pdf.mcfelements.McfxProject;
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 import net.sf.mcf2pdf.calendar.CalendarResources;
+import net.sf.mcf2pdf.calendar.CalendarEventCatalogue;
 import net.sf.mcf2pdf.calendar.CalendarDateModel;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
@@ -534,9 +536,11 @@ public class Mcf2FoConverter {
 
 		McfPage coverBack = null;
 		McfPage coverFront = null;
+		boolean legacySvg = false;
 		List<McfPage> normalPages = new Vector<McfPage>();
 		for (McfPage p : book.getPages()) {
 			for (McfArea a : p.getAreas()) {
+				legacySvg |= a.getContent() instanceof McfSvgCalendarImpl;
 				if ("svgarea".equalsIgnoreCase(a.getAreaType())
 						&& !(a.getContent() instanceof McfSvgCalendarImpl)) {
 					throw new IOException("SVG calendar areas must contain an SVG document or template reference");
@@ -578,9 +582,10 @@ public class Mcf2FoConverter {
 
 		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
 		if (firstMonth == null) throw new IOException("Invalid calendar start date: " + book.getStartDateCalendarium());
+		List<? extends McfCalendarEvent> events = calendarEvents(book, legacySvg);
 		CalendarDateModel dateModel = firstMonth == null ? null
 				: new CalendarDateModel(firstMonth, calendarLanguage, book.getHolidaysProvince(),
-						calendarResources.getHolidays(), book.getCalendarEvents(), calendarHolidaysEnabled(book));
+						calendarResources.getHolidays(), events, calendarHolidaysEnabled(book));
 		if (dateModel != null) {
 			for (String id : dateModel.getUnsupportedHolidayIds()) {
 				log.warn("Unknown CEWE calendar holiday id '" + id + "'");
@@ -609,6 +614,14 @@ public class Mcf2FoConverter {
 		}
 		String legacy = book.getHolidaysShowHolidays();
 		return legacy == null || !("0".equals(legacy.trim()) || "false".equalsIgnoreCase(legacy.trim()));
+	}
+
+	List<? extends McfCalendarEvent> calendarEvents(McfFotobook book,
+			boolean legacySvg) throws IOException {
+		if (legacySvg && ("0".equals(book.getHolidaysShowEvents())
+				|| "false".equalsIgnoreCase(book.getHolidaysShowEvents()))) return Collections.emptyList();
+		if (!legacySvg || !book.getCalendarEvents().isEmpty()) return book.getCalendarEvents();
+		return CalendarEventCatalogue.load(resources.getCalendarEventsFile());
 	}
 
 	private void warnForUnknownCalendarCatalogEntries(McfFotobook book) {

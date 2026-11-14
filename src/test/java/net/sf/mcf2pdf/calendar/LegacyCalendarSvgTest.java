@@ -90,7 +90,7 @@ public class LegacyCalendarSvgTest {
             SVGDocument doc = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL");
             assertEquals(enabled ? "New Year" : "Birthday", field(doc, "cm_holiday030").getTextContent());
             assertEquals(enabled ? "Birthday" : "", field(doc, "cm_holiday031").getTextContent());
-            assertEquals(enabled ? "cm_cal_sunday0" : "weekdays", field(doc, "cm_day03_style").getAttribute("class"));
+            assertEquals(enabled ? "cm_cal_sunday0" : "cm_cal_day", field(doc, "cm_day03_style").getAttribute("class"));
         }
     }
 
@@ -113,5 +113,22 @@ public class LegacyCalendarSvgTest {
                     "", LocalDate.of(2026, 1, 1), null, "pl_PL");
             fail();
         } catch (java.io.IOException expected) { assertTrue(expected.getMessage().contains("future_token")); }
+    }
+
+    @Test public void visibleNonDayOffHolidaysUseTheHolidayStyleAndLocalizedHeadings() throws Exception {
+        java.io.File file = tmp.newFile();
+        Files.write(file.toPath(), ("<holidays><country iso=\"Polska\" locale=\"pl_PL\">"
+                + "<day date=\"XXXX-12-24\" honor=\"show\" name=\"Christmas Eve\"/>"
+                + "</country></holidays>").getBytes(StandardCharsets.UTF_8));
+        LocalDate start = LocalDate.of(2016, 12, 1);
+        CalendarDateModel model = new CalendarDateModel(start, "pl_PL", null,
+                new HolidayCatalogue(file), Collections.emptyList());
+        SVGDocument doc = LegacyCalendarSvg.prepare(grid().replace("</svg>",
+                "<text cewe:cal=\"cm_dayname0\"/><text cewe:cal=\"cm_weekcaption_short\"/></svg>"),
+                "", start, model.getMonth(0), "pl_PL");
+        assertEquals("cm_cal_sunday3", field(doc, "cm_day35_style").getAttribute("class"));
+        assertEquals("Christmas Eve", field(doc, "cm_holiday350").getTextContent());
+        assertEquals("TYD", field(doc, "cm_weekcaption_short").getTextContent());
+        assertTrue(Character.isUpperCase(field(doc, "cm_dayname0").getTextContent().charAt(0)));
     }
 }

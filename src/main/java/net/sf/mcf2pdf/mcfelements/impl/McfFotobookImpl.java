@@ -169,6 +169,7 @@ public class McfFotobookImpl implements McfFotobook {
 
 	private String holidaysFeatures;
 	private String holidaysShowHolidays;
+	private String holidaysShowEvents;
 
 	private String holidaysWeekHeadline;
 
@@ -216,6 +217,15 @@ public class McfFotobookImpl implements McfFotobook {
 
 	public void setHolidaysShowHolidays(String value) {
 		holidaysShowHolidays = value;
+	}
+
+	@Override
+	public String getHolidaysShowEvents() {
+		return holidaysShowEvents;
+	}
+
+	public void setHolidaysShowEvents(String value) {
+		holidaysShowEvents = value;
 	}
 
 	public void setHolidaysFeatures(String holidaysFeatures) {

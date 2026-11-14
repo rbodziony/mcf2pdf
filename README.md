@@ -27,6 +27,10 @@ installation no longer contains them, add an older installation's
 `-e "C:\work\CEWEroznewersje\CEWE643\CEWE Fotoswiat\Resources\photofun"`.
 The `-i` installation still provides the calendar and holiday catalogues.
 Resources are read from disk and are not bundled with this repository.
+Legacy SVG calendars with personal events enabled also read `calendarEvents.xml`
+from the selected `hps` root (`-c`) when the project has no embedded events.
+Calendar fonts and text colours follow the CEWE resources, including light text
+on light cells when the selected stylesheet specifies it.
 
 The generated PDFs are NOT, and will never be, a 100% representation of the
 designed photobook. Also, they do NOT include bleed margins (especially not for 

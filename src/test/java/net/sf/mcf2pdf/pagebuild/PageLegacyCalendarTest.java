@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class PageLegacyCalendarTest {
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
 
-    @Test public void weekdayDigitsAreVisibleOnLightCellsAndTransferPhotosAreOmitted() throws Exception {
+    @Test public void weekdayDigitsKeepTheStylesheetColourAndTransferPhotosAreOmitted() throws Exception {
         File css = tmp.newFile("black.css");
         Files.write(css.toPath(), ("text {fill:white; font-size:20px;} .weekdays text {fill:black;}"
                 + ".day_bg {fill:white;}").getBytes(StandardCharsets.UTF_8));
@@ -47,8 +47,27 @@ public class PageLegacyCalendarTest {
         for (int y = 15; y < 45; y++) for (int x = 15; x < 45; x++) {
             if ((image.getRGB(x, y) & 0xffffff) < 0x808080) dark++;
         }
-        assertTrue("Rendered date must remain readable on a white cell", dark > 10);
+        assertEquals("Do not override white text with the global weekdays class", 0, dark);
         assertEquals(0xffffff, image.getRGB(80, 80) & 0xffffff);
+    }
+
+    @Test public void svgFontsUseTheLoadedCeweFaceInsteadOfAnOsSubstitute() {
+        McfResourceScanner resources = mock(McfResourceScanner.class);
+        java.awt.Font loaded = new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 1);
+        when(resources.getFont("SyntheticCeweFont")).thenReturn(loaded);
+        org.apache.batik.bridge.FontFamilyResolver fallback = mock(org.apache.batik.bridge.FontFamilyResolver.class);
+        PageLegacyCalendar.ContextFonts fonts = new PageLegacyCalendar.ContextFonts(
+                new PageRenderContext(254, 1, resources, null), fallback);
+        org.apache.batik.gvt.font.GVTFontFamily family = fonts.resolve("SyntheticCeweFont");
+        assertNotNull(family);
+        java.util.Map<java.text.AttributedCharacterIterator.Attribute, Object> attributes = new java.util.HashMap<>();
+        attributes.put(java.awt.font.TextAttribute.WEIGHT, java.awt.font.TextAttribute.WEIGHT_BOLD);
+        java.awt.font.FontRenderContext frc = new java.awt.font.FontRenderContext(null, true, true);
+        org.apache.batik.gvt.font.GVTGlyphVector glyphs = family.deriveFont(20, attributes).createGlyphVector(frc, "1111");
+        glyphs.performDefaultLayout();
+        java.awt.geom.Rectangle2D actual = glyphs.getLogicalBounds();
+        assertEquals(loaded.deriveFont(20f).getStringBounds("1111", frc).getWidth(), actual.getWidth(), .1);
+        verifyNoInteractions(fallback);
     }
 
     @Test public void missingTemplateReportsTheRequiredPathAndExtraResourceOption() throws Exception {
