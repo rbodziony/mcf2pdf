@@ -209,7 +209,22 @@ public class Mcf2FoConverterTest {
     }
 
     private void assertAcceptanceFixture(String name) throws Exception {
+        assertAcceptanceFixture(name, false);
+    }
+
+    @Test
+    public void splitsOldCalendarIncludingBlankCoverHalf() throws Exception {
+        assertAcceptanceFixture("acceptance-old.mcf", true);
+    }
+
+    @Test
+    public void splitsModernCalendarIncludingBlankCoverHalf() throws Exception {
+        assertAcceptanceFixture("acceptance-modern.mcf", true);
+    }
+
+    private void assertAcceptanceFixture(String name, boolean split) throws Exception {
         Mcf2FoConverter converter = createConverter();
+        converter.setSplitPages(split);
         StringBuilder layouts = new StringBuilder("<calendar_layout>");
         for (String schema : new String[] { "OneDayPerRow (1)", "OneDayPerRow (2)", "OneDayPerRow (4col)" }) {
             layouts.append("<calendararea schema=\"").append(schema).append("\">");
@@ -223,18 +238,23 @@ public class Mcf2FoConverterTest {
         Files.write(calendarLayoutFile.toPath(), layouts.toString().getBytes(StandardCharsets.UTF_8));
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         converter.convert(new File("src/test/resources/calendar/" + name), out, 60, false, false, -1, 1.0);
-        Assert.assertEquals("Cover and two months", 3, tempImageDir.listFiles().length);
-        for (int sheet = 1; sheet <= 3; sheet++) {
+        Assert.assertEquals("Cover and two months", split ? 6 : 3, tempImageDir.listFiles().length);
+        if (split) Assert.assertTrue(out.toString("UTF-8").contains("page-height=\"496px\""));
+        for (int sheet = 1; sheet <= (split ? 6 : 3); sheet++) {
             java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, sheet + ".jpg"));
             Assert.assertEquals(702, image.getWidth());
-            Assert.assertEquals(992, image.getHeight());
+            Assert.assertEquals(split ? 496 : 992, image.getHeight());
             int ink = 0;
-            for (int y = 540; y < 895; y++) {
+            for (int y = split ? 44 : 540; y < (split ? 399 : 895); y++) {
                 for (int x = 24; x < 660; x++) {
                     if ((image.getRGB(x, y) & 0xff) < 120) ink++;
                 }
             }
-            Assert.assertTrue("Visible calendar on sheet " + sheet, ink > 30);
+            if (split && sheet % 2 == 1) {
+                Assert.assertEquals("Blank top half on sheet " + sheet, 0, ink);
+            } else {
+                Assert.assertTrue("Visible calendar on sheet " + sheet, ink > 30);
+            }
         }
     }
 
@@ -246,6 +266,14 @@ public class Mcf2FoConverterTest {
 
         // the cover and the first sheet (page records 1 and 2)
         Assert.assertEquals(2, tempImageDir.listFiles().length);
+    }
+
+    @Test
+    public void splitCalendarMaxPageNumberStillLimitsSourceSheets() throws Exception {
+        Mcf2FoConverter converter = createConverter();
+        converter.setSplitPages(true);
+        converter.convert(writeProject("CAL8", CALENDAR_PAGES), new ByteArrayOutputStream(), 60, false, false, 2, 1.0);
+        Assert.assertEquals("Two halves of cover plus two halves of first month", 4, tempImageDir.listFiles().length);
     }
 
     @Test

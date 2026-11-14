@@ -198,7 +198,8 @@ public class Mcf2FoConverter {
 	 * Enables single page output. Every double page is split into its left and
 	 * right page, and each one becomes a PDF page in the original album page
 	 * size. The cover (back, spine and front) stays one page in its original
-	 * size. Ignored if A4 output is enabled, which splits pages as well.
+	 * size. Ignored for books if A4 output is enabled, which splits pages as well.
+	 * Calendars are cut horizontally into top/bottom halves, including the cover.
 	 *
 	 * @param splitPages <code>true</code> to enable single page output.
 	 */
@@ -520,8 +521,8 @@ public class Mcf2FoConverter {
 		if (!"CAL8".equals(book.getProductName())) {
 			throw new IOException("Calendar product '" + book.getProductName() + "' is not supported, only CAL8");
 		}
-		if (splitToA4 || splitPages || splitCover) {
-			log.warn("The options for single pages, A4 output and cover splitting are ignored for calendars");
+		if (splitToA4 || splitCover) {
+			log.warn("The options for A4 output and cover splitting are ignored for calendars; use -1 to split sheets horizontally");
 		}
 
 		McfPage coverBack = null;
@@ -563,7 +564,7 @@ public class Mcf2FoConverter {
 		int heightPX = context.toPixel(size.getHeight() / 10.0f);
 
 		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
-		docBuilder.addPageMaster("default", widthPX, heightPX);
+		docBuilder.addPageMaster("default", widthPX, splitPages ? heightPX - heightPX / 2 : heightPX);
 		tempImageDir.mkdirs();
 		docBuilder.startFlow("default");
 
@@ -635,7 +636,11 @@ public class Mcf2FoConverter {
 		if (bottom != null)
 			areas.addAll(bottom.getAreas());
 		addAreaDrawables(areas);
-		sheet.addToDocumentBuilder(docBuilder);
+		if (splitPages) {
+			sheet.addHorizontalHalvesToDocumentBuilder(docBuilder);
+		} else {
+			sheet.addToDocumentBuilder(docBuilder);
+		}
 	}
 
 	/** Cover wrap of most CEWE hardcover products (<code>coverextrahorizontal="40"</code>), in mm. */

@@ -117,6 +117,29 @@ public class BitmapPageBuilder extends AbstractPageBuilder {
 		docBuilder.addPageElement(createImgFoElement(page, docBuilder.getNamespace()));
 	}
 
+	/** Render once, then emit the top and bottom halves without scaling. */
+	public void addHorizontalHalvesToDocumentBuilder(XslFoDocumentBuilder docBuilder) throws IOException {
+		BufferedImage image = renderImage();
+		int middle = image.getHeight() / 2;
+		if (middle == 0) {
+			throw new IOException("Page is too short to split horizontally");
+		}
+		BufferedImage top = image.getSubimage(0, 0, image.getWidth(), middle);
+		if (image.getHeight() % 2 != 0) {
+			// Equal page sizes at odd pixel heights: retain every source row and pad
+			// the shorter top half with one white row rather than stretching it.
+			BufferedImage padded = new BufferedImage(image.getWidth(), middle + 1, BufferedImage.TYPE_INT_ARGB);
+			Graphics2D g = padded.createGraphics();
+			g.setColor(Color.WHITE);
+			g.fillRect(0, 0, padded.getWidth(), padded.getHeight());
+			g.drawImage(top, 0, 0, null);
+			g.dispose();
+			top = padded;
+		}
+		addImage(docBuilder, top);
+		addImage(docBuilder, image.getSubimage(0, middle, image.getWidth(), image.getHeight() - middle));
+	}
+
 	/**
 	 * Renders all drawables of this page onto one image of the full double page.
 	 *

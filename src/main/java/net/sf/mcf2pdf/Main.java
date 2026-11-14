@@ -56,7 +56,7 @@ public class Main {
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
-		options.addOption("1", false, "Single pages: split every double page into two PDF pages in the original album page size (cover stays one page). Default keeps double pages.");
+		options.addOption("1", false, "Single pages: split book spreads left/right (cover stays one page), or calendar sheets top/bottom including the cover. Default keeps full spreads/sheets.");
 		options.addOption("o", false, "Split the cover: the front cover becomes the first page, the back cover the last page, the spine is skipped.");
 		options.addOption("a", false, "A4 output: split every double page into two A4 pages (orientation follows the album page; cover is fitted on one A4 page). Default keeps the page size from the MCF/MCFX file.");
 		options.addOption("f", true, "Select an MCF entry when a .mcfx database contains more than one.");
