@@ -160,6 +160,7 @@ public class CalendarResourcesTest {
 		CalendarResources loaded = CalendarResources.load(resources, null, "Polska");
 
 		Assert.assertEquals("pl_PL", loaded.getHolidays().getCountryAttributes().get("locale"));
+		Assert.assertEquals("pl_PL", loaded.getHolidayLanguage());
 	}
 
 	@Test
@@ -181,7 +182,11 @@ public class CalendarResourcesTest {
 		Assert.assertEquals(2, byLanguage.getHolidays().getHolidays().size());
 		Assert.assertEquals("Ferie zimowe", byLanguage.getHolidays().getVacations().get(0).getAttribute("name"));
 
+		Assert.assertNull("No locale attribute and no installation language", byLanguage.getHolidayLanguage());
+		Assert.assertTrue(new File(resources, "pl_PL.lproj").mkdir());
+
 		CalendarResources byCountry = CalendarResources.load(resources, null, "Polska");
+		Assert.assertEquals("pl_PL", byCountry.getHolidayLanguage());
 		Assert.assertEquals("Święto Niepodległości",
 				byCountry.getHolidays().getHolidays().get(1).getAttribute("name"));
 
@@ -219,6 +224,7 @@ public class CalendarResourcesTest {
 		Assert.assertEquals("Polska", holidays.getCountryAttributes().get("iso"));
 		Assert.assertEquals(24, holidays.getHolidays().size());
 		Assert.assertEquals(64, holidays.getVacations().size());
+		Assert.assertEquals("pl_PL", CalendarResources.load(resources, null, "Polska").getHolidayLanguage());
 		// calendar_schema.xml repeats bgcoloreven="#E1EFCE" in one cell of this schema.
 		Assert.assertEquals("#E1EFCE", loaded.getColors().getSchema("Green/white nuances")
 				.getCell("CALENDAR_CELL_TYPE_HEAD_EMPTY").get("bgcoloreven"));

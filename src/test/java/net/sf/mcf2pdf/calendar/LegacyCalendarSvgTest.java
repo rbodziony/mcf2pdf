@@ -131,4 +131,49 @@ public class LegacyCalendarSvgTest {
         assertEquals("TYD", field(doc, "cm_weekcaption_short").getTextContent());
         assertTrue(Character.isUpperCase(field(doc, "cm_dayname0").getTextContent().charAt(0)));
     }
+    @Test public void cewe5KeepsNeighbouringMonthCellsAndStylesOnlySundays() throws Exception {
+        java.io.File file = tmp.newFile();
+        Files.write(file.toPath(), ("<holidays><country iso=\"Polska\" locale=\"pl_PL\">"
+                + "<day date=\"XXXX-12-24\" honor=\"show\" name=\"Christmas Eve\"/>"
+                + "<day date=\"XXXX-12-26\" honor=\"free\" name=\"Second day\"/>"
+                + "</country></holidays>").getBytes(StandardCharsets.UTF_8));
+        // December 2016 starts on Thursday and needs five rows.
+        LocalDate start = LocalDate.of(2016, 12, 1);
+        CalendarDateModel model = new CalendarDateModel(start, "pl_PL", null,
+                new HolidayCatalogue(file), Collections.emptyList());
+        SVGDocument doc = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL",
+                LegacyCalendarStyle.CEWE5);
+        // 28 November: visible cell without a date.
+        assertEquals("", field(doc, "cm_day00_style").getAttribute("display"));
+        assertEquals("cm_cal_day", field(doc, "cm_day00_style").getAttribute("class"));
+        assertEquals("", field(doc, "cm_day00").getTextContent());
+        // 1 January after the last day, also a Sunday: visible, without date or Sunday text style.
+        assertEquals("", field(doc, "cm_day46_style").getAttribute("display"));
+        assertEquals("cm_cal_day", field(doc, "cm_day46_style").getAttribute("class"));
+        // Holidays on weekdays keep the ordinary style; labels are still filled in.
+        assertEquals("cm_cal_day", field(doc, "cm_day35_style").getAttribute("class"));
+        assertEquals("Christmas Eve", field(doc, "cm_holiday350").getTextContent());
+        assertEquals("cm_cal_day", field(doc, "cm_day40_style").getAttribute("class"));
+        assertEquals("Second day", field(doc, "cm_holiday400").getTextContent());
+        assertEquals("cm_cal_sunday3", field(doc, "cm_day36_style").getAttribute("class"));
+        // The unused sixth week stays hidden.
+        assertEquals("none", field(doc, "cm_day50_style").getAttribute("display"));
+        assertEquals("cm_cal_week_empty", field(doc, "cm_week5_style").getAttribute("class"));
+
+        SVGDocument cewe6 = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL");
+        assertEquals("none", field(cewe6, "cm_day00_style").getAttribute("display"));
+        assertEquals("cm_cal_sunday4", field(cewe6, "cm_day40_style").getAttribute("class"));
+    }
+
+    @Test public void installationVersionSelectsTheLegacyStyle() throws Exception {
+        java.io.File cewe5 = tmp.newFolder("cewe5");
+        Files.write(new java.io.File(cewe5, "version.xml").toPath(),
+                "<config> <version number=\"5.1.8\"/> </config>".getBytes(StandardCharsets.UTF_8));
+        java.io.File cewe6 = tmp.newFolder("cewe6");
+        Files.write(new java.io.File(cewe6, "version.xml").toPath(),
+                "<config> <version number=\"6.4.3\"/> </config>".getBytes(StandardCharsets.UTF_8));
+        assertEquals(LegacyCalendarStyle.CEWE5, LegacyCalendarStyle.fromResources(cewe5));
+        assertEquals(LegacyCalendarStyle.CEWE6, LegacyCalendarStyle.fromResources(cewe6));
+        assertEquals(LegacyCalendarStyle.CEWE6, LegacyCalendarStyle.fromResources(tmp.newFolder("cewe8")));
+    }
 }

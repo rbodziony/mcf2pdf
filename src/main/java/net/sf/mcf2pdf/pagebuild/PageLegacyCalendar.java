@@ -24,6 +24,7 @@ import org.apache.batik.gvt.font.GVTFontFamily;
 import org.w3c.dom.svg.SVGDocument;
 
 import net.sf.mcf2pdf.calendar.CalendarDateModel.CalendarMonth;
+import net.sf.mcf2pdf.calendar.LegacyCalendarStyle;
 import net.sf.mcf2pdf.calendar.LegacyCalendarSvg;
 import net.sf.mcf2pdf.mcfelements.impl.McfSvgCalendarImpl;
 import net.sf.mcf2pdf.mcfelements.util.ImageUtil;
@@ -34,12 +35,19 @@ public final class PageLegacyCalendar implements PageDrawable {
     private final LocalDate start;
     private final CalendarMonth month;
     private final String language;
+    private final LegacyCalendarStyle style;
 
     public PageLegacyCalendar(McfSvgCalendarImpl svg, LocalDate start, CalendarMonth month, String language) {
+        this(svg, start, month, language, LegacyCalendarStyle.CEWE6);
+    }
+
+    public PageLegacyCalendar(McfSvgCalendarImpl svg, LocalDate start, CalendarMonth month, String language,
+            LegacyCalendarStyle style) {
         this.svg = svg;
         this.start = start;
         this.month = month;
         this.language = language;
+        this.style = style;
     }
 
     @Override public float getLeftMM() { return svg.getArea().getLeft() / 10f; }
@@ -53,10 +61,21 @@ public final class PageLegacyCalendar implements PageDrawable {
         String source = svg.getSvgDocument();
         if (source == null || source.trim().isEmpty()) source = readRequired(context, svg.getFileName());
         String css = readRequired(context, svg.getCssSheet());
-        // StandardSheet names a non-existent aggregate CSS in CEWE 5.x. The actual
-        // layout stylesheet is beside it and has the selected colour's basename.
         String standard = svg.getStandardSheet();
-        if (standard == null && svg.getFileName() != null) standard = svg.getFileName();
+        File standardFile = style == LegacyCalendarStyle.CEWE5 && standard != null
+                ? context.getCalendarResource(standard) : null;
+        if (style == LegacyCalendarStyle.CEWE5 && standardFile != null) {
+            // CEWE 5.x: the template's layout sheet follows the global colour sheet, but
+            // the colour sheet's Sunday rules still win (CEWE 5.1.8 shows white holiday
+            // labels in Sunday cells and black ones elsewhere).
+            String colour = css;
+            css += "\n" + new String(Files.readAllBytes(standardFile.toPath()), StandardCharsets.UTF_8);
+            css += "\n" + sundayRules(colour);
+            standard = null;
+        }
+        // Later CEWE versions drop the StandardSheet file; the layout stylesheet is
+        // beside it and has the selected colour's basename.
+        else if (standard == null && svg.getFileName() != null) standard = svg.getFileName();
         if (standard != null) {
             String color = svg.getCssSheet().replace('\\', '/');
             String local = standard.substring(0, standard.replace('\\', '/').lastIndexOf('/') + 1)
@@ -66,7 +85,7 @@ public final class PageLegacyCalendar implements PageDrawable {
         if (svg.getCustomCssSheet() != null && !svg.getCustomCssSheet().trim().isEmpty()) {
             css += "\n" + readRequired(context, svg.getCustomCssSheet());
         }
-        SVGDocument document = LegacyCalendarSvg.prepare(source, css, start, month, language);
+        SVGDocument document = LegacyCalendarSvg.prepare(source, css, start, month, language, style);
         Raster transcoder = new Raster(context);
         transcoder.addTranscodingHint(ImageTranscoder.KEY_WIDTH, (float) context.toPixel(svg.getArea().getWidth() / 10f));
         transcoder.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, (float) context.toPixel(svg.getArea().getHeight() / 10f));
@@ -80,6 +99,21 @@ public final class PageLegacyCalendar implements PageDrawable {
             image = ImageUtil.rotateImage(image, (float) Math.toRadians(svg.getArea().getRotation()), offset);
         }
         return image;
+    }
+
+    /** Returns the rules whose selectors all target a <code>cm_cal_sunday</code> cell. */
+    static String sundayRules(String css) {
+        StringBuilder result = new StringBuilder();
+        String withoutComments = css.replaceAll("(?s)/\\*.*?\\*/", "");
+        java.util.regex.Matcher rule = java.util.regex.Pattern.compile("([^{}]+)\\{([^{}]*)\\}").matcher(withoutComments);
+        while (rule.find()) {
+            boolean sunday = true;
+            for (String selector : rule.group(1).split(",")) {
+                sunday &= selector.trim().startsWith(".cm_cal_sunday");
+            }
+            if (sunday) result.append(rule.group(1).trim()).append(" {").append(rule.group(2)).append("}\n");
+        }
+        return result.toString();
     }
 
     private static String readRequired(PageRenderContext context, String path) throws IOException {

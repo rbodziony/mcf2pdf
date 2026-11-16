@@ -35,6 +35,7 @@ import net.sf.mcf2pdf.mcfelements.McfxProject;
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
 import net.sf.mcf2pdf.calendar.CalendarResources;
+import net.sf.mcf2pdf.calendar.LegacyCalendarStyle;
 import net.sf.mcf2pdf.calendar.CalendarEventCatalogue;
 import net.sf.mcf2pdf.calendar.CalendarDateModel;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
@@ -88,6 +89,7 @@ public class Mcf2FoConverter {
 	private CalendarDateModel.CalendarMonth calendarDateMonth;
 
 	private String calendarLanguage;
+	private LegacyCalendarStyle legacyCalendarStyle = LegacyCalendarStyle.CEWE6;
 
 	private File tempImageDir;
 
@@ -137,6 +139,7 @@ public class Mcf2FoConverter {
 			throw new IOException("MCF Resources Directory " + resourcesDir.getAbsolutePath() + " does not exist");
 		}
 		calendarResourcesDirectory = resourcesDir;
+		legacyCalendarStyle = LegacyCalendarStyle.fromResources(resourcesDir);
 
 		scanForProducts(resourcesDir, McfProductCatalogue.CatalogueVersion.PRE_V6);
 		File productsDir = new File(resourcesDir, "products");
@@ -500,7 +503,8 @@ public class Mcf2FoConverter {
 			else if (calendarBook != null && a.getContent() instanceof McfSvgCalendarImpl) {
 				currentPage.addDrawable(new PageLegacyCalendar(
 						(McfSvgCalendarImpl) a.getContent(),
-						PageCalendar.parse(calendarBook.getStartDateCalendarium()), calendarDateMonth, calendarLanguage));
+						PageCalendar.parse(calendarBook.getStartDateCalendarium()), calendarDateMonth, calendarLanguage,
+						legacyCalendarStyle));
 			}
 			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
 					&& a.getContent() instanceof McfCalendarArea) {
@@ -567,7 +571,11 @@ public class Mcf2FoConverter {
 				book.getHolidaysCountry(), imageDir);
 		calendarLanguage = book.getHolidaysLanguage();
 		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
-			calendarLanguage = calendarResources.getHolidays().getCountryAttributes().get("locale");
+			calendarLanguage = calendarResources.getHolidayLanguage();
+		}
+		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
+			throw new IOException("Calendar language cannot be determined: the project has no holidays language"
+					+ " and the CEWE calendar entries do not name one");
 		}
 		warnForUnknownCalendarCatalogEntries(book);
 

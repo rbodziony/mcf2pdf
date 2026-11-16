@@ -33,6 +33,11 @@ public final class LegacyCalendarSvg {
 
     public static SVGDocument prepare(String source, String css, LocalDate start,
             CalendarMonth month, String language) throws IOException {
+        return prepare(source, css, start, month, language, LegacyCalendarStyle.CEWE6);
+    }
+
+    public static SVGDocument prepare(String source, String css, LocalDate start,
+            CalendarMonth month, String language, LegacyCalendarStyle style) throws IOException {
         // External stylesheets are replaced by the explicitly resolved project styles.
         source = source.replaceAll("(?s)<\\?xml-stylesheet.*?\\?>", "")
                 .replaceAll("(?s)<!DOCTYPE[^>]*>", "");
@@ -45,18 +50,18 @@ public final class LegacyCalendarSvg {
         if (!root.hasAttribute("viewBox")) {
             root.setAttribute("viewBox", "0 0 " + root.getAttribute("width") + " " + root.getAttribute("height"));
         }
-        populate(root, start, month, language);
-        Element style = document.createElementNS(SVG, "style");
-        style.setAttribute("type", "text/css");
-        style.setTextContent(css);
-        root.insertBefore(style, root.getFirstChild());
+        populate(root, start, month, language, style);
+        Element styleElement = document.createElementNS(SVG, "style");
+        styleElement.setAttribute("type", "text/css");
+        styleElement.setTextContent(css);
+        root.insertBefore(styleElement, root.getFirstChild());
         return document;
     }
 
-    private static void populate(Element element, LocalDate start, CalendarMonth month, String language)
-            throws IOException {
+    private static void populate(Element element, LocalDate start, CalendarMonth month, String language,
+            LegacyCalendarStyle style) throws IOException {
         String key = element.getAttributeNS(CEWE, "cal");
-        if (!key.isEmpty()) expand(element, key, start, month, language);
+        if (!key.isEmpty()) expand(element, key, start, month, language, style);
         for (Node node = element.getFirstChild(); node != null;) {
             Node next = node.getNextSibling();
             if (node instanceof Element) {
@@ -69,15 +74,15 @@ public final class LegacyCalendarSvg {
                     if ("image".equals(child.getLocalName())) {
                         throw new IOException("Unsupported embedded image in legacy calendar SVG");
                     }
-                    populate(child, start, month, language);
+                    populate(child, start, month, language, style);
                 }
             }
             node = next;
         }
     }
 
-    private static void expand(Element e, String key, LocalDate start, CalendarMonth month, String language)
-            throws IOException {
+    private static void expand(Element e, String key, LocalDate start, CalendarMonth month, String language,
+            LegacyCalendarStyle style) throws IOException {
         LocalDate end = start.plusMonths(11);
         boolean oneYear = start.getYear() == end.getYear();
         switch (key) {
@@ -113,7 +118,12 @@ public final class LegacyCalendarSvg {
             int row = Integer.parseInt(cell.group(2)), col = Integer.parseInt(cell.group(3));
             CalendarDay day = row < month.getWeeks().size() ? month.getWeeks().get(row).getDays().get(col) : null;
             boolean present = day != null && day.isInMonth();
-            if ("_style".equals(cell.group(4))) {
+            if ("_style".equals(cell.group(4)) && style == LegacyCalendarStyle.CEWE5) {
+                // CEWE 5.x keeps the cells of neighbouring months (without a date)
+                // and gives the Sunday style to Sundays only.
+                e.setAttribute("class", present && day.isSunday() ? "cm_cal_sunday" + row : "cm_cal_day");
+                if (day == null) e.setAttribute("display", "none");
+            } else if ("_style".equals(cell.group(4))) {
                 // CEWE uses the holiday colour also for visible non-day-off entries
                 // (e.g. Christmas Eve). Ordinary cells retain the stylesheet's text
                 // colour; forcing the global "weekdays" class changes that colour.
