@@ -9,15 +9,22 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+import java.util.regex.Matcher;
 
 import net.sf.mcf2pdf.mcfelements.McfArea;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
+import net.sf.mcf2pdf.mcfelements.McfBundlesize;
+import net.sf.mcf2pdf.mcfelements.McfCalendarArea;
+import net.sf.mcf2pdf.mcfelements.McfCalendarEvent;
+import net.sf.mcf2pdf.mcfelements.impl.McfSvgCalendarImpl;
+import net.sf.mcf2pdf.pagebuild.PageLegacyCalendar;
 import net.sf.mcf2pdf.mcfelements.McfClipart;
 import net.sf.mcf2pdf.mcfelements.McfFotobook;
 import net.sf.mcf2pdf.mcfelements.McfImage;
@@ -27,12 +34,17 @@ import net.sf.mcf2pdf.mcfelements.McfText;
 import net.sf.mcf2pdf.mcfelements.McfxProject;
 import net.sf.mcf2pdf.mcfelements.FotobookBuilder;
 import net.sf.mcf2pdf.mcfelements.util.XslFoDocumentBuilder;
+import net.sf.mcf2pdf.calendar.CalendarResources;
+import net.sf.mcf2pdf.calendar.LegacyCalendarStyle;
+import net.sf.mcf2pdf.calendar.CalendarEventCatalogue;
+import net.sf.mcf2pdf.calendar.CalendarDateModel;
 import net.sf.mcf2pdf.mcfglobals.McfAlbumType;
 import net.sf.mcf2pdf.mcfglobals.McfProductCatalogue;
 import net.sf.mcf2pdf.mcfglobals.McfResourceScanner;
 import net.sf.mcf2pdf.pagebuild.BitmapPageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageBackground;
 import net.sf.mcf2pdf.pagebuild.PageBinding;
+import net.sf.mcf2pdf.pagebuild.PageCalendar;
 import net.sf.mcf2pdf.pagebuild.PageBuilder;
 import net.sf.mcf2pdf.pagebuild.PageClipart;
 import net.sf.mcf2pdf.pagebuild.PageImage;
@@ -71,7 +83,20 @@ public class Mcf2FoConverter {
 
 	private PageRenderContext context;
 
+	/** Calendar being converted and the month of the sheet being built (<code>null</code> on the cover). */
+	private McfFotobook calendarBook;
+
+	private CalendarDateModel.CalendarMonth calendarDateMonth;
+
+	private String calendarLanguage;
+	private LegacyCalendarStyle legacyCalendarStyle = LegacyCalendarStyle.CEWE6;
+
 	private File tempImageDir;
+
+	private File calendarResourcesDirectory;
+	private File calendarWritableResourcesDirectory;
+
+	private CalendarResources calendarResources;
 
 	/** A4 portrait width, in mm. */
 	public static final float A4_WIDTH_MM = 210f;
@@ -101,6 +126,12 @@ public class Mcf2FoConverter {
 	 * which are parsed have a format error.
 	 */
 	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir,File hpsDirPath) throws IOException, SAXException {
+		this(mcfInstallDir, mcfTempDir, tempImageDir, hpsDirPath, Collections.<File>emptyList());
+	}
+
+	/** Additional resource directories fill gaps; installed resources take precedence. */
+	public Mcf2FoConverter(File mcfInstallDir, File mcfTempDir, File tempImageDir, File hpsDirPath,
+			List<File> extraResourceDirs) throws IOException, SAXException {
 		this.tempImageDir = tempImageDir;
 
 		// get all products - scan ALL XML files in Resources for fotobookdefinitions
@@ -108,6 +139,8 @@ public class Mcf2FoConverter {
 		if (!resourcesDir.isDirectory()) {
 			throw new IOException("MCF Resources Directory " + resourcesDir.getAbsolutePath() + " does not exist");
 		}
+		calendarResourcesDirectory = resourcesDir;
+		legacyCalendarStyle = LegacyCalendarStyle.fromResources(resourcesDir);
 
 		scanForProducts(resourcesDir, McfProductCatalogue.CatalogueVersion.PRE_V6);
 		File productsDir = new File(resourcesDir, "products");
@@ -120,7 +153,14 @@ public class Mcf2FoConverter {
 		File hpsDir = null;
 		if (hpsDirPath == null) {
 			hpsDir = null;
-			try {
+			int[] installedVersion = net.sf.mcf2pdf.calendar.CeweInstallation.version(resourcesDir);
+			String localAppData = System.getenv("LOCALAPPDATA");
+			File localHpsDir = localAppData == null ? null : new File(new File(localAppData, "CEWE"), "hps");
+			if (net.sf.mcf2pdf.calendar.CeweInstallation.usesLocalAppDataHps(installedVersion)
+					&& localHpsDir != null && localHpsDir.isDirectory()) {
+				hpsDir = localHpsDir;
+			}
+			else try {
 				char[] pszPath = new char[WinDef.MAX_PATH];
 				if (Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_COMMON_APPDATA, null, ShlObj.SHGFP_TYPE_CURRENT, pszPath).intValue() == 0) {
 					File f = new File(new File(Native.toString(pszPath)), "hps");
@@ -140,8 +180,16 @@ public class Mcf2FoConverter {
 			hpsDir = hpsDirPath;
 		}
 		List<File> scanDirs = new ArrayList<File>();
+		for (File extra : extraResourceDirs) {
+			if (!extra.isDirectory()) {
+				throw new IOException("Additional resource directory does not exist: " + extra);
+			}
+			scanDirs.add(extra);
+		}
 		scanDirs.add(new File(mcfInstallDir, "Resources"));
 		scanDirs.add(mcfTempDir);
+		calendarWritableResourcesDirectory = net.sf.mcf2pdf.calendar.CeweInstallation.writableResources(
+				resourcesDir, hpsDir);
 		if (hpsDir != null) {
 			scanDirs.add(hpsDir);
 		}
@@ -167,7 +215,8 @@ public class Mcf2FoConverter {
 	 * Enables single page output. Every double page is split into its left and
 	 * right page, and each one becomes a PDF page in the original album page
 	 * size. The cover (back, spine and front) stays one page in its original
-	 * size. Ignored if A4 output is enabled, which splits pages as well.
+	 * size. Ignored for books if A4 output is enabled, which splits pages as well.
+	 * Calendars are cut horizontally into top/bottom halves, including the cover.
 	 *
 	 * @param splitPages <code>true</code> to enable single page output.
 	 */
@@ -264,6 +313,12 @@ public class Mcf2FoConverter {
 
 		// prepare page render context
 		context = new PageRenderContext(dpi, sx, resources, albumType);
+
+		String product = book.getProductName();
+		if (product != null && product.startsWith("CAL")) {
+			convertCalendar(book, xslFoOut, maxPageNo, imageDir);
+			return;
+		}
 
 		// create XSL-FO document
 		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
@@ -426,6 +481,19 @@ public class Mcf2FoConverter {
 		if (rightPage != null)
 			areas.addAll(rightPage.getAreas());
 
+		addAreaDrawables(areas);
+
+		if (addPageNum) {
+			currentPage.addDrawable(new PageNum(book, leftPage, "left", pageWidth, pageHeight));
+			currentPage.addDrawable(new PageNum(book, rightPage, "right", pageWidth, pageHeight));
+		}
+
+		if (addBinding) {
+			currentPage.addDrawable(new PageBinding(resources.getBinding()));
+		}
+	}
+
+	private void addAreaDrawables(List<? extends McfArea> areas) {
 		for (McfArea a : areas) {
 			if (McfArea.IMAGEBACKGROUNDAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent()));
@@ -442,16 +510,177 @@ public class Mcf2FoConverter {
 			else if (McfArea.SPINETEXTAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageText((McfText)a.getContent()));
 			}
-
+			else if (calendarBook != null && a.getContent() instanceof McfSvgCalendarImpl) {
+				currentPage.addDrawable(new PageLegacyCalendar(
+						(McfSvgCalendarImpl) a.getContent(),
+						PageCalendar.parse(calendarBook.getStartDateCalendarium()), calendarDateMonth, calendarLanguage,
+						legacyCalendarStyle));
+			}
+			else if (calendarBook != null && "calendariumarea".equalsIgnoreCase(a.getAreaType())
+					&& a.getContent() instanceof McfCalendarArea) {
+				McfCalendarArea calendarArea = (McfCalendarArea)a.getContent();
+				PageCalendar calendar = PageCalendar.createFromDateModel(calendarBook.getStartDateCalendarium(),
+						calendarLanguage, a, calendarArea, calendarDateMonth,
+						calendarResources.getLayouts(), calendarResources.getColors(),
+						calendarBook.getCalendarColorSchemas());
+				if (calendar != null) {
+					currentPage.addDrawable(calendar);
+				}
+				else if (calendarDateMonth != null
+						&& !PageCalendar.isLayoutSupported(calendarArea.getLayoutSchema())) {
+					log.warn("Calendar layout schema '" + calendarArea.getLayoutSchema() + "' is not rendered yet");
+				}
+			}
 		}
-		
-		if (addPageNum) {
-			currentPage.addDrawable(new PageNum(book, leftPage, "left", pageWidth, pageHeight));
-			currentPage.addDrawable(new PageNum(book, rightPage, "right", pageWidth, pageHeight));
+	}
+
+	/**
+	 * Converts a wall calendar (CAL8). Every sheet is a vertical double page: the first
+	 * page record is the top half and the second the bottom half of one page of the
+	 * output. The areas of both records use the coordinates of the whole sheet.
+	 * Titles and supported day tables are rendered from the CEWE catalogues.
+	 */
+	private void convertCalendar(McfFotobook book, OutputStream xslFoOut, int maxPageNo, File imageDir) throws IOException {
+		if (!"CAL8".equals(book.getProductName())) {
+			throw new IOException("Calendar product '" + book.getProductName() + "' is not supported, only CAL8");
+		}
+		if (splitToA4 || splitCover) {
+			log.warn("The options for A4 output and cover splitting are ignored for calendars; use -1 to split sheets horizontally");
 		}
 
-		if (addBinding) {
-			currentPage.addDrawable(new PageBinding(resources.getBinding()));
+		McfPage coverBack = null;
+		McfPage coverFront = null;
+		boolean legacySvg = false;
+		List<McfPage> normalPages = new Vector<McfPage>();
+		for (McfPage p : book.getPages()) {
+			for (McfArea a : p.getAreas()) {
+				legacySvg |= a.getContent() instanceof McfSvgCalendarImpl;
+				if ("svgarea".equalsIgnoreCase(a.getAreaType())
+						&& !(a.getContent() instanceof McfSvgCalendarImpl)) {
+					throw new IOException("SVG calendar areas must contain an SVG document or template reference");
+				}
+			}
+			Matcher cover = McfPage.CALENDAR_COVER.matcher(p.getType());
+			if (cover.matches()) {
+				if ("back".equals(cover.group(1))) {
+					coverBack = p;
+				} else {
+					coverFront = p;
+				}
+			}
+			else if (McfPage.CONTENT.matcher(p.getType()).matches()) {
+				if (maxPageNo < 0 || p.getPageNr() <= maxPageNo) {
+					normalPages.add(p);
+				}
+			}
+		}
+		if (normalPages.isEmpty() && coverBack == null) {
+			throw new IOException("No calendar pages found for rendering");
+		}
+		calendarResources = CalendarResources.load(calendarResourcesDirectory, calendarWritableResourcesDirectory,
+				book.getHolidaysLanguage(), book.getHolidaysCountry(), imageDir);
+		log.info("Calendar entries: " + calendarResources.getHolidayFile());
+		calendarLanguage = book.getHolidaysLanguage();
+		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
+			calendarLanguage = calendarResources.getHolidayLanguage();
+		}
+		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
+			throw new IOException("Calendar language cannot be determined: the project has no holidays language"
+					+ " and the CEWE calendar entries do not name one");
+		}
+		warnForUnknownCalendarCatalogEntries(book);
+
+		McfBundlesize size = book.getPages().get(0).getBundlesize();
+		int widthPX = context.toPixel(size.getWidth() / 10.0f);
+		int heightPX = context.toPixel(size.getHeight() / 10.0f);
+
+		XslFoDocumentBuilder docBuilder = new XslFoDocumentBuilder();
+		docBuilder.addPageMaster("default", widthPX, splitPages ? heightPX - heightPX / 2 : heightPX);
+		tempImageDir.mkdirs();
+		docBuilder.startFlow("default");
+
+		LocalDate firstMonth = PageCalendar.parse(book.getStartDateCalendarium());
+		if (firstMonth == null) throw new IOException("Invalid calendar start date: " + book.getStartDateCalendarium());
+		List<? extends McfCalendarEvent> events = calendarEvents(book, legacySvg);
+		CalendarDateModel dateModel = firstMonth == null ? null
+				: new CalendarDateModel(firstMonth, calendarLanguage, book.getHolidaysProvince(),
+						calendarResources.getHolidays(), events, calendarHolidaysEnabled(book));
+		if (dateModel != null) {
+			for (String id : dateModel.getUnsupportedHolidayIds()) {
+				log.warn("Unknown CEWE calendar holiday id '" + id + "'");
+			}
+		}
+		calendarBook = book;
+		if (coverBack != null || coverFront != null) {
+			log.info("Rendering cover...");
+			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack, null);
+		}
+		for (int i = 0; i < normalPages.size(); i += 2) {
+			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
+			CalendarDateModel.CalendarMonth month = dateModel == null ? null : dateModel.getMonth(i / 2);
+			addCalendarSheet(docBuilder, widthPX, heightPX, normalPages.get(i),
+					i + 1 < normalPages.size() ? normalPages.get(i + 1) : null, month);
+		}
+
+		docBuilder.endFlow();
+		new XMLOutputter().output(docBuilder.createDocument(), xslFoOut);
+	}
+
+	static boolean calendarHolidaysEnabled(McfFotobook book) {
+		String features = book.getHolidaysFeatures();
+		if (features != null) {
+			return java.util.Arrays.asList(features.trim().split("\\s*,\\s*")).contains("holidays");
+		}
+		String legacy = book.getHolidaysShowHolidays();
+		return legacy == null || !("0".equals(legacy.trim()) || "false".equalsIgnoreCase(legacy.trim()));
+	}
+
+	List<? extends McfCalendarEvent> calendarEvents(McfFotobook book,
+			boolean legacySvg) throws IOException {
+		if (legacySvg && ("0".equals(book.getHolidaysShowEvents())
+				|| "false".equalsIgnoreCase(book.getHolidaysShowEvents()))) return Collections.emptyList();
+		if (!legacySvg || !book.getCalendarEvents().isEmpty()) return book.getCalendarEvents();
+		return CalendarEventCatalogue.load(resources.getCalendarEventsFile());
+	}
+
+	private void warnForUnknownCalendarCatalogEntries(McfFotobook book) {
+		for (McfPage page : book.getPages()) {
+			for (McfArea area : page.getAreas()) {
+				if (!(area.getContent() instanceof McfCalendarArea)) {
+					continue;
+				}
+				McfCalendarArea calendar = (McfCalendarArea) area.getContent();
+				if (calendar.getLayoutSchema() != null
+						&& calendarResources.getLayouts().getLayout(calendar.getLayoutSchema()) == null) {
+					log.warn("Unknown calendar layout schema '" + calendar.getLayoutSchema() + "'");
+				}
+				if (calendar.getColorSchema() != null
+						&& calendarResources.getColors().getSchema(calendar.getColorSchema(),
+								book.getCalendarColorSchemas()) == null) {
+					log.warn("Unknown calendar color schema '" + calendar.getColorSchema() + "'");
+				}
+			}
+		}
+	}
+
+	private void addCalendarSheet(XslFoDocumentBuilder docBuilder, int widthPX, int heightPX,
+			McfPage top, McfPage bottom, CalendarDateModel.CalendarMonth dateMonth) throws IOException {
+		calendarDateMonth = dateMonth;
+		BitmapPageBuilder sheet = new BitmapPageBuilder(widthPX, heightPX, context, tempImageDir);
+		currentPage = sheet;
+		currentPage.addDrawable(new PageBackground(
+				top == null ? Collections.<McfBackground>emptyList() : top.getBackgrounds(),
+				bottom == null ? Collections.<McfBackground>emptyList() : bottom.getBackgrounds(), true));
+		List<McfArea> areas = new Vector<McfArea>();
+		if (top != null)
+			areas.addAll(top.getAreas());
+		if (bottom != null)
+			areas.addAll(bottom.getAreas());
+		addAreaDrawables(areas);
+		if (splitPages) {
+			sheet.addHorizontalHalvesToDocumentBuilder(docBuilder);
+		} else {
+			sheet.addToDocumentBuilder(docBuilder);
 		}
 	}
 

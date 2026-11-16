@@ -15,8 +15,43 @@ Fotobuch or My CEWE Photobook software (in short, MCF software) to PDF files.
 These files then can be used to have a quick and rough impression on how the 
 photobook is going to look after printing.
 
-**Calendars and anything else than BOOKS are NOT (yet) supported by this software!**
-**(Do not ask me WHEN they will be supported - you will be ignored)**
+CAL8 wall calendars are supported, including the legacy CEWE 5.x month-block SVG
+format of projects created with CEWE 5.x. Calendar output contains 13 full
+sheets; `-1` cuts every sheet horizontally into top/bottom pages, including the
+cover (26 pages). The binding spiral is omitted. Other calendar products and SVG
+placeholder families are currently unsupported.
+
+Legacy calendars need their original SVG templates and CSS files. If the current
+installation no longer contains them, add an older installation's
+`Resources/photofun` directory using `-e`/`--extra-resources`, for example
+`-e "<CEWE 6.4.3 installation>\Resources\photofun"`.
+The `-i` installation still provides the calendar and holiday catalogues.
+Resources are read from disk and are not bundled with this repository.
+Legacy SVG calendars with personal events enabled also read `calendarEvents.xml`
+from the selected `hps` root (`-c`) when the project has no embedded events.
+Calendar fonts and text colours follow the CEWE resources, including light text
+on light cells when the selected stylesheet specifies it.
+
+The same legacy project looks different in different CEWE versions, so the
+output follows the installation given with `-i` (its `Resources/version.xml` or
+`Resources/config/version.xml`):
+
+| `-i` installation | Legacy calendar style |
+|---|---|
+| CEWE 5.x | Grey cells for days of neighbouring months, Sunday style only in the Sunday column, CSS cascade as rendered by CEWE 5.x (Qt 5.1). |
+| CEWE 6.x and newer | Days outside the month hidden; days off (`honor="free"`) use the Sunday style. |
+
+Holiday names come from `calendarentries/<language>.xml` (CEWE 5.x: a single
+`calendarentries.xml`). Like CEWE, a catalogue downloaded to
+`<hps>/<key account>/<NN.NN.NN>/resources/calendarentries` is preferred unless
+the installed file is newer, so CEWE 6.4.3 shows e.g. "Boże Narodzenie" instead
+of "1. Boże Narodzenie". The log line `Calendar entries:` shows the file used.
+
+Without `-c`, the `hps` directory is chosen like CEWE does: CEWE 7.2 and newer
+use `%LOCALAPPDATA%\CEWE\hps`, older versions `C:\ProgramData\hps`. Examples:
+
+    mcf2pdf -i "C:\Program Files\CEWE\CEWE Fotoswiat" -e "<CEWE 6.4.3 installation>\Resources\photofun" calendar.mcf out.pdf
+    mcf2pdf -i "<CEWE 5.x installation>" -e "<CEWE 6.4.3 installation>\Resources\photofun" calendar.mcf out-cewe5.pdf
 
 The generated PDFs are NOT, and will never be, a 100% representation of the
 designed photobook. Also, they do NOT include bleed margins (especially not for 
@@ -118,7 +153,8 @@ Options are placed before the input file, e.g.
 | `-r <dpi>` | Rendering resolution in DPI (default 150). Higher values give better quality, but need more memory and time. |
 | `-n <page>` | Render only up to the given page number, e.g. to test settings quickly. |
 | `-f <name>` | Select the MCF entry if an `.mcfx` file contains more than one. |
-| `-c <dir>` | Additional CEWE resources (`hps` directory), e.g. `C:\Users\<user>\AppData\Local\CEWE\hps`. |
+| `-c <dir>` | Additional CEWE resources (`hps` directory), e.g. `C:\Users\<user>\AppData\Local\CEWE\hps`. Without it, chosen by the version of the `-i` installation (see above). |
+| `-e <dir>` | Additional resource directory (repeatable), e.g. an older installation's `Resources/photofun` with legacy calendar templates. Installed resources take precedence. |
 | `-t <dir>` | Temporary directory of the MCF software (set by the startup script). |
 | `-i <dir>` | Installation directory of the MCF software (set by the startup script). |
 | `-w <dir>` | Working directory for temporary images (default `<USER_HOME>/.mcf2pdf`). |

@@ -1,8 +1,10 @@
 package net.sf.mcf2pdf.pagebuild;
 
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.Assert;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -13,6 +15,9 @@ import net.sf.mcf2pdf.pagebuild.PageRenderContext;
 import net.sf.mcf2pdf.mcfelements.McfBackground;
 
 public class PageBackgroundTest {
+
+    @Rule
+    public TemporaryFolder tmp = new TemporaryFolder();
 
     @Test
     public void testIsVectorGraphic() {
@@ -151,6 +156,64 @@ public class PageBackgroundTest {
         Assert.assertEquals(-1, bg.getHue());
         Assert.assertEquals(-1, bg.getFading());
         Assert.assertEquals(0, bg.getAlignment());
+    }
+
+    @Test
+    public void testStackedBackgroundsFillTopAndBottomHalf() throws IOException {
+        File dir = tmp.newFolder();
+        File top = writeSolidPng(new File(dir, "top.png"), java.awt.Color.RED);
+        File bottom = writeSolidPng(new File(dir, "bottom.png"), java.awt.Color.BLUE);
+
+        McfBackground topBg = Mockito.mock(McfBackground.class);
+        Mockito.when(topBg.getType()).thenReturn(1);
+        Mockito.when(topBg.getDesignElementId()).thenReturn("top");
+        McfBackground bottomBg = Mockito.mock(McfBackground.class);
+        Mockito.when(bottomBg.getType()).thenReturn(1);
+        Mockito.when(bottomBg.getDesignElementId()).thenReturn("bottom");
+
+        net.sf.mcf2pdf.mcfglobals.McfResourceScanner resources =
+                Mockito.mock(net.sf.mcf2pdf.mcfglobals.McfResourceScanner.class);
+        Mockito.when(resources.getImage("top")).thenReturn(top);
+        Mockito.when(resources.getImage("bottom")).thenReturn(bottom);
+        PageRenderContext context = new PageRenderContext(254, 1, resources, null);
+
+        PageBackground background = new PageBackground(Arrays.asList(topBg), Arrays.asList(bottomBg), true);
+        BufferedImage result = background.renderAsBitmap(context, new java.awt.Point(), 40, 80);
+
+        Assert.assertEquals(java.awt.Color.RED.getRGB(), result.getRGB(0, 0));
+        Assert.assertEquals(java.awt.Color.RED.getRGB(), result.getRGB(39, 39));
+        Assert.assertEquals(java.awt.Color.BLUE.getRGB(), result.getRGB(0, 40));
+        Assert.assertEquals(java.awt.Color.BLUE.getRGB(), result.getRGB(39, 79));
+    }
+
+    @Test
+    public void testStackedBackgroundWithoutBottomLeavesBottomHalfTransparent() throws IOException {
+        File dir = tmp.newFolder();
+        File top = writeSolidPng(new File(dir, "top.png"), java.awt.Color.RED);
+        McfBackground topBg = Mockito.mock(McfBackground.class);
+        Mockito.when(topBg.getType()).thenReturn(1);
+        Mockito.when(topBg.getDesignElementId()).thenReturn("top");
+        net.sf.mcf2pdf.mcfglobals.McfResourceScanner resources =
+                Mockito.mock(net.sf.mcf2pdf.mcfglobals.McfResourceScanner.class);
+        Mockito.when(resources.getImage("top")).thenReturn(top);
+        PageRenderContext context = new PageRenderContext(254, 1, resources, null);
+
+        PageBackground background = new PageBackground(Arrays.asList(topBg),
+                java.util.Collections.<McfBackground>emptyList(), true);
+        BufferedImage result = background.renderAsBitmap(context, new java.awt.Point(), 40, 80);
+
+        Assert.assertEquals(java.awt.Color.RED.getRGB(), result.getRGB(20, 20));
+        Assert.assertEquals(0, result.getRGB(20, 60) >>> 24);
+    }
+
+    private static File writeSolidPng(File file, java.awt.Color color) throws IOException {
+        BufferedImage img = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB);
+        java.awt.Graphics2D g = img.createGraphics();
+        g.setColor(color);
+        g.fillRect(0, 0, 8, 8);
+        g.dispose();
+        javax.imageio.ImageIO.write(img, "png", file);
+        return file;
     }
 
     @Test

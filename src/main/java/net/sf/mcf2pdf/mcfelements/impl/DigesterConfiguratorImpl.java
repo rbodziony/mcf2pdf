@@ -6,6 +6,7 @@ package net.sf.mcf2pdf.mcfelements.impl;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -76,6 +77,73 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		
 		digester.addCallMethod("fotobook/addOns/addOn", "addAddOnVariant", 1);
 		digester.addCallParam("fotobook/addOns/addOn", 0, "variant");
+
+		digester.addCallMethod("fotobook/holidays", "setHolidaysLanguage", 1);
+		digester.addCallParam("fotobook/holidays", 0, "language");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysCountry", 1);
+		digester.addCallParam("fotobook/holidays", 0, "country");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysProvince", 1);
+		digester.addCallParam("fotobook/holidays", 0, "province");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysFeatures", 1);
+		digester.addCallParam("fotobook/holidays", 0, "features");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysShowHolidays", 1);
+		digester.addCallParam("fotobook/holidays", 0, "showHolidays");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysShowEvents", 1);
+		digester.addCallParam("fotobook/holidays", 0, "showEvents");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekHeadline", 1);
+		digester.addCallParam("fotobook/holidays", 0, "weekHeadline");
+		digester.addCallMethod("fotobook/holidays", "setHolidaysWeekText", 1);
+		digester.addCallParam("fotobook/holidays", 0, "weekText");
+
+		for (String eventPath : new String[] {
+				"fotobook/CalendarEvents/CalendarEvent", "fotobook/calendarEvents/calendarEvent" }) {
+			digester.addObjectCreate(eventPath, McfCalendarEventImpl.class);
+			digester.addBeanPropertySetter(eventPath + "/Name", "name");
+			digester.addBeanPropertySetter(eventPath + "/DateTime", "dateTime");
+			digester.addBeanPropertySetter(eventPath + "/Recurrent", "recurrent");
+			digester.addSetNext(eventPath, "addCalendarEvent", McfCalendarEvent.class.getName());
+		}
+
+		for (String schemaPath : new String[] {
+				"fotobook/colorSchemata/calendararea", "fotobook/colorschemata/calendararea" }) {
+			digester.addObjectCreate(schemaPath, McfCalendarColorSchemaImpl.class);
+			DigesterUtil.addSetProperties(digester, schemaPath, Arrays.asList(
+					new String[] { "schema", "schema" },
+					new String[] { "colorschema", "schema" },
+					new String[] { "gridcolor", "gridColor" }));
+			addCalendarColorCellRules(digester, schemaPath + "/celldefault", false);
+			addCalendarColorCellRules(digester, schemaPath + "/cell", true);
+			digester.addSetNext(schemaPath, "addCalendarColorSchema", McfCalendarColorSchema.class.getName());
+		}
+
+		// calendar part of a calendar area
+		digester.addObjectCreate("fotobook/page/area/calendararea", McfCalendarAreaImpl.class);
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/calendararea", Arrays.asList(
+				new String[] { "layoutschema", "layoutSchema" },
+				new String[] { "colorschema", "colorSchema" },
+				new String[] { "font", "font" },
+				new String[] { "fontsize_percentage", "fontSizePercentage" },
+				new String[] { "fontsize_percentage_holiddays", "fontSizePercentageHolidays" },
+				new String[] { "show_holiday", "showHoliday" },
+				new String[] { "optimizedSize", "optimizedSize" },
+				new String[] { "extrainformation", "extraInformation" }));
+		digester.addSetNext("fotobook/page/area/calendararea", "setContent");
+		digester.addSetTop("fotobook/page/area/calendararea", "setArea");
+
+		// Legacy calendar SVG: svgDocument is escaped XML, not nested elements.
+		digester.addObjectCreate("fotobook/page/area/svg", McfSvgCalendarImpl.class);
+		DigesterUtil.addSetProperties(digester, "fotobook/page/area/svg", Arrays.asList(
+				new String[] { "cssSheet", "cssSheet" },
+				new String[] { "customCssSheet", "customCssSheet" }));
+		digester.addBeanPropertySetter("fotobook/page/area/svg/svg_image_calendar/svgDocument", "svgDocument");
+		digester.addCallMethod("fotobook/page/area/svg/svg_image", "setFileName", 1);
+		digester.addCallParam("fotobook/page/area/svg/svg_image", 0, "fileName");
+		digester.addCallMethod("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", "setStandardSheet", 1);
+		digester.addCallParam("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", 0, "StandardSheet");
+		digester.addCallMethod("fotobook/page/area/svg/svg_image/cssSheetTitleIdMap", "setStandardSheet", 1);
+		digester.addCallParam("fotobook/page/area/svg/svg_image/cssSheetTitleIdMap", 0, "StandardSheet");
+		digester.addSetNext("fotobook/page/area/svg", "setContent");
+		digester.addSetTop("fotobook/page/area/svg", "setArea");
 
 		// pagenumbering element
 		digester.addObjectCreate("fotobook/pagenumbering", getPageNumClass());
@@ -216,6 +284,24 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addSetNext("decorations/decoration", "add");
 	}
 
+	private static void addCalendarColorCellRules(Digester digester, String path, boolean withType) {
+		digester.addObjectCreate(path, McfCalendarColorCellImpl.class);
+		List<String[]> attributes = new LinkedList<String[]>();
+		if (withType) {
+			attributes.add(new String[] { "type", "type" });
+		}
+		attributes.add(new String[] { "textcolor", "textColor" });
+		attributes.add(new String[] { "bgcolor", "backgroundColor" });
+		attributes.add(new String[] { "bordercolor", "borderColor" });
+		DigesterUtil.addSetProperties(digester, path, attributes);
+		if (withType) {
+			digester.addSetNext(path, "addCell", McfCalendarColorCell.class.getName());
+		}
+		else {
+			digester.addSetNext(path, "setCellDefault", McfCalendarColorCell.class.getName());
+		}
+	}
+
 	private final static Substitutor FLOAT_SUBSTITUTOR = new Substitutor() {
 		@Override
 		public String substitute(String bodyText) {
@@ -262,6 +348,7 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		result.add(new String[] { "productname", "productName" });
 		result.add(new String[] { "imagedir", "imageDir" });
 		result.add(new String[] { "normalpages", "normalPages" });
+		result.add(new String[] { "startdatecalendarium", "startDateCalendarium" });
 		result.add(new String[] { "totalpages", "totalPages" });
 		result.add(new String[] { "producttype", "productType" });
 		result.add(new String[] { "programversion", "programVersion" });

@@ -143,4 +143,94 @@ public class DigesterConfiguratorImplTest {
 
         assertEquals(new Color(0xaabb91), clipart.getColorMappings().get(Color.WHITE));
     }
+
+    @Test
+    public void testParsesCalendarFontAndSizePercentage() throws IOException, SAXException {
+        String xml = "<fotobook><page><area areatype=\"calendariumarea\">"
+                + "<calendararea layoutschema=\"Month\" colorschema=\"Gray\" font=\"FranklinGothic\" "
+                + "fontsize_percentage=\"-20\" fontsize_percentage_holiddays=\"-50\" show_holiday=\"1\" "
+                + "optimizedSize=\"600cm2\" extrainformation=\"$$$$\"/></area></page></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+        McfCalendarArea calendar = (McfCalendarArea) fotobook.getPages().get(0).getAreas().get(0).getContent();
+
+        assertEquals("Month", calendar.getLayoutSchema());
+        assertEquals("Gray", calendar.getColorSchema());
+        assertEquals("FranklinGothic", calendar.getFont());
+        assertEquals(-20, calendar.getFontSizePercentage());
+        assertEquals(-50, calendar.getFontSizePercentageHolidays());
+        assertEquals("1", calendar.getShowHoliday());
+        assertEquals("600cm2", calendar.getOptimizedSize());
+        assertEquals("$$$$", calendar.getExtraInformation());
+    }
+
+    @Test
+    public void testParsesHolidaysCountryWithoutLanguage() throws IOException, SAXException {
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(
+                new StringReader("<fotobook><holidays country=\"Polska\" showHolidays=\"0\"/></fotobook>"));
+
+        assertNull(fotobook.getHolidaysLanguage());
+        assertEquals("Polska", fotobook.getHolidaysCountry());
+        assertEquals("0", fotobook.getHolidaysShowHolidays());
+    }
+
+    @Test
+    public void testParsesCalendarHolidaySettings() throws IOException, SAXException {
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(
+                "<fotobook startdatecalendarium=\"01.01.2026\"><holidays language=\"pl_PL\" province=\"Mazowieckie\" features=\"holiday\" "
+                        + "weekHeadline=\"1\" weekText=\"2\"/></fotobook>"));
+
+        assertEquals("01.01.2026", fotobook.getStartDateCalendarium());
+        assertEquals("pl_PL", fotobook.getHolidaysLanguage());
+        assertEquals("Mazowieckie", fotobook.getHolidaysProvince());
+        assertEquals("holiday", fotobook.getHolidaysFeatures());
+        assertEquals("1", fotobook.getHolidaysWeekHeadline());
+        assertEquals("2", fotobook.getHolidaysWeekText());
+    }
+
+    @Test
+    public void testParsesCalendarAreaWithPositionElement() throws IOException, SAXException {
+        String xml = "<fotobook><page><area areatype=\"calendariumarea\">"
+                + "<position left=\"10\" top=\"20\" width=\"30\" height=\"40\"/>"
+                + "<calendararea layoutschema=\"Month\"/></area></page></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+        McfArea area = fotobook.getPages().get(0).getAreas().get(0);
+        McfCalendarArea calendar = (McfCalendarArea) area.getContent();
+
+        assertEquals(10f, area.getLeft(), 0.001f);
+        assertEquals(20f, area.getTop(), 0.001f);
+        assertEquals(30f, area.getWidth(), 0.001f);
+        assertEquals(40f, area.getHeight(), 0.001f);
+        assertEquals("Month", calendar.getLayoutSchema());
+    }
+
+    @Test
+    public void testParsesCalendarEventsAndUserColorSchemas() throws IOException, SAXException {
+        String xml = "<fotobook>"
+                + "<CalendarEvents><CalendarEvent><Name>Birthday</Name><DateTime>2000-05-04</DateTime>"
+                + "<Recurrent>yes</Recurrent></CalendarEvent></CalendarEvents>"
+                + "<colorSchemata><calendararea colorschema=\"USER_custom\" gridcolor=\"#123456\">"
+                + "<celldefault textcolor=\"#000000\" bgcolor=\"transparent\" bordercolor=\"#ffffff\"/>"
+                + "<cell type=\"CALENDAR_CELL_TYPE_MONTH\" textcolor=\"#333333\"/>"
+                + "</calendararea><calendararea schema=\"USER_legacy\"/></colorSchemata></fotobook>";
+
+        configurator.configureDigester(digester, null);
+        McfFotobook fotobook = (McfFotobook) digester.parse(new StringReader(xml));
+
+        assertEquals(1, fotobook.getCalendarEvents().size());
+        assertEquals("Birthday", fotobook.getCalendarEvents().get(0).getName());
+        assertEquals("2000-05-04", fotobook.getCalendarEvents().get(0).getDateTime());
+        assertEquals("yes", fotobook.getCalendarEvents().get(0).getRecurrent());
+        assertEquals(2, fotobook.getCalendarColorSchemas().size());
+        assertEquals("USER_custom", fotobook.getCalendarColorSchemas().get(0).getSchema());
+        assertEquals("#000000", fotobook.getCalendarColorSchemas().get(0).getCellDefault().get("textcolor"));
+        assertEquals("#333333", fotobook.getCalendarColorSchemas().get(0).getCells()
+                .get("CALENDAR_CELL_TYPE_MONTH").get("textcolor"));
+        assertEquals("USER_legacy", fotobook.getCalendarColorSchemas().get(1).getSchema());
+    }
 }

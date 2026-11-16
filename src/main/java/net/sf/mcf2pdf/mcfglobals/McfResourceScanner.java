@@ -43,6 +43,8 @@ public class McfResourceScanner {
 	private Map<String, File> foundClips = new HashMap<String, File>();
 
 	private Map<String, Font> foundFonts = new HashMap<String, Font>();
+
+	private Map<String, Font> foundFontsByPostScriptName = new HashMap<String, Font>();
 	
 	private Map<String, File> foundColors = new HashMap<String, File>();
 
@@ -60,6 +62,30 @@ public class McfResourceScanner {
 			scanDirectory(f);
 		}
 		log.debug("finished scanning ");
+	}
+
+	/** Resolve an exact CEWE-relative path; later roots retain installation precedence. */
+	public File getCalendarResource(String relativePath) throws IOException {
+		if (relativePath == null || relativePath.trim().isEmpty()) return null;
+		String path = relativePath.replace('\\', '/');
+		if (!path.startsWith("categories/SVGCalendars/") || path.contains("..") || path.contains(":")) {
+			throw new IOException("Invalid calendar resource path: " + relativePath);
+		}
+		for (int i = scanDirs.size() - 1; i >= 0; i--) {
+			for (String prefix : new String[] { "", "photofun/", "Resources/photofun/" }) {
+				File candidate = new File(scanDirs.get(i), prefix + path);
+				if (candidate.isFile()) return candidate;
+			}
+		}
+		return null;
+	}
+
+	public File getCalendarEventsFile() {
+		for (int i = scanDirs.size() - 1; i >= 0; i--) {
+			File file = new File(scanDirs.get(i), "calendarEvents.xml");
+			if (file.isFile()) return file;
+		}
+		return null;
 	}
 
 	private void scanDirectory(File dir) throws IOException {
@@ -119,6 +145,7 @@ public class McfResourceScanner {
 				else if(nm.matches(".+\\.ttf")) {
 					Font font = loadFont(f);
 					foundFonts.put(font.getFamily(), font);
+					foundFontsByPostScriptName.put(font.getPSName(), font);
 				}
 				else if(nm.matches("normalbinding.*\\.png")) {
 					foundBinding = f;
@@ -267,6 +294,21 @@ public class McfResourceScanner {
 
 	public Font getFont(String id) {
 		return foundFonts.get(id);
+	}
+
+	public Font getFont(String family, boolean bold) {
+		if ("FranklinGothic".equalsIgnoreCase(family)) {
+			Font selected = foundFontsByPostScriptName.get(bold ? "FranklinGothic-Medium" : "FranklinGothic");
+			if (selected != null) {
+				return selected;
+			}
+			Font book = foundFontsByPostScriptName.get("FranklinGothic");
+			if (book != null) {
+				return bold ? book.deriveFont(Font.BOLD) : book;
+			}
+		}
+		Font font = getFont(family);
+		return font == null ? null : font.deriveFont(bold ? Font.BOLD : Font.PLAIN);
 	}
 
 	public Fading getDecoration(String id) {

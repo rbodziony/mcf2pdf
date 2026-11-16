@@ -9,7 +9,7 @@ package net.sf.mcf2pdf.mcfelements;
 public interface McfAreaContent {
 	
 	public static enum ContentType {
-		IMAGE, IMAGEBACKGROUND, CLIPART, TEXT, POSITION
+		IMAGE, IMAGEBACKGROUND, CLIPART, TEXT, POSITION, CALENDAR
 	}
 	
 	public McfArea getArea();

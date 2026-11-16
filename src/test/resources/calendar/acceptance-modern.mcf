@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fotobook productname="CAL8" version="4.0" startdatecalendarium="01.01.2026" imagedir="images">
+  <savingVersion programversion="8.0.5"/>
+  <holidays language="pl_PL" features="holidays, holiday_colors, personalEntries"/>
+  <CalendarEvents><CalendarEvent><Name>Sample event</Name><DateTime>2026-02-28</DateTime><Recurrent>no</Recurrent></CalendarEvent></CalendarEvents>
+  <page pagenr="0" type="calendarcoverback"><bundlesize width="2970" height="4200"/>
+    <area areatype="calendariumarea" zposition="1"><position left="100" top="2400" width="2700" height="300" rotation="0"/><calendararea layoutschema="Year (Long-Name-Big)" colorschema="Black"/></area>
+  </page>
+  <page pagenr="0" type="calendarcoverfront"><bundlesize width="2970" height="4200"/></page>
+  <page pagenr="1" type="normalpage"><bundlesize width="2970" height="4200"/>
+    <area areatype="calendariumarea" zposition="1"><position left="100" top="2300" width="2700" height="1500" rotation="0"/><calendararea layoutschema="OneDayPerRow (1)" colorschema="Black"/></area>
+  </page>
+  <page pagenr="2" type="normalpage"><bundlesize width="2970" height="4200"/></page>
+  <page pagenr="3" type="normalpage"><bundlesize width="2970" height="4200"/>
+    <area areatype="calendariumarea" zposition="1"><position left="100" top="2300" width="2700" height="1500" rotation="0"/><calendararea layoutschema="OneDayPerRow (4col)" colorschema="Black" extrainformation="$$$$"/></area>
+  </page>
+  <page pagenr="4" type="normalpage"><bundlesize width="2970" height="4200"/></page>
+</fotobook>

@@ -46,6 +46,7 @@ public class Main {
 		options.addOption("h", false, "Prints this help and exits.");
 		options.addOption("t", true, "Location of MCF temporary files.");
 		options.addOption("c", true, "Location of MCF (hps dir) additional files.");
+		options.addOption("e", "extra-resources", true, "Additional resource directory (repeatable). Installed resources take precedence.");
 		options.addOption("w", true, "Location for temporary images generated during conversion.");
 		options.addOption("r", true, "Sets the resolution to use for page rendering, in DPI. Default is 150.");
 		options.addOption("n", true, "Sets the page number to render up to. Default renders all pages.");
@@ -55,7 +56,7 @@ public class Main {
 		options.addOption("x", false, "Generates only XSL-FO content instead of PDF content.");
 		options.addOption("q", false, "Quiet mode - only errors are logged.");
 		options.addOption("d", false, "Enables debugging logging output.");
-		options.addOption("1", false, "Single pages: split every double page into two PDF pages in the original album page size (cover stays one page). Default keeps double pages.");
+		options.addOption("1", false, "Single pages: split book spreads left/right (cover stays one page), or calendar sheets top/bottom including the cover. Default keeps full spreads/sheets.");
 		options.addOption("o", false, "Split the cover: the front cover becomes the first page, the back cover the last page, the spine is skipped.");
 		options.addOption("a", false, "A4 output: split every double page into two A4 pages (orientation follows the album page; cover is fitted on one A4 page). Default keeps the page size from the MCF/MCFX file.");
 		options.addOption("f", true, "Select an MCF entry when a .mcfx database contains more than one.");
@@ -236,7 +237,12 @@ public class Main {
 		Log log = LogFactory.getLog(Main.class);
 
 		try {
-			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath);
+			java.util.List<File> extraResources = new java.util.ArrayList<File>();
+			String[] extraPaths = cl.getOptionValues("e");
+			if (extraPaths != null) {
+				for (String path : extraPaths) extraResources.add(new File(path));
+			}
+			Mcf2FoConverter converter = new Mcf2FoConverter(installDir, tempDir, tempImages, hpsDirPath, extraResources);
 			converter.setSplitToA4(cl.hasOption("a"));
 			converter.setSplitPages(cl.hasOption("1"));
 			converter.setSplitCover(cl.hasOption("o"));
