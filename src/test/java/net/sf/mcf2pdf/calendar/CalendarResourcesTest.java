@@ -162,6 +162,103 @@ public class CalendarResourcesTest {
 		Assert.assertEquals("pl_PL", loaded.getHolidays().getCountryAttributes().get("locale"));
 	}
 
+	@Test
+	public void loadsLegacySingleCalendarEntriesFileFromCewe5() throws Exception {
+		File resources = temporaryFolder.newFolder("cewe5-resources");
+		write(resources, "calendar_layout.xml", "<calendar_layout/>");
+		write(resources, "calendar_schema.xml", "<calendar_schema/>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+		Files.write(new File(resources, "calendarentries.xml").toPath(),
+				("<holidays><country iso=\"Polska\"><nationwide>"
+				+ "<day id=\"19\" honor=\"free\" name=\"Nowy Rok\"/>"
+				+ "<day date=\"XXXX-11-11\" honor=\"free\" name=\"Święto Niepodległości\"/>"
+				+ "</nationwide><province name=\"dolnośląskie\">"
+				+ "<vacation name=\"Ferie zimowe\" start=\"2015-01-19\" end=\"2015-02-01\"/>"
+				+ "</province></country></holidays>").getBytes(StandardCharsets.UTF_8));
+
+		CalendarResources byLanguage = CalendarResources.load(resources, "pl_PL");
+		Assert.assertEquals("Polska", byLanguage.getHolidays().getCountryAttributes().get("iso"));
+		Assert.assertEquals(2, byLanguage.getHolidays().getHolidays().size());
+		Assert.assertEquals("Ferie zimowe", byLanguage.getHolidays().getVacations().get(0).getAttribute("name"));
+
+		CalendarResources byCountry = CalendarResources.load(resources, null, "Polska");
+		Assert.assertEquals("Święto Niepodległości",
+				byCountry.getHolidays().getHolidays().get(1).getAttribute("name"));
+
+		try {
+			CalendarResources.load(resources, null, "Deutschland");
+			Assert.fail("Country mismatch should fail");
+		} catch (IOException e) {
+			Assert.assertTrue(e.getMessage(), e.getMessage().contains("Deutschland"));
+		}
+	}
+
+	@Test
+	public void calendarEntriesDirectoryTakesPrecedenceOverLegacyFile() throws Exception {
+		File resources = temporaryFolder.newFolder("mixed-resources");
+		write(resources, "calendar_layout.xml", "<calendar_layout/>");
+		write(resources, "calendar_schema.xml", "<calendar_schema/>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+		write(resources, "calendarentries.xml", "<holidays><country iso=\"Legacy\"/></holidays>");
+		File entries = new File(resources, "calendarentries");
+		Assert.assertTrue(entries.mkdir());
+		write(entries, "pl_PL.xml", "<holidays><country iso=\"Polska\" locale=\"pl_PL\"/></holidays>");
+
+		Assert.assertEquals("Polska",
+				CalendarResources.load(resources, "pl_PL").getHolidays().getCountryAttributes().get("iso"));
+	}
+
+	@Test
+	public void loadsInstalledCewe518CalendarResources() throws Exception {
+		File resources = new File("C:/Work/CEWEroznewersje/tmp/FOTOJOKER Fotoswiat 5.1.8/Resources");
+		org.junit.Assume.assumeTrue(new File(resources, "calendarentries.xml").isFile());
+
+		CalendarResources loaded = CalendarResources.load(resources, "pl_PL");
+
+		HolidayCatalogue holidays = loaded.getHolidays();
+		Assert.assertEquals("Polska", holidays.getCountryAttributes().get("iso"));
+		Assert.assertEquals(24, holidays.getHolidays().size());
+		Assert.assertEquals(64, holidays.getVacations().size());
+		// calendar_schema.xml repeats bgcoloreven="#E1EFCE" in one cell of this schema.
+		Assert.assertEquals("#E1EFCE", loaded.getColors().getSchema("Green/white nuances")
+				.getCell("CALENDAR_CELL_TYPE_HEAD_EMPTY").get("bgcoloreven"));
+	}
+
+	@Test
+	public void toleratesRepeatedIdenticalAttributes() throws Exception {
+		File resources = temporaryFolder.newFolder("duplicate-attribute-resources");
+		write(resources, "calendar_schema.xml", "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><calendar_schema>"
+				+ "<calendararea schema=\"Grün\" gridcolor=\"#ffffff\">"
+				+ "<cell type=\"CALENDAR_CELL_TYPE_HEAD_EMPTY\" bgcoloreven=\"#E1EFCE\" bgcolorodd=\"#ffffff\""
+				+ " bgcoloreven='#E1EFCE'/>"
+				+ "</calendararea></calendar_schema>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+
+		CalendarColorCatalogue colors = new CalendarColorCatalogue(new File(resources, "calendar_schema.xml"),
+				new File(resources, "calendar_synonym.xml"));
+
+		java.util.Map<String, String> cell = colors.getSchema("Grün").getCell("CALENDAR_CELL_TYPE_HEAD_EMPTY");
+		Assert.assertEquals("#E1EFCE", cell.get("bgcoloreven"));
+		Assert.assertEquals("#ffffff", cell.get("bgcolorodd"));
+	}
+
+	@Test
+	public void rejectsRepeatedAttributesWithDifferentValues() throws Exception {
+		File resources = temporaryFolder.newFolder("conflicting-attribute-resources");
+		write(resources, "calendar_schema.xml", "<calendar_schema><calendararea schema=\"A\">"
+				+ "<cell type=\"X\" bgcoloreven=\"#111111\" bgcoloreven=\"#222222\"/>"
+				+ "</calendararea></calendar_schema>");
+		write(resources, "calendar_synonym.xml", "<synonyms/>");
+
+		try {
+			new CalendarColorCatalogue(new File(resources, "calendar_schema.xml"),
+					new File(resources, "calendar_synonym.xml"));
+			Assert.fail("Conflicting duplicate attributes should fail");
+		} catch (IOException e) {
+			Assert.assertTrue(e.getMessage(), e.getMessage().contains("calendar_schema.xml"));
+		}
+	}
+
 	private static void write(File directory, String name, String contents) throws IOException {
 		Files.write(new File(directory, name).toPath(), contents.getBytes(StandardCharsets.ISO_8859_1));
 	}

@@ -37,7 +37,12 @@ public final class CalendarResources {
 		File schemaFile = requiredFile(resourcesDirectory, "calendar_schema.xml");
 		File synonymFile = requiredFile(resourcesDirectory, "calendar_synonym.xml");
 		HolidayCatalogue holidays;
-		if (locale != null && !locale.isEmpty()) {
+		File legacyEntriesFile = new File(resourcesDirectory, "calendarentries.xml");
+		if (!entriesDirectory.isDirectory() && legacyEntriesFile.isFile()) {
+			// CEWE 5.x ships a single calendarentries.xml for the installation's country.
+			holidays = loadLegacyHolidayCatalogue(legacyEntriesFile, locale, country);
+		}
+		else if (locale != null && !locale.isEmpty()) {
 			File holidayFile = requiredFile(entriesDirectory, locale + ".xml");
 			holidays = new HolidayCatalogue(holidayFile);
 		}
@@ -46,6 +51,29 @@ public final class CalendarResources {
 		}
 		return new CalendarResources(new CalendarLayoutCatalogue(layoutFile),
 				new CalendarColorCatalogue(schemaFile, synonymFile, projectImageDirectory), holidays);
+	}
+
+	private static HolidayCatalogue loadLegacyHolidayCatalogue(File file, String locale, String country)
+			throws IOException {
+		HolidayCatalogue catalogue = new HolidayCatalogue(file);
+		java.util.Map<String, String> attributes = catalogue.getCountryAttributes();
+		if (locale != null && !locale.isEmpty()) {
+			String fileLocale = attributes.get("locale");
+			if (fileLocale != null && !fileLocale.equalsIgnoreCase(locale)) {
+				throw new IOException("CEWE calendar entries file " + file.getAbsolutePath() + " is for language '"
+						+ fileLocale + "', not '" + locale + "'");
+			}
+			return catalogue;
+		}
+		if (country == null || country.trim().isEmpty()) {
+			throw new IOException("Calendar language and holidays country are both missing");
+		}
+		String fileCountry = attributes.get("iso");
+		if (fileCountry == null || !fileCountry.equalsIgnoreCase(country.trim())) {
+			throw new IOException("CEWE calendar entries file " + file.getAbsolutePath() + " is for country '"
+					+ fileCountry + "', not '" + country + "'");
+		}
+		return catalogue;
 	}
 
 	private static HolidayCatalogue findHolidayCatalogue(File entriesDirectory, String country) throws IOException {
