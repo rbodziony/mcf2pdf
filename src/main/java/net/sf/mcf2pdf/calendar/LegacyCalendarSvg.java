@@ -119,16 +119,11 @@ public final class LegacyCalendarSvg {
             int row = Integer.parseInt(cell.group(2)), col = Integer.parseInt(cell.group(3));
             CalendarDay day = row < month.getWeeks().size() ? month.getWeeks().get(row).getDays().get(col) : null;
             boolean present = day != null && day.isInMonth();
-            if ("_style".equals(cell.group(4)) && style == LegacyCalendarStyle.CEWE5) {
-                String type = col == 6 ? "sunday" : col == 5 ? "saturday" : "weekday";
+            if ("_style".equals(cell.group(4))) {
+                boolean dayOff = style == LegacyCalendarStyle.CEWE6 && present && day.isDayOff();
+                String type = col == 6 || dayOff ? "sunday" : col == 5 ? "saturday" : "weekday";
                 e.setAttribute("class", "cm_cal_" + type + (present ? Integer.toString(row) : "_empty"));
-                if (day == null) e.setAttribute("display", "none");
-            } else if ("_style".equals(cell.group(4))) {
-                // CEWE uses the holiday colour also for visible non-day-off entries
-                // (e.g. Christmas Eve). Ordinary cells retain the stylesheet's text
-                // colour; forcing the global "weekdays" class changes that colour.
-                e.setAttribute("class", present && (day.isSunday() || day.isHoliday()) ? "cm_cal_sunday" + row : "cm_cal_day");
-                if (!present) e.setAttribute("display", "none");
+                if (style == LegacyCalendarStyle.CEWE5 ? day == null : !present) e.setAttribute("display", "none");
             } else if ("day".equals(cell.group(1))) {
                 e.setTextContent(present ? Integer.toString(day.getDate().getDayOfMonth()) : "");
             } else {

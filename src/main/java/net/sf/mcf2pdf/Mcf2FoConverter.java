@@ -94,6 +94,7 @@ public class Mcf2FoConverter {
 	private File tempImageDir;
 
 	private File calendarResourcesDirectory;
+	private File calendarWritableResourcesDirectory;
 
 	private CalendarResources calendarResources;
 
@@ -180,6 +181,8 @@ public class Mcf2FoConverter {
 		}
 		scanDirs.add(new File(mcfInstallDir, "Resources"));
 		scanDirs.add(mcfTempDir);
+		calendarWritableResourcesDirectory = net.sf.mcf2pdf.calendar.CeweInstallation.writableResources(
+				resourcesDir, hpsDir);
 		if (hpsDir != null) {
 			scanDirs.add(hpsDir);
 		}
@@ -567,8 +570,9 @@ public class Mcf2FoConverter {
 		if (normalPages.isEmpty() && coverBack == null) {
 			throw new IOException("No calendar pages found for rendering");
 		}
-		calendarResources = CalendarResources.load(calendarResourcesDirectory, book.getHolidaysLanguage(),
-				book.getHolidaysCountry(), imageDir);
+		calendarResources = CalendarResources.load(calendarResourcesDirectory, calendarWritableResourcesDirectory,
+				book.getHolidaysLanguage(), book.getHolidaysCountry(), imageDir);
+		log.info("Calendar entries: " + calendarResources.getHolidayFile());
 		calendarLanguage = book.getHolidaysLanguage();
 		if (calendarLanguage == null || calendarLanguage.trim().isEmpty()) {
 			calendarLanguage = calendarResources.getHolidayLanguage();

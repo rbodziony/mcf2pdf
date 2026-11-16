@@ -90,7 +90,7 @@ public class LegacyCalendarSvgTest {
             SVGDocument doc = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL");
             assertEquals(enabled ? "New Year" : "Birthday", field(doc, "cm_holiday030").getTextContent());
             assertEquals(enabled ? "Birthday" : "", field(doc, "cm_holiday031").getTextContent());
-            assertEquals(enabled ? "cm_cal_sunday0" : "cm_cal_day", field(doc, "cm_day03_style").getAttribute("class"));
+            assertEquals(enabled ? "cm_cal_sunday0" : "cm_cal_weekday0", field(doc, "cm_day03_style").getAttribute("class"));
         }
     }
 
@@ -115,7 +115,7 @@ public class LegacyCalendarSvgTest {
         } catch (java.io.IOException expected) { assertTrue(expected.getMessage().contains("future_token")); }
     }
 
-    @Test public void visibleNonDayOffHolidaysUseTheHolidayStyleAndLocalizedHeadings() throws Exception {
+    @Test public void cewe6ShowHolidaysKeepTheColumnStyleAndLocalizedHeadings() throws Exception {
         java.io.File file = tmp.newFile();
         Files.write(file.toPath(), ("<holidays><country iso=\"Polska\" locale=\"pl_PL\">"
                 + "<day date=\"XXXX-12-24\" honor=\"show\" name=\"Christmas Eve\"/>"
@@ -126,11 +126,12 @@ public class LegacyCalendarSvgTest {
         SVGDocument doc = LegacyCalendarSvg.prepare(grid().replace("</svg>",
                 "<text cewe:cal=\"cm_dayname0\"/><text cewe:cal=\"cm_weekcaption_short\"/></svg>"),
                 "", start, model.getMonth(0), "pl_PL");
-        assertEquals("cm_cal_sunday3", field(doc, "cm_day35_style").getAttribute("class"));
+        assertEquals("cm_cal_saturday3", field(doc, "cm_day35_style").getAttribute("class"));
         assertEquals("Christmas Eve", field(doc, "cm_holiday350").getTextContent());
         assertEquals("TYD", field(doc, "cm_weekcaption_short").getTextContent());
         assertTrue(Character.isUpperCase(field(doc, "cm_dayname0").getTextContent().charAt(0)));
     }
+
     @Test public void cewe5KeepsNeighbouringMonthCellsAndStylesOnlySundays() throws Exception {
         java.io.File file = tmp.newFile();
         Files.write(file.toPath(), ("<holidays><country iso=\"Polska\" locale=\"pl_PL\">"
@@ -158,6 +159,8 @@ public class LegacyCalendarSvgTest {
         SVGDocument cewe6 = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL");
         assertEquals("none", field(cewe6, "cm_day00_style").getAttribute("display"));
         assertEquals("cm_cal_sunday4", field(cewe6, "cm_day40_style").getAttribute("class"));
+        assertEquals("cm_cal_saturday3", field(cewe6, "cm_day35_style").getAttribute("class"));
+        assertEquals("cm_cal_weekday_empty", field(cewe6, "cm_day00_style").getAttribute("class"));
     }
 
     @Test public void installationVersionSelectsTheLegacyStyle() throws Exception {
