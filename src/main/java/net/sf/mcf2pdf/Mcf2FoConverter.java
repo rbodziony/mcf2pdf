@@ -153,7 +153,14 @@ public class Mcf2FoConverter {
 		File hpsDir = null;
 		if (hpsDirPath == null) {
 			hpsDir = null;
-			try {
+			int[] installedVersion = net.sf.mcf2pdf.calendar.CeweInstallation.version(resourcesDir);
+			String localAppData = System.getenv("LOCALAPPDATA");
+			File localHpsDir = localAppData == null ? null : new File(new File(localAppData, "CEWE"), "hps");
+			if (net.sf.mcf2pdf.calendar.CeweInstallation.usesLocalAppDataHps(installedVersion)
+					&& localHpsDir != null && localHpsDir.isDirectory()) {
+				hpsDir = localHpsDir;
+			}
+			else try {
 				char[] pszPath = new char[WinDef.MAX_PATH];
 				if (Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_COMMON_APPDATA, null, ShlObj.SHGFP_TYPE_CURRENT, pszPath).intValue() == 0) {
 					File f = new File(new File(Native.toString(pszPath)), "hps");

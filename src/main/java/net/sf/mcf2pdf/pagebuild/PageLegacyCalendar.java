@@ -63,9 +63,15 @@ public final class PageLegacyCalendar implements PageDrawable {
         if (source == null || source.trim().isEmpty()) source = readRequired(context, svg.getFileName());
         String css = readRequired(context, svg.getCssSheet());
         String standard = svg.getStandardSheet();
-        File standardFile = style == LegacyCalendarStyle.CEWE5 && standard != null
-                ? context.getCalendarResource(standard) : null;
-        if (style == LegacyCalendarStyle.CEWE5 && standardFile != null) {
+        File standardFile = null;
+        if (standard != null) {
+            try {
+                standardFile = context.getCalendarResource(standard);
+            } catch (IOException e) {
+                standardFile = null;
+            }
+        }
+        if (standardFile != null) {
             css += "\n" + new String(Files.readAllBytes(standardFile.toPath()), StandardCharsets.UTF_8);
             standard = null;
         }

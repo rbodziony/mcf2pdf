@@ -40,6 +40,17 @@ public class CeweInstallationTest {
 	}
 
 	@Test
+	public void cewe72AndNewerKeepHpsInLocalAppData() {
+		assertEquals(false, CeweInstallation.usesLocalAppDataHps(null));
+		assertEquals(false, CeweInstallation.usesLocalAppDataHps(new int[] { 5, 1, 8 }));
+		assertEquals(false, CeweInstallation.usesLocalAppDataHps(new int[] { 6, 4, 3 }));
+		assertEquals(false, CeweInstallation.usesLocalAppDataHps(new int[] { 7, 1, 5 }));
+		assertEquals(true, CeweInstallation.usesLocalAppDataHps(new int[] { 7, 2, 4 }));
+		assertEquals(true, CeweInstallation.usesLocalAppDataHps(new int[] { 7, 3, 4 }));
+		assertEquals(true, CeweInstallation.usesLocalAppDataHps(new int[] { 8, 0, 5 }));
+	}
+
+	@Test
 	public void downloadedCatalogueWinsUnlessTheInstalledOneIsNewer() throws Exception {
 		File resources = calendarResources("Resources");
 		File writable = tmp.newFolder("writable");

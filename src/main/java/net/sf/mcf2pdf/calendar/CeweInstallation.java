@@ -52,6 +52,10 @@ public final class CeweInstallation {
 		return directory.isDirectory() ? directory : null;
 	}
 
+	public static boolean usesLocalAppDataHps(int[] version) {
+		return version != null && (version[0] > 7 || version[0] == 7 && version[1] >= 2);
+	}
+
 	public static File mostCurrent(File installed, File writable) {
 		if (writable != null && writable.isFile()
 				&& !(installed.isFile() && installed.lastModified() > writable.lastModified())) {
