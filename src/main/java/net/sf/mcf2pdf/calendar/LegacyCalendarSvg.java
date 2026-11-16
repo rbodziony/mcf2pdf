@@ -51,6 +51,7 @@ public final class LegacyCalendarSvg {
             root.setAttribute("viewBox", "0 0 " + root.getAttribute("width") + " " + root.getAttribute("height"));
         }
         populate(root, start, month, language, style);
+        if (style == LegacyCalendarStyle.CEWE5) QtCssCompat.markPreviousSiblings(root);
         Element styleElement = document.createElementNS(SVG, "style");
         styleElement.setAttribute("type", "text/css");
         styleElement.setTextContent(css);
@@ -119,9 +120,8 @@ public final class LegacyCalendarSvg {
             CalendarDay day = row < month.getWeeks().size() ? month.getWeeks().get(row).getDays().get(col) : null;
             boolean present = day != null && day.isInMonth();
             if ("_style".equals(cell.group(4)) && style == LegacyCalendarStyle.CEWE5) {
-                // CEWE 5.x keeps the cells of neighbouring months (without a date)
-                // and gives the Sunday style to Sundays only.
-                e.setAttribute("class", present && day.isSunday() ? "cm_cal_sunday" + row : "cm_cal_day");
+                String type = col == 6 ? "sunday" : col == 5 ? "saturday" : "weekday";
+                e.setAttribute("class", "cm_cal_" + type + (present ? Integer.toString(row) : "_empty"));
                 if (day == null) e.setAttribute("display", "none");
             } else if ("_style".equals(cell.group(4))) {
                 // CEWE uses the holiday colour also for visible non-day-off entries

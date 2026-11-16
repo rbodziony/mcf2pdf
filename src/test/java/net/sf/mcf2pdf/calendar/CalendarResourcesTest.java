@@ -225,7 +225,6 @@ public class CalendarResourcesTest {
 		Assert.assertEquals(24, holidays.getHolidays().size());
 		Assert.assertEquals(64, holidays.getVacations().size());
 		Assert.assertEquals("pl_PL", CalendarResources.load(resources, null, "Polska").getHolidayLanguage());
-		// calendar_schema.xml repeats bgcoloreven="#E1EFCE" in one cell of this schema.
 		Assert.assertEquals("#E1EFCE", loaded.getColors().getSchema("Green/white nuances")
 				.getCell("CALENDAR_CELL_TYPE_HEAD_EMPTY").get("bgcoloreven"));
 	}

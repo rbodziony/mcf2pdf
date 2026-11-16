@@ -140,7 +140,6 @@ public class DigesterConfiguratorImpl implements DigesterConfigurator {
 		digester.addCallParam("fotobook/page/area/svg/svg_image", 0, "fileName");
 		digester.addCallMethod("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", "setStandardSheet", 1);
 		digester.addCallParam("fotobook/page/area/svg/svg_image_calendar/cssSheetTitleIdMap", 0, "StandardSheet");
-		// Month blocks reference a template file and carry their own StandardSheet.
 		digester.addCallMethod("fotobook/page/area/svg/svg_image/cssSheetTitleIdMap", "setStandardSheet", 1);
 		digester.addCallParam("fotobook/page/area/svg/svg_image/cssSheetTitleIdMap", 0, "StandardSheet");
 		digester.addSetNext("fotobook/page/area/svg", "setContent");

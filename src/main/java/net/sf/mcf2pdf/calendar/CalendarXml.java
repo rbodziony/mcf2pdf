@@ -40,8 +40,6 @@ final class CalendarXml {
 			return builder.parse(file);
 		}
 		catch (SAXException e) {
-			// Some CEWE 5.x resources repeat an attribute with the same value, which CEWE tolerates
-			// but which is not well-formed XML. Retry once without such exact duplicates.
 			byte[] original = Files.readAllBytes(file.toPath());
 			byte[] repaired = removeIdenticalDuplicateAttributes(original);
 			if (repaired == null) {
@@ -64,13 +62,6 @@ final class CalendarXml {
 		}
 	}
 
-	/**
-	 * Removes repeated attributes whose value equals the first occurrence. The bytes are handled as
-	 * ISO-8859-1 so that every byte round-trips unchanged whatever the file's declared encoding is;
-	 * XML markup is ASCII, so tag and attribute boundaries are still recognised in UTF-8 files.
-	 *
-	 * @return the repaired bytes, or <code>null</code> if nothing could be repaired.
-	 */
 	static byte[] removeIdenticalDuplicateAttributes(byte[] xml) {
 		String text = new String(xml, StandardCharsets.ISO_8859_1);
 		Matcher tag = START_TAG.matcher(text);
@@ -93,7 +84,6 @@ final class CalendarXml {
 					tagChanged = true;
 				}
 				else {
-					// Conflicting values: there is no safe choice, so leave the file broken.
 					return null;
 				}
 			}
@@ -122,7 +112,6 @@ final class CalendarXml {
 			factory.setExpandEntityReferences(false);
 			factory.setXIncludeAware(false);
 			DocumentBuilder builder = factory.newDocumentBuilder();
-			// Keep the default error handler from printing "[Fatal Error]" before the retry.
 			builder.setErrorHandler(new org.xml.sax.ErrorHandler() {
 				@Override
 				public void warning(org.xml.sax.SAXParseException exception) {

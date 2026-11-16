@@ -137,26 +137,21 @@ public class LegacyCalendarSvgTest {
                 + "<day date=\"XXXX-12-24\" honor=\"show\" name=\"Christmas Eve\"/>"
                 + "<day date=\"XXXX-12-26\" honor=\"free\" name=\"Second day\"/>"
                 + "</country></holidays>").getBytes(StandardCharsets.UTF_8));
-        // December 2016 starts on Thursday and needs five rows.
         LocalDate start = LocalDate.of(2016, 12, 1);
         CalendarDateModel model = new CalendarDateModel(start, "pl_PL", null,
                 new HolidayCatalogue(file), Collections.emptyList());
         SVGDocument doc = LegacyCalendarSvg.prepare(grid(), "", start, model.getMonth(0), "pl_PL",
                 LegacyCalendarStyle.CEWE5);
-        // 28 November: visible cell without a date.
         assertEquals("", field(doc, "cm_day00_style").getAttribute("display"));
-        assertEquals("cm_cal_day", field(doc, "cm_day00_style").getAttribute("class"));
+        assertEquals("cm_cal_weekday_empty", field(doc, "cm_day00_style").getAttribute("class"));
         assertEquals("", field(doc, "cm_day00").getTextContent());
-        // 1 January after the last day, also a Sunday: visible, without date or Sunday text style.
         assertEquals("", field(doc, "cm_day46_style").getAttribute("display"));
-        assertEquals("cm_cal_day", field(doc, "cm_day46_style").getAttribute("class"));
-        // Holidays on weekdays keep the ordinary style; labels are still filled in.
-        assertEquals("cm_cal_day", field(doc, "cm_day35_style").getAttribute("class"));
+        assertEquals("cm_cal_sunday_empty", field(doc, "cm_day46_style").getAttribute("class"));
+        assertEquals("cm_cal_saturday3", field(doc, "cm_day35_style").getAttribute("class"));
         assertEquals("Christmas Eve", field(doc, "cm_holiday350").getTextContent());
-        assertEquals("cm_cal_day", field(doc, "cm_day40_style").getAttribute("class"));
+        assertEquals("cm_cal_weekday4", field(doc, "cm_day40_style").getAttribute("class"));
         assertEquals("Second day", field(doc, "cm_holiday400").getTextContent());
         assertEquals("cm_cal_sunday3", field(doc, "cm_day36_style").getAttribute("class"));
-        // The unused sixth week stays hidden.
         assertEquals("none", field(doc, "cm_day50_style").getAttribute("display"));
         assertEquals("cm_cal_week_empty", field(doc, "cm_week5_style").getAttribute("class"));
 

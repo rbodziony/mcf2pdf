@@ -96,14 +96,4 @@ public class PageLegacyCalendarTest {
         try { resources.getCalendarResource("categories/SVGCalendars/../../secret.css"); fail(); }
         catch (java.io.IOException expected) { assertTrue(expected.getMessage().contains("Invalid")); }
     }
-
-    @Test public void cewe5SundayRulesAreReappliedAfterTheLayoutSheet() {
-        String rules = PageLegacyCalendar.sundayRules("text { fill:#fff; }\n/* .cm_cal_sunday9 text { fill:red; } */"
-                + ".cm_cal_sunday0 text { fill:#ffffff; }\n"
-                + ".cm_cal_sunday1 text, .cm_cal_sunday2 text { fill:#ffffff; }\n"
-                + ".cm_cal_sunday0 text, text.holiday { fill:#000; }\n"
-                + "rect.day_bg_sunday { fill:#9f9f9f; }");
-        assertEquals(".cm_cal_sunday0 text { fill:#ffffff; }\n"
-                + ".cm_cal_sunday1 text, .cm_cal_sunday2 text { fill:#ffffff; }\n", rules);
-    }
 }

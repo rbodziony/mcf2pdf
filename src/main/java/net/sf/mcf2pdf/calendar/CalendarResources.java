@@ -42,10 +42,8 @@ public final class CalendarResources {
 		String holidayLanguage = null;
 		File legacyEntriesFile = new File(resourcesDirectory, "calendarentries.xml");
 		if (!entriesDirectory.isDirectory() && legacyEntriesFile.isFile()) {
-			// CEWE 5.x ships a single calendarentries.xml for the installation's country.
 			holidays = loadLegacyHolidayCatalogue(legacyEntriesFile, locale, country);
 			if (holidays.getCountryAttributes().get("locale") == null) {
-				// The file has no locale attribute; the installation language is its <locale>.lproj directory.
 				holidayLanguage = installationLanguage(resourcesDirectory);
 			}
 		}
@@ -63,7 +61,6 @@ public final class CalendarResources {
 				new CalendarColorCatalogue(schemaFile, synonymFile, projectImageDirectory), holidays, holidayLanguage);
 	}
 
-	/** Returns the language of the only <code>&lt;locale&gt;.lproj</code> directory, or <code>null</code>. */
 	private static String installationLanguage(File resourcesDirectory) {
 		File[] candidates = resourcesDirectory.listFiles(file -> file.isDirectory()
 				&& file.getName().matches("[A-Za-z]{2,3}_[A-Za-z]{2,3}\\.lproj"));
@@ -144,10 +141,6 @@ public final class CalendarResources {
 		return holidays;
 	}
 
-	/**
-	 * Returns the language of the holiday catalogue: its <code>locale</code> attribute or, for a CEWE 5.x
-	 * <code>calendarentries.xml</code> without one, the installation language. May be <code>null</code>.
-	 */
 	public String getHolidayLanguage() {
 		return holidayLanguage;
 	}
