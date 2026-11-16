@@ -16,7 +16,7 @@ These files then can be used to have a quick and rough impression on how the
 photobook is going to look after printing.
 
 CAL8 wall calendars are supported, including the legacy CEWE 5.x month-block SVG
-format used by the 2014/2015 sample projects. Calendar output contains 13 full
+format of projects created with CEWE 5.x. Calendar output contains 13 full
 sheets; `-1` cuts every sheet horizontally into top/bottom pages, including the
 cover (26 pages). The binding spiral is omitted. Other calendar products and SVG
 placeholder families are currently unsupported.
@@ -24,7 +24,7 @@ placeholder families are currently unsupported.
 Legacy calendars need their original SVG templates and CSS files. If the current
 installation no longer contains them, add an older installation's
 `Resources/photofun` directory using `-e`/`--extra-resources`, for example
-`-e "C:\work\CEWEroznewersje\CEWE643\CEWE Fotoswiat\Resources\photofun"`.
+`-e "<CEWE 6.4.3 installation>\Resources\photofun"`.
 The `-i` installation still provides the calendar and holiday catalogues.
 Resources are read from disk and are not bundled with this repository.
 Legacy SVG calendars with personal events enabled also read `calendarEvents.xml`
@@ -50,8 +50,8 @@ of "1. Boże Narodzenie". The log line `Calendar entries:` shows the file used.
 Without `-c`, the `hps` directory is chosen like CEWE does: CEWE 7.2 and newer
 use `%LOCALAPPDATA%\CEWE\hps`, older versions `C:\ProgramData\hps`. Examples:
 
-    mcf2pdf -i "C:\Program Files\CEWE\CEWE Fotoswiat" -e "<6.4.3>\Resources\photofun" Kalendarz_2015.mcf out.pdf
-    mcf2pdf -i "<CEWE 5.1.8 installation>" -e "<6.4.3>\Resources\photofun" Kalendarz_2015.mcf out-cewe5.pdf
+    mcf2pdf -i "C:\Program Files\CEWE\CEWE Fotoswiat" -e "<CEWE 6.4.3 installation>\Resources\photofun" calendar.mcf out.pdf
+    mcf2pdf -i "<CEWE 5.x installation>" -e "<CEWE 6.4.3 installation>\Resources\photofun" calendar.mcf out-cewe5.pdf
 
 The generated PDFs are NOT, and will never be, a 100% representation of the
 designed photobook. Also, they do NOT include bleed margins (especially not for 

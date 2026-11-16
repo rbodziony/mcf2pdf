@@ -215,7 +215,9 @@ public class CalendarResourcesTest {
 
 	@Test
 	public void loadsInstalledCewe518CalendarResources() throws Exception {
-		File resources = new File("C:/Work/CEWEroznewersje/tmp/FOTOJOKER Fotoswiat 5.1.8/Resources");
+		String installation = System.getProperty("mcf2pdf.test.cewe518");
+		org.junit.Assume.assumeTrue("Set -Dmcf2pdf.test.cewe518=<CEWE 5.1.8 installation>", installation != null);
+		File resources = new File(installation, "Resources");
 		org.junit.Assume.assumeTrue(new File(resources, "calendarentries.xml").isFile());
 
 		CalendarResources loaded = CalendarResources.load(resources, "pl_PL");
