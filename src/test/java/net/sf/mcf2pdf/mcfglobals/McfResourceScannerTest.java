@@ -72,4 +72,32 @@ public class McfResourceScannerTest {
         assertTrue(scanner.getColorImage("123132") !=null);
     }
     // Add more tests here for other file types and scenarios
+
+    @org.junit.Rule
+    public org.junit.rules.TemporaryFolder tmp = new org.junit.rules.TemporaryFolder();
+
+    @Test
+    public void thumbnailsAndRefinementMasksDoNotReplaceTheBackground() throws IOException {
+        File extra = tmp.newFolder("extra");
+        File install = tmp.newFolder("install");
+        File background = write(new File(install, "photofun/backgrounds/6731/6731/6731.jpg"));
+        write(new File(install, "photofun/backgrounds/6731/6731/refinement/refinement-6731.jpg"));
+        write(new File(install, "photofun/thumbnails/backgrounds/spotcolor/6731.webp"));
+        write(new File(extra, "photofun/backgrounds/spotcolor/6731.webp"));
+        File thumbnailOnly = write(new File(install, "photofun/thumbnails/backgrounds/6544.webp"));
+
+        McfResourceScanner real = new McfResourceScanner(Arrays.asList(extra, install));
+        real.scan();
+
+        assertEquals(background, real.getImage("6731"));
+        assertEquals("A thumbnail is still better than nothing", thumbnailOnly, real.getImage("6544"));
+        assertTrue(McfResourceScanner.isPreviewOrMask("C:\\CEWE\\photofun\\thumbnails\\backgrounds\\1.webp"));
+        assertFalse(McfResourceScanner.isPreviewOrMask("/cewe/photofun/backgrounds/multicolor/6544.webp"));
+    }
+
+    private static File write(File file) throws IOException {
+        assertTrue(file.getParentFile().isDirectory() || file.getParentFile().mkdirs());
+        java.nio.file.Files.write(file.toPath(), new byte[] { 1 });
+        return file;
+    }
 }
