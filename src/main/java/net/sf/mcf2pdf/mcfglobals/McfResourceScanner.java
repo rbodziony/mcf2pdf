@@ -104,9 +104,8 @@ public class McfResourceScanner {
 				log.debug("path="+path);
 				if (nm.matches(".+\\.(jp(e?)g|webp|bmp)")) {
 					String id = nm.substring(0, nm.indexOf("."));
-					if (isPreviewOrMask(path)) {
-						foundImages.putIfAbsent(id, f);
-					} else {
+					File current = foundImages.get(id);
+					if (current == null || imageRank(path) >= imageRank(current.getAbsolutePath())) {
 						foundImages.put(id, f);
 					}
 				}
@@ -237,8 +236,14 @@ public class McfResourceScanner {
 
 	/** Thumbnails and refinement masks share the id of the design element but are not the background itself. */
 	static boolean isPreviewOrMask(String path) {
+		return imageRank(path) < 2;
+	}
+
+	static int imageRank(String path) {
 		String p = path.replace('\\', '/').toLowerCase(Locale.US);
-		return p.contains("/thumbnails/") || p.contains("/spotcolor/") || p.contains("/refinement/");
+		if (p.contains("/spotcolor/") || p.contains("/refinement/")) return 0;
+		if (p.contains("/thumbnails/")) return 1;
+		return 2;
 	}
 
 	private void registerDecorationName(Decoration decoration) {
