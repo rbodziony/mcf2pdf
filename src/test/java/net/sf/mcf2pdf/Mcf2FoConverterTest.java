@@ -131,6 +131,23 @@ public class Mcf2FoConverterTest {
     }
 
     @Test
+    public void calendarCoverFrontBackgroundFillsTheBottomHalf() throws Exception {
+        File extra = tmp.newFolder("extra-resources");
+        writeSolidBackground(extra, "87654321.bmp", java.awt.Color.RED);
+        Mcf2FoConverter converter = createConverter(java.util.Collections.singletonList(extra));
+        String pages = "<page pagenr=\"0\" type=\"calendarcoverback\">" + BUNDLE
+                + "<background type=\"1\" designElementId=\"0\"/></page>"
+                + "<page pagenr=\"0\" type=\"calendarcoverfront\">" + BUNDLE
+                + "<background type=\"1\" designElementId=\"87654321\"/></page>";
+        converter.convert(writeProject("CAL8", pages), new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "1.jpg"));
+        int top = image.getRGB(100, 100);
+        int bottom = image.getRGB(100, 800);
+        Assert.assertFalse("Cover back stays without the front background", ((top >> 16) & 255) > 200 && ((top >> 8) & 255) < 30);
+        Assert.assertTrue("Cover front background in the bottom half", ((bottom >> 16) & 255) > 200 && ((bottom >> 8) & 255) < 30);
+    }
+
+    @Test
     public void missingExtraResourceDirectoryReportsItsPath() throws Exception {
         File missing = new File(tmp.getRoot(), "missing-resources");
         try {

@@ -613,7 +613,7 @@ public class Mcf2FoConverter {
 		calendarBook = book;
 		if (coverBack != null || coverFront != null) {
 			log.info("Rendering cover...");
-			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack, null);
+			addCalendarSheet(docBuilder, widthPX, heightPX, coverBack, coverFront, null);
 		}
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");
