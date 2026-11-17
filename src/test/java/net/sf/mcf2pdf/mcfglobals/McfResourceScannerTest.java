@@ -85,12 +85,18 @@ public class McfResourceScannerTest {
         write(new File(install, "photofun/thumbnails/backgrounds/spotcolor/6731.webp"));
         write(new File(extra, "photofun/backgrounds/spotcolor/6731.webp"));
         File thumbnailOnly = write(new File(install, "photofun/thumbnails/backgrounds/6544.webp"));
+        File thumbnailBeforeMask = write(new File(extra, "photofun/thumbnails/backgrounds/6600.webp"));
+        write(new File(install, "photofun/thumbnails/backgrounds/spotcolor/6600.webp"));
+        write(new File(extra, "photofun/thumbnails/backgrounds/6543.webp"));
+        File laterThumbnail = write(new File(install, "photofun/thumbnails/backgrounds/multicolor/6543.webp"));
 
         McfResourceScanner real = new McfResourceScanner(Arrays.asList(extra, install));
         real.scan();
 
         assertEquals(background, real.getImage("6731"));
         assertEquals("A thumbnail is still better than nothing", thumbnailOnly, real.getImage("6544"));
+        assertEquals("A thumbnail is better than a mask", thumbnailBeforeMask, real.getImage("6600"));
+        assertEquals("Among thumbnails the last one scanned wins", laterThumbnail, real.getImage("6543"));
         assertTrue(McfResourceScanner.isPreviewOrMask("C:\\CEWE\\photofun\\thumbnails\\backgrounds\\1.webp"));
         assertFalse(McfResourceScanner.isPreviewOrMask("/cewe/photofun/backgrounds/multicolor/6544.webp"));
     }
