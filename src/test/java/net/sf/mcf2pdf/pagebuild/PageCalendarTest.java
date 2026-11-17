@@ -296,4 +296,12 @@ public class PageCalendarTest {
 		}
 		return count;
 	}
+
+    @Test
+    public void weekLabelsUseTheCeweShortWeekNames() {
+        Assert.assertEquals("TYD", PageCalendar.weekShortName("pl_PL"));
+        Assert.assertEquals("KW", PageCalendar.weekShortName("de_DE"));
+        Assert.assertEquals("Wk", PageCalendar.weekShortName("en_GB"));
+        Assert.assertEquals("Wk", PageCalendar.weekShortName("xx_XX"));
+    }
 }

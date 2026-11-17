@@ -387,8 +387,7 @@ public class PageCalendar implements PageDrawable {
 			int h = Math.max(1, Math.round(bottom) - y);
 			fillCell(g, context, colors.get("bgcolor"), 0, y, width, h);
 
-			String prefix = "pl".equals(parseLanguage(language).getLanguage()) ? "Tyd " : "Wk ";
-			String label = prefix + firstDay.getIsoWeekNumber();
+			String label = weekShortName(language) + " " + firstDay.getIsoWeekNumber();
 			boolean bold = cell != null && Boolean.parseBoolean(cell.getFontAttributes().get("bold"));
 			Font font = tableFont(context, cell, 0, bold, 6f);
 			float maxTextWidth = Math.max(1, h - context.toPixel(1f));
@@ -543,6 +542,21 @@ public class PageCalendar implements PageDrawable {
 			return "CALENDAR_CELL_TYPE_HEAD_SATURDAY";
 		}
 		return "CALENDAR_CELL_TYPE_HEAD_WEEKDAY";
+	}
+
+	private static final Map<String, String> WEEK_SHORT_NAMES = new java.util.HashMap<String, String>();
+	static {
+		String[] names = { "de", "KW", "en", "Wk", "fr", "SEM", "it", "Sett", "pl", "TYD", "sk", "KT", "hr", "T",
+				"sl", "T", "da", "uge", "fi", "vko", "sv", "v", "es", "SC", "nb", "uke", "no", "uke" };
+		for (int i = 0; i < names.length; i += 2) {
+			WEEK_SHORT_NAMES.put(names[i], names[i + 1]);
+		}
+	}
+
+	/** Short week name of CEWE's <code>international/CalendarWeekNames.xml</code>. */
+	static String weekShortName(String language) {
+		String name = WEEK_SHORT_NAMES.get(parseLanguage(language).getLanguage());
+		return name == null ? "Wk" : name;
 	}
 
 	private static Locale parseLanguage(String language) {
