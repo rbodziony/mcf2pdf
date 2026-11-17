@@ -496,7 +496,7 @@ public class Mcf2FoConverter {
 	private void addAreaDrawables(List<? extends McfArea> areas) {
 		for (McfArea a : areas) {
 			if (McfArea.IMAGEBACKGROUNDAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent()));
+				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent(), calendarBook != null));
 			}
 			else if (McfArea.IMAGEAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageImage((McfImage)a.getContent()));
@@ -613,7 +613,7 @@ public class Mcf2FoConverter {
 		calendarBook = book;
 		if (coverBack != null || coverFront != null) {
 			log.info("Rendering cover...");
-			addCalendarSheet(docBuilder, widthPX, heightPX, coverFront, coverBack, null);
+			addCalendarSheet(docBuilder, widthPX, heightPX, coverBack, coverFront, null);
 		}
 		for (int i = 0; i < normalPages.size(); i += 2) {
 			log.info("Rendering calendar sheet " + (i / 2 + 1) + "...");

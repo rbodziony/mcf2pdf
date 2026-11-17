@@ -44,6 +44,19 @@ public class PageBackgroundTest {
     }
 
     @Test
+    public void testParseTemplateNameWithParameters() {
+        Assert.assertArrayEquals(new String[] { "6547", null, null }, PageBackground.parseTemplateName("6547,normal,"));
+        Assert.assertArrayEquals(new String[] { "6544", "210", "2" },
+                PageBackground.parseTemplateName("6544,hue=210,fading=2,normal,"));
+        Assert.assertArrayEquals(new String[] { "6369", null, null },
+                PageBackground.parseTemplateName("6369,backgroundId=6369,normal,"));
+        Assert.assertArrayEquals(new String[] { "Weiss", null, null }, PageBackground.parseTemplateName("Weiss,normal,"));
+        Assert.assertNull(PageBackground.parseTemplateName("empty-dadada,normal,"));
+        Assert.assertNull(PageBackground.parseTemplateName("CAL8_title_0001_000010_large"));
+        Assert.assertNull(PageBackground.parseTemplateName(null));
+    }
+
+    @Test
     public void testIsMulticolorNeedsHueAndFadingPair() {
         Assert.assertFalse(PageBackground.isMulticolor(-1, -1));
         Assert.assertFalse(PageBackground.isMulticolor(30, -1));

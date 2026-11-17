@@ -1,6 +1,6 @@
 # mcf2pdf Converter for Mein CEWE Fotobuch (My CEWE Photobook) files to PDF
 
-Latest Release: Version **0.9.0**
+Latest Release: Version **0.9.1**
 
 
 Initial Author: Florian Albrecht
