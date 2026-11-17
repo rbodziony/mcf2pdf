@@ -100,8 +100,8 @@ public class PageBackground implements PageDrawable {
 			throw new IOException("Could not read image file: " + r.file.getAbsolutePath());
 		}
 		img = rotateQuarterTurns(img, r.bg.getRotation());
-		if (isMulticolor(r.bg.getHue(), r.bg.getFading())) {
-			img = recolor(img, r.bg.getHue(), r.bg.getFading());
+		if (isMulticolor(r.hue, r.fading)) {
+			img = recolor(img, r.hue, r.fading);
 		}
 
 		int[] src = useAlignment
@@ -242,10 +242,51 @@ public class PageBackground implements PageDrawable {
 	private static class Resolved {
 		final File file;
 		final McfBackground bg;
+		final int hue;
+		final int fading;
 
 		Resolved(File file, McfBackground bg) {
+			this(file, bg, bg.getHue(), bg.getFading());
+		}
+
+		Resolved(File file, McfBackground bg, int hue, int fading) {
 			this.file = file;
 			this.bg = bg;
+			this.hue = hue;
+			this.fading = fading;
+		}
+	}
+
+	private static final java.util.regex.Pattern TEMPLATE_NAME =
+			java.util.regex.Pattern.compile("([a-zA-Z0-9_]+)((?:,[a-zA-Z]+=[^,]*)*),normal(,.*)?");
+
+	/** Template id, hue and fading of a <code>templatename</code> such as <code>6544,hue=210,fading=2,normal,</code>. */
+	static String[] parseTemplateName(String templateName) {
+		if (templateName == null) {
+			return null;
+		}
+		java.util.regex.Matcher m = TEMPLATE_NAME.matcher(templateName);
+		if (!m.matches()) {
+			return null;
+		}
+		String hue = null;
+		String fading = null;
+		for (String parameter : m.group(2).split(",")) {
+			if (parameter.startsWith("hue=")) {
+				hue = parameter.substring(4);
+			}
+			else if (parameter.startsWith("fading=")) {
+				fading = parameter.substring(7);
+			}
+		}
+		return new String[] { m.group(1), hue, fading };
+	}
+
+	private static int parseInt(String value, int fallback) {
+		try {
+			return value == null ? fallback : Integer.parseInt(value.trim());
+		} catch (NumberFormatException e) {
+			return fallback;
 		}
 	}
 
@@ -271,12 +312,19 @@ public class PageBackground implements PageDrawable {
 				return new Resolved(null, bg);
 			String tn = bg.getTemplateName();
 			String designElementId = bg.getDesignElementId();
+			int hue = bg.getHue();
+			int fading = bg.getFading();
 			if (designElementId != null) {
 				tn = designElementId;
 			} else {
-				if (tn == null || !tn.matches("[a-zA-Z0-9_]+,normal(,.*)?"))
+				String[] template = parseTemplateName(tn);
+				if (template == null)
 					continue;
-				tn = tn.substring(0, tn.indexOf(","));
+				tn = template[0];
+				if (!isMulticolor(hue, fading)) {
+					hue = parseInt(template[1], -1);
+					fading = parseInt(template[2], -1);
+				}
 			}
 			File f = context.getBackgroundImage(tn);
 			if (f == null) {
@@ -285,7 +333,7 @@ public class PageBackground implements PageDrawable {
 			if (f == null)
 				context.getLog().warn("Background not found for page " + bg.getPage().getPageNr() + ": " + tn);
 			else
-				return new Resolved(f, bg);
+				return new Resolved(f, bg, hue, fading);
 		}
 		return null;
 	}
