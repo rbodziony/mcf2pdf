@@ -148,6 +148,32 @@ public class Mcf2FoConverterTest {
     }
 
     @Test
+    public void calendarImageBackgroundRightOrBottomFillsTheBottomHalf() throws Exception {
+        Mcf2FoConverter converter = createConverter();
+        String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
+                + "<area areatype=\"imagebackgroundarea\">"
+                + "<position height=\"2160\" left=\"-30\" rotation=\"0\" top=\"-30\" width=\"3030\" zposition=\"1\"/>"
+                + "<imagebackground backgroundPosition=\"RIGHT_OR_BOTTOM\" filename=\"photo.png\">"
+                + "<cutout left=\"0\" scale=\"10\" top=\"0\"/></imagebackground></area></page>"
+                + "<page pagenr=\"2\" type=\"normalpage\">" + BUNDLE + "</page>";
+        File project = writeProject("CAL8", pages);
+        File images = new File(project.getParentFile(), "images");
+        Assert.assertTrue(images.mkdir());
+        java.awt.image.BufferedImage photo = new java.awt.image.BufferedImage(303, 216, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D graphics = photo.createGraphics();
+        graphics.setColor(java.awt.Color.RED);
+        graphics.fillRect(0, 0, 303, 216);
+        graphics.dispose();
+        javax.imageio.ImageIO.write(photo, "png", new File(images, "photo.png"));
+        converter.convert(project, new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "1.jpg"));
+        int top = image.getRGB(100, 100);
+        int bottom = image.getRGB(100, 800);
+        Assert.assertFalse("Top half stays without the bottom photo", ((top >> 16) & 255) > 200 && ((top >> 8) & 255) < 30);
+        Assert.assertTrue("Photo background in the bottom half", ((bottom >> 16) & 255) > 200 && ((bottom >> 8) & 255) < 30);
+    }
+
+    @Test
     public void missingExtraResourceDirectoryReportsItsPath() throws Exception {
         File missing = new File(tmp.getRoot(), "missing-resources");
         try {

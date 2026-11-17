@@ -496,7 +496,7 @@ public class Mcf2FoConverter {
 	private void addAreaDrawables(List<? extends McfArea> areas) {
 		for (McfArea a : areas) {
 			if (McfArea.IMAGEBACKGROUNDAREA.matcher(a.getAreaType()).matches()) {
-				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent()));
+				currentPage.addDrawable(new PageImageBackground((McfImageBackground)a.getContent(), calendarBook != null));
 			}
 			else if (McfArea.IMAGEAREA.matcher(a.getAreaType()).matches()) {
 				currentPage.addDrawable(new PageImage((McfImage)a.getContent()));
