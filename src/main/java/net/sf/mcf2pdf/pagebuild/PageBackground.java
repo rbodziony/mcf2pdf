@@ -327,6 +327,19 @@ public class PageBackground implements PageDrawable {
 				}
 			}
 			File f = context.getBackgroundImage(tn);
+			if (f != null && isMulticolor(hue, fading)) {
+				if (Boolean.FALSE.equals(context.isMulticolorBackground(tn))) {
+					hue = -1;
+					fading = -1;
+				}
+				else {
+					String sourceId = context.getMulticolorSourceId(tn);
+					File source = sourceId == null ? null : context.getBackgroundImage(sourceId);
+					if (source != null) {
+						f = source;
+					}
+				}
+			}
 			if (f == null) {
 				f = context.getBackgroundColor(tn);
 			}

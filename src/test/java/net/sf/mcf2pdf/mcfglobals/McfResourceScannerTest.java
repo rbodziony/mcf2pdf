@@ -101,6 +101,34 @@ public class McfResourceScannerTest {
         assertFalse(McfResourceScanner.isPreviewOrMask("/cewe/photofun/backgrounds/multicolor/6544.webp"));
     }
 
+    @Test
+    public void backgroundTemplatesTellMulticolorAndTheirMulticolorImage() throws IOException {
+        File hps = tmp.newFolder("hps");
+        File install = tmp.newFolder("install-mc");
+        File source = write(new File(hps, "photofun/backgrounds/9060/9060/9060-0-0.jpg"));
+        java.nio.file.Files.write(new File(install, "backgrounds_default.xml").toPath(), ("<templates>"
+                + "<template name=\"6909\" multicolor_id=\"9060\" multicolor=\"1\" designElementType=\"background\"/>"
+                + "<template name=\"6000\" designElementType=\"background\"/></templates>").getBytes("UTF-8"));
+        File addon = new File(hps, "addons/6540/backgrounds/v1/6540.xml");
+        write(addon);
+        java.nio.file.Files.write(addon.toPath(),
+                "<templates><template name=\"6540\" designElementType=\"background\"/></templates>".getBytes("UTF-8"));
+        File later = new File(hps, "photofun/backgrounds/6909/6909/6909.xml");
+        write(later);
+        java.nio.file.Files.write(later.toPath(),
+                "<templates><template name=\"6909\" designElementType=\"background\"/></templates>".getBytes("UTF-8"));
+
+        McfResourceScanner real = new McfResourceScanner(Arrays.asList(install, hps));
+        real.scan();
+
+        assertEquals(Boolean.TRUE, real.isMulticolorBackground("6909"));
+        assertEquals("9060", real.getMulticolorSourceId("6909"));
+        assertEquals(source, real.getImage("9060"));
+        assertEquals(Boolean.FALSE, real.isMulticolorBackground("6540"));
+        assertEquals(Boolean.FALSE, real.isMulticolorBackground("6000"));
+        assertNull(real.isMulticolorBackground("1234"));
+    }
+
     private static File write(File file) throws IOException {
         assertTrue(file.getParentFile().isDirectory() || file.getParentFile().mkdirs());
         java.nio.file.Files.write(file.toPath(), new byte[] { 1 });

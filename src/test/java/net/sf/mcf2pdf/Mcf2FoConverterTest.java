@@ -166,6 +166,32 @@ public class Mcf2FoConverterTest {
     }
 
     @Test
+    public void onlyMulticolorBackgroundsAreRecolouredFromTheirMulticolorImage() throws Exception {
+        File extra = tmp.newFolder("extra-resources");
+        File backgrounds = new File(extra, "backgrounds");
+        Assert.assertTrue(backgrounds.mkdir());
+        writeSolidBackground(backgrounds, "87654325.bmp", java.awt.Color.RED);
+        writeSolidBackground(backgrounds, "87654327.bmp", java.awt.Color.RED);
+        writeSolidBackground(backgrounds, "87654329-0-0.bmp", new java.awt.Color(40, 40, 40));
+        java.nio.file.Files.write(new File(backgrounds, "templates.xml").toPath(), ("<templates>"
+                + "<template name=\"87654325\" designElementType=\"background\" filename=\"87654325.bmp\"/>"
+                + "<template name=\"87654327\" multicolor_id=\"87654329\" multicolor=\"1\" designElementType=\"background\" filename=\"87654327.bmp\"/>"
+                + "</templates>").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        Mcf2FoConverter converter = createConverter(java.util.Collections.singletonList(extra));
+        String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
+                + "<background type=\"1\" templatename=\"87654325,hue=120,fading=0,normal,\"/></page>"
+                + "<page pagenr=\"2\" type=\"normalpage\">" + BUNDLE
+                + "<background type=\"1\" templatename=\"87654327,hue=120,fading=0,normal,\"/></page>";
+        converter.convert(writeProject("CAL8", pages), new ByteArrayOutputStream(), 60, false, false, -1, 1.0);
+        java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new File(tempImageDir, "1.jpg"));
+        int top = image.getRGB(100, 100);
+        int bottom = image.getRGB(100, 800);
+        Assert.assertTrue("Background without multicolor template keeps its colour", ((top >> 16) & 255) > 200 && ((top >> 8) & 255) < 30);
+        Assert.assertTrue("Multicolor background uses its neutral multicolor image",
+                ((bottom >> 16) & 255) < 80 && ((bottom >> 8) & 255) < 80 && (bottom & 255) < 80);
+    }
+
+    @Test
     public void calendarImageBackgroundRightOrBottomFillsTheBottomHalf() throws Exception {
         Mcf2FoConverter converter = createConverter();
         String pages = "<page pagenr=\"1\" type=\"normalpage\">" + BUNDLE
