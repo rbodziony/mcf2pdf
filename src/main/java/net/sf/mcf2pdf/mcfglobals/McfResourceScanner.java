@@ -8,6 +8,8 @@ import java.awt.FontFormatException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +17,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.io.IOUtils;
@@ -51,6 +55,14 @@ public class McfResourceScanner {
 	private Map<String, Fading> foundDecorations = new HashMap<String, Fading>();
 
 	private Map<String, File> foundedDesignelementIDs = new HashMap<String, File>();
+
+	private Map<String, Boolean> multicolorBackgrounds = new HashMap<String, Boolean>();
+
+	private Map<String, String> multicolorSources = new HashMap<String, String>();
+
+	private static final Pattern IMAGE_VARIANT = Pattern.compile("(\\d+)-\\d+-\\d+");
+
+	private static final Pattern TEMPLATE_TAG = Pattern.compile("<template\\s[^>]*>");
 	private File foundBinding;
 
 	public McfResourceScanner(List<File> scanDirs) {
@@ -104,9 +116,10 @@ public class McfResourceScanner {
 				log.debug("path="+path);
 				if (nm.matches(".+\\.(jp(e?)g|webp|bmp)")) {
 					String id = nm.substring(0, nm.indexOf("."));
-					File current = foundImages.get(id);
-					if (current == null || imageRank(path) >= imageRank(current.getAbsolutePath())) {
-						foundImages.put(id, f);
+					registerImage(id, f);
+					Matcher variant = IMAGE_VARIANT.matcher(id);
+					if (variant.matches()) {
+						registerImage(variant.group(1), f);
 					}
 				}
 				else if (nm.matches(".+\\.(clp|svg)")) {
@@ -123,6 +136,7 @@ public class McfResourceScanner {
 				}
 				else if (nm.equals("backgrounds_default.xml")) {
 					log.debug("Processing default backgrounds " + f.getAbsolutePath());
+					loadBackgroundTemplates(f);
 					List<Template> colors = loadColorsMapping(f);
 					for (Template color : colors) {
 						File colorFile = new File(f.getParent() + '/' + color.getFilename());
@@ -152,6 +166,9 @@ public class McfResourceScanner {
 				}
 				else if(nm.matches("normalbinding.*\\.png")) {
 					foundBinding = f;
+				}
+				else if (nm.endsWith(".xml") && path.replace('\\', '/').toLowerCase(Locale.US).contains("/backgrounds/")) {
+					loadBackgroundTemplates(f);
 				}
 				else if (nm.matches(".+\\.xml") && path.contains("decorations")) {
 					log.debug("in last if checking "+f.getName());
@@ -234,6 +251,45 @@ public class McfResourceScanner {
 		log.debug("finished scanning ");
 	}
 
+	private void registerImage(String id, File f) {
+		File current = foundImages.get(id);
+		if (current == null || imageRank(f.getAbsolutePath()) >= imageRank(current.getAbsolutePath())) {
+			foundImages.put(id, f);
+		}
+	}
+
+	/** Reads <code>multicolor</code> and <code>multicolor_id</code> of background templates; a single multicolor definition wins. */
+	private void loadBackgroundTemplates(File f) {
+		String xml;
+		try {
+			xml = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			log.warn("Cannot read background templates from " + f.getAbsolutePath(), e);
+			return;
+		}
+		Matcher template = TEMPLATE_TAG.matcher(xml);
+		while (template.find()) {
+			String tag = template.group();
+			String type = attribute(tag, "designElementType");
+			String name = attribute(tag, "name");
+			if (name == null || type == null || !type.startsWith("background")) {
+				continue;
+			}
+			boolean multicolor = "1".equals(attribute(tag, "multicolor"));
+			String multicolorId = attribute(tag, "multicolor_id");
+			Boolean known = multicolorBackgrounds.get(name);
+			multicolorBackgrounds.put(name, multicolor || Boolean.TRUE.equals(known));
+			if (multicolorId != null) {
+				multicolorSources.putIfAbsent(name, multicolorId);
+			}
+		}
+	}
+
+	private static String attribute(String tag, String name) {
+		Matcher m = Pattern.compile("\\s" + name + "=\"([^\"]*)\"").matcher(tag);
+		return m.find() ? m.group(1) : null;
+	}
+
 	/** Thumbnails and refinement masks share the id of the design element but are not the background itself. */
 	static boolean isPreviewOrMask(String path) {
 		return imageRank(path) < 2;
@@ -295,6 +351,16 @@ public class McfResourceScanner {
 		return foundImages.get(id);
 	}
 	
+	/** @return whether a background template is multicolor, or <code>null</code> if no template is known */
+	public Boolean isMulticolorBackground(String id) {
+		return multicolorBackgrounds.get(id);
+	}
+
+	/** @return the id of the neutral image CEWE recolours for a multicolor background, or <code>null</code> */
+	public String getMulticolorSourceId(String id) {
+		return multicolorSources.get(id);
+	}
+
 	public File getColorImage(String name) {
 		return foundColors.get(name);
 	}

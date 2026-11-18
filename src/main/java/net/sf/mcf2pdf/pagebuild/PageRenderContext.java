@@ -163,6 +163,14 @@ public final class PageRenderContext {
 		return resources.getImage(id);
 	}
 
+	public Boolean isMulticolorBackground(String id) {
+		return resources.isMulticolorBackground(id);
+	}
+
+	public String getMulticolorSourceId(String id) {
+		return resources.getMulticolorSourceId(id);
+	}
+
 	/**
 	 * Return the background image for given color name eg. 'Schwarz'.
 	 *
